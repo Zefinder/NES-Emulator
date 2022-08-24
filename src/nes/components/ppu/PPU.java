@@ -1,5 +1,6 @@
 package nes.components.ppu;
 
+import nes.components.Bus;
 import nes.components.Component;
 import nes.components.mapper.Mapper;
 import nes.components.ppu.bus.PPUBus;
@@ -7,11 +8,13 @@ import nes.components.ppu.register.PPURegisters;
 import nes.components.ppu.rendering.PPURender;
 import nes.exceptions.AddressException;
 
-public class PPU implements Component {
+public class PPU implements Component, Runnable {
 
-	private PPUBus bus;
+	private Bus bus;
 	private PPURegisters registres;
 	private PPURender renderUnit;
+	
+	private Thread ppuThread;
 
 	private byte[] patternTable1;
 	private byte[] patternTable2;
@@ -28,9 +31,11 @@ public class PPU implements Component {
 	private int scanline, cycle;
 	private boolean oddTick;
 
+	private volatile boolean readyForNext;
+
 	public PPU() {
 		registres = new PPURegisters();
-		bus = new PPUBus();
+		bus = new PPUBus(registres);
 		renderUnit = new PPURender();
 
 		patternTable1 = new byte[0x1000];
@@ -50,9 +55,65 @@ public class PPU implements Component {
 
 		paletteIndexes = new byte[0x20];
 
+
+		ppuThread = new Thread(this);
+		ppuThread.start();
+		
+		scanline = 310;
+		oddTick = false;
+		readyForNext = true;
+
+		System.out.println("Fraise");
+	}
+
+	public void setHorizontalNametableMirroring() {
+		nametable1Begin = nametable0Begin;
+		nametable1End = nametable0End;
+
+		nametable3Begin = nametable2Begin;
+		nametable3End = nametable2End;
+	}
+
+	public void setVerticalNametableMirroring() {
+		nametable3Begin = nametable1Begin;
+		nametable3End = nametable1End;
+
+		nametable2Begin = nametable0Begin;
+		nametable2End = nametable0End;
+	}
+
+	@Override
+	public void start() {
+
+	}
+
+	@Override
+	public void reset() {
+
+	}
+
+	@Override
+	public void tick() throws AddressException {
+//		System.out.println("PPU tick! ");
+		while (!readyForNext) {
+			// J'ai peut être honte d'écrire ça, oui
+			// J'aurais pu utiliser une variable condition, oui xD
+		}
+		readyForNext = false;
+		
+	}
+
+	@Override
+	public void initMapping(Mapper mapper) throws AddressException {
 		// Ajout des pattern tables
 		bus.addToMemoryMap(patternTable1);
 		bus.addToMemoryMap(patternTable2);
+		
+		boolean vertical = mapper.mapPPUMemory(bus);
+		if (vertical)
+			setVerticalNametableMirroring();
+		else
+			setHorizontalNametableMirroring();
 
 		// Ajout des nametables
 		bus.addToMemoryMap(nametable0Begin);
@@ -76,67 +137,14 @@ public class PPU implements Component {
 		// Ajout des palettes et miroirs
 		for (int i = 0; i < 8; i++)
 			bus.addToMemoryMap(paletteIndexes);
-
-		scanline = 310;
-		oddTick = false;
-
-		System.out.println("Fraise");
-	}
-
-	public void setHorizontalNametableMirroring() {
-		nametable1Begin = nametable0Begin;
-		nametable1End = nametable0End;
-
-		nametable3Begin = nametable2Begin;
-		nametable3End = nametable2End;
-	}
-
-	public void setVerticalNametableMirroring() {
-		nametable3Begin = nametable1Begin;
-		nametable3End = nametable1End;
-
-		nametable2Begin = nametable0Begin;
-		nametable2End = nametable0End;
-	}
-
-	@Override
-	public void start() {
-	}
-
-	@Override
-	public void reset() {
-
-	}
-
-	@Override
-	public void tick() throws AddressException {
-		if (scanline != 311)
-			renderUnit.render(scanline, cycle, registres, bus, oddTick);
-		cycle++;
-		oddTick = !oddTick;
-
-		if (cycle == 341) {
-			cycle = 0;
-			scanline = (++scanline) % 312;
-		}
-
-		if (scanline == 310 && cycle == 341 && oddTick) {
-			scanline = 0;
-			cycle = 0;
-		}
-	}
-
-	@Override
-	public void initMapping(Mapper mapper) throws AddressException {
-		boolean vertical = mapper.mapPPUMemory(bus);
-		if (vertical)
-			setVerticalNametableMirroring();
-		else
-			setHorizontalNametableMirroring();
 	}
 
 	public PPURegisters getRegistres() {
 		return registres;
+	}
+	
+	public Bus getBus() {
+		return bus;
 	}
 
 	public int getScanline() {
@@ -145,6 +153,33 @@ public class PPU implements Component {
 
 	public int getCycle() {
 		return cycle;
+	}
+
+	@Override
+	public void run() {
+		while (true) {
+			if (!readyForNext) {
+				readyForNext = true;
+				try {
+					renderUnit.render(scanline, cycle, registres, bus, oddTick);
+				} catch (AddressException e) {
+					e.printStackTrace();
+				}
+				cycle++;
+				oddTick = !oddTick;
+
+				if (cycle == 341) {
+					cycle = 0;
+					scanline = (++scanline) % 311;
+				}
+
+				if (scanline == 310 && cycle == 341 && oddTick) {
+					scanline = 0;
+					cycle = 0;
+				}
+
+			}
+		}
 	}
 
 }

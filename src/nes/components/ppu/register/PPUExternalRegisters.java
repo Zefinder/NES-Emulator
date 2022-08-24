@@ -30,11 +30,11 @@ public class PPUExternalRegisters {
 		this.PPUCTRL = PPUCTRL;
 	}
 
-	public void setNMI() {
+	public void enableNMI() {
 		PPUCTRL |= 0b10000000;
 	}
 
-	public void clearNMI() {
+	public void disableNMI() {
 		PPUCTRL &= 0b01111111;
 	}
 
@@ -242,15 +242,15 @@ public class PPUExternalRegisters {
 		this.PPUSTATUS = PPUSTATUS;
 	}
 
-	public boolean isInVBlank() {
+	public boolean isInNMI() {
 		return (PPUSTATUS & 0b10000000) == 0b10000000;
 	}
 
-	public void startVBlank() {
+	public void setNMI() {
 		PPUSTATUS |= 0b10000000;
 	}
 
-	public void endVBlank() {
+	public void clearNMI() {
 		PPUSTATUS &= 0b01111111;
 	}
 

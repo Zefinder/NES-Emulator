@@ -3,9 +3,7 @@ package nes.components;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import nes.components.cpu.CPU;
 import nes.components.mapper.Mapper;
@@ -25,7 +23,9 @@ public class NES implements Component {
 	private byte[] prgRom;
 	private int mapperNumber;
 	private int prgChunksNumber, chrChunksNumber;
-	private int masterTick;
+	private int masterTick, frame;
+
+	private long debut, fin;
 
 	private Mapper mapper;
 	private Component cpu, ppu;
@@ -33,11 +33,14 @@ public class NES implements Component {
 	// A retirer après les tests
 	private Map<Integer, Instruction> instructionMap;
 
+	private static ScheduledExecutorService sch;
+
 	public NES(Component cpu, Component ppu, File romFile) {
-		masterTick = 0;
+		masterTick = 1;
 		this.cpu = cpu;
 		this.ppu = ppu;
 		this.romFile = romFile;
+		frame = 0;
 	}
 
 	@Override
@@ -64,6 +67,10 @@ public class NES implements Component {
 
 		cpu.start();
 		ppu.start();
+
+		debut = System.currentTimeMillis();
+//		nano = System.nanoTime();
+
 	}
 
 	@Override
@@ -72,18 +79,45 @@ public class NES implements Component {
 		// Un tick CPU après 16 ticks
 		// Un tick PPU après 5 ticks
 
+//		System.out.printf("Master tick : %d ", masterTick);
+
+		// FIXME Optimiser le CPU et le PPU
 		if (masterTick % 16 == 0)
 			cpu.tick();
 
 		if (masterTick % 5 == 0)
 			ppu.tick();
 
-		++masterTick;
+//		System.out.println();
+//		masterTick = (++masterTick < 80 ? masterTick : 0);
+//		masterTick++;
+//		if (masterTick == 26512750) {
+//			fin = System.currentTimeMillis();
+//			System.out.println("Framerate : " + 50000.0 / (fin - debut) + " fps");
+//			debut = System.currentTimeMillis();
+//			masterTick = 0;
+//		}
+
+		if (++masterTick % 530255 == 0) {
+			if (++frame == 50) {
+				frame = 0;
+				fin = System.currentTimeMillis();
+				System.out.println("Framerate : " + 50000.0 / (fin - debut) + " fps");
+				debut = System.currentTimeMillis();
+			}
+			masterTick = 0;
+		}
+
 	}
 
 	@Override
 	public void reset() throws AddressException {
 		cpu.reset();
+	}
+
+	// A enlever après les tests
+	public static void killNes() {
+		sch.shutdown();
 	}
 
 	@Override
@@ -139,24 +173,33 @@ public class NES implements Component {
 		NES nes = new NES(cpu, ppu, new File("./Super Mario Bros.nes"));
 		nes.start();
 
-		final ScheduledExecutorService sch = Executors.newScheduledThreadPool(1);
-		sch.scheduleAtFixedRate(new Runnable() {
-
-//			private int counter = 0;
-
-			@Override
-			public void run() {
-				try {
-					nes.tick();
-				} catch (AddressException e) {
-					e.printStackTrace();
-				}
-			}
-		}, 0, 37, TimeUnit.NANOSECONDS);
+//		final ScheduledExecutorService sch = Executors.newScheduledThreadPool(1);
+//		sch = Executors.newScheduledThreadPool(1);
+//		sch.scheduleAtFixedRate(new Runnable() {
+//
+////			private int counter = 0;
+//
+//			@Override
+//			public void run() {
+//				try {
+//					nes.tick();
+//				} catch (AddressException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		}, 0, 10, TimeUnit.NANOSECONDS);
 //		byte a = (byte) 0x80;
 //		byte b = (byte) 0xFF;
 //		byte c = (byte) (a + b);
 //		System.out.println(String.format("0x%04x", c));
+
+		while (true) {
+//			if(System.nanoTime() - nano >= 32) {
+			nes.tick();
+//				nano = System.nanoTime();
+//			}
+
+		}
 	}
 
 	// A SUPPRIMER APRES LES TESTS
@@ -164,12 +207,14 @@ public class NES implements Component {
 		do {
 			tick();
 		} while (masterTick % 16 != 0);
+			tick();
 	}
 
 	public void nextPPUTick() throws AddressException {
 		do {
 			tick();
 		} while (masterTick % 5 != 0);
+		tick();
 	}
 
 	public Map<Integer, Instruction> getInstructionMap() {

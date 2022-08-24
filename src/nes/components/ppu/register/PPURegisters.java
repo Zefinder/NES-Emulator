@@ -14,7 +14,7 @@ public class PPURegisters implements RegisterListener {
 		backgroundRegisters = new PPUBackgroundRegisters();
 		externalRegisters = new PPUExternalRegisters();
 		spritesRegisters = new PPUSpritesRegisters();
-		
+
 		EventManager.getInstance().addRegisterListener(this);
 	}
 
@@ -148,9 +148,7 @@ public class PPURegisters implements RegisterListener {
 	@Override
 	public void on2007Written(byte newValue) {
 		externalRegisters.setPPUDATA(newValue);
-		for (int i = 0; i < externalRegisters.getVRAMIncrement(); i++) {
-			augCoarseX();
-		}
+		backgroundRegisters.setV(backgroundRegisters.getV() + externalRegisters.getVRAMIncrement());
 	}
 
 	@Override
@@ -205,34 +203,84 @@ public class PPURegisters implements RegisterListener {
 	}
 
 	@Override
+	public void on2000Changed(byte newValue) {
+		externalRegisters.setPPUCTRL(newValue);
+	}
+
+	@Override
+	public void on2001Changed(byte newValue) {
+		externalRegisters.setPPUMASK(newValue);
+	}
+
+	@Override
+	public void on2002Changed(byte newValue) {
+		externalRegisters.setPPUSTATUS(newValue);
+	}
+
+	@Override
+	public void on2003Changed(byte newValue) {
+		externalRegisters.setOAMADDR(newValue);
+	}
+
+	@Override
+	public void on2004Changed(byte newValue) {
+		externalRegisters.setOAMDATA(newValue);
+	}
+
+	@Override
+	public void on2005Changed(byte newValue) {
+		externalRegisters.setPPUSCROLL(newValue);
+	}
+
+	@Override
+	public void on2006Changed(byte newValue) {
+		externalRegisters.setPPUADDR(newValue);
+	}
+
+	@Override
+	public void on2007Changed(byte newValue) {
+		externalRegisters.setPPUDATA(newValue);
+	}
+
+	@Override
+	public void on4014Changed(byte newValue) {
+		externalRegisters.setOAMDMA(newValue);
+	}
+
+	@Override
 	public void onNMIRaised() {
 		externalRegisters.setNMI();
+		EventManager.getInstance().fireChanging2002(externalRegisters.getPPUSTATUS());
 	}
 
 	@Override
 	public void onSpriteOverflowRaised() {
 		externalRegisters.setSpriteOverflow();
+		EventManager.getInstance().fireChanging2002(externalRegisters.getPPUSTATUS());
 	}
 
 	@Override
 	public void onSprite0HitRaised() {
 		externalRegisters.setSprite0Hit();
+		EventManager.getInstance().fireChanging2002(externalRegisters.getPPUSTATUS());
 	}
 
 	@Override
 	public void onNMIOver() {
 		externalRegisters.clearNMI();
-
+		EventManager.getInstance().fireChanging2002(externalRegisters.getPPUSTATUS());
 	}
 
 	@Override
 	public void onSpriteOverflowOver() {
 		externalRegisters.clearSpriteOverflow();
+		EventManager.getInstance().fireChanging2002(externalRegisters.getPPUSTATUS());
 	}
 
 	@Override
 	public void onSprite0HitOver() {
 		externalRegisters.clearSprite0Hit();
+		EventManager.getInstance().fireChanging2002(externalRegisters.getPPUSTATUS());
 	}
 
 	@Override

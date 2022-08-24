@@ -9,10 +9,11 @@ public class CPUBus extends Bus {
 	private byte L;
 
 	public CPUBus() {
-		EventManager.getInstance().addRegisterListener(this);
+		super();
 	}
 
 	// FIXME ATTENTION ATTENDRE LES CYCLES AVANT D'ECRIRE DANS CERTAINS REGISTRES
+	// FIXME FAIRE ATTENDRE 256 CYCLES QUAND OAMDMA ECRIT
 
 	@Override
 	public synchronized byte getByteFromMemory(int address) throws AddressException {
@@ -29,8 +30,9 @@ public class CPUBus extends Bus {
 			break;
 
 		case 0x2002:
+			ret = getByte(0x2002);
 			EventManager.getInstance().fireReading2002();
-			ret = L;
+			L = ret;
 			break;
 
 		case 0x2003:
@@ -116,6 +118,12 @@ public class CPUBus extends Bus {
 		}
 
 	}
+	
+	@Override
+	protected synchronized void setByte(int address, byte value) throws AddressException {
+		super.setByte(address, value);
+		EventManager.getInstance().fireValueChanged(true, address, value);
+	}
 
 	@Override
 	public void on2000Written(byte newValue) {
@@ -139,6 +147,7 @@ public class CPUBus extends Bus {
 
 	@Override
 	public void on2002Written(byte newValue) {
+		// Changed by the CPU !
 		L = newValue;
 	}
 
@@ -146,7 +155,7 @@ public class CPUBus extends Bus {
 	public void on2003Written(byte newValue) {
 		L = newValue;
 		try {
-			setByte(0x2001, newValue);
+			setByte(0x2003, newValue);
 		} catch (AddressException e) {
 			e.printStackTrace();
 		}
@@ -156,7 +165,7 @@ public class CPUBus extends Bus {
 	public void on2004Written(byte newValue) {
 		L = newValue;
 		try {
-			setByte(0x2001, newValue);
+			setByte(0x2004, newValue);
 		} catch (AddressException e) {
 			e.printStackTrace();
 		}
@@ -166,7 +175,7 @@ public class CPUBus extends Bus {
 	public void on2005Written(byte newValue) {
 		L = newValue;
 		try {
-			setByte(0x2001, newValue);
+			setByte(0x2005, newValue);
 		} catch (AddressException e) {
 			e.printStackTrace();
 		}
@@ -176,7 +185,7 @@ public class CPUBus extends Bus {
 	public void on2006Written(byte newValue) {
 		L = newValue;
 		try {
-			setByte(0x2001, newValue);
+			setByte(0x2006, newValue);
 		} catch (AddressException e) {
 			e.printStackTrace();
 		}
@@ -186,7 +195,7 @@ public class CPUBus extends Bus {
 	public void on2007Written(byte newValue) {
 		L = newValue;
 		try {
-			setByte(0x2001, newValue);
+			setByte(0x2007, newValue);
 		} catch (AddressException e) {
 			e.printStackTrace();
 		}
@@ -196,7 +205,7 @@ public class CPUBus extends Bus {
 	public void on4014Written(byte newValue) {
 		L = newValue;
 		try {
-			setByte(0x2001, newValue);
+			setByte(0x4014, newValue);
 			byte[] oamData = new byte[0x100];
 			int baseAddress = newValue << 8;
 			for (int i = 0; i < oamData.length; i++) {
@@ -266,59 +275,110 @@ public class CPUBus extends Bus {
 	public void on4014Read() {
 		// Rien ici
 	}
-
+	
 	@Override
-	public void onNMIRaised() {
+	public void on2000Changed(byte newValue) {
 		try {
-			setByte(0x2002, (byte) (getByte(0x2002) | 0b10000000));
+			setByte(0x2000, newValue);
 		} catch (AddressException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void on2001Changed(byte newValue) {
+		try {
+			setByte(0x2001, newValue);
+		} catch (AddressException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void on2002Changed(byte newValue) {
+		try {
+			setByte(0x2002, newValue);
+		} catch (AddressException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void on2003Changed(byte newValue) {
+		try {
+			setByte(0x2003, newValue);
+		} catch (AddressException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void on2004Changed(byte newValue) {
+		try {
+			setByte(0x2004, newValue);
+		} catch (AddressException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void on2005Changed(byte newValue) {
+		try {
+			setByte(0x2005, newValue);
+		} catch (AddressException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void on2006Changed(byte newValue) {
+		try {
+			setByte(0x2006, newValue);
+		} catch (AddressException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void on2007Changed(byte newValue) {
+		try {
+			setByte(0x2007, newValue);
+		} catch (AddressException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void on4014Changed(byte newValue) {
+		try {
+			setByte(0x4014, newValue);
+		} catch (AddressException e) {
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public void onNMIRaised() {
 	}
 
 	@Override
 	public void onSpriteOverflowRaised() {
-		try {
-			setByte(0x2002, (byte) (getByte(0x2002) | 0b00100000));
-		} catch (AddressException e) {
-			e.printStackTrace();
-		}
 	}
 
 	@Override
 	public void onSprite0HitRaised() {
-		try {
-			setByte(0x2002, (byte) (getByte(0x2002) | 0b01000000));
-		} catch (AddressException e) {
-			e.printStackTrace();
-		}
 	}
 
 	@Override
 	public void onNMIOver() {
-		try {
-			setByte(0x2002, (byte) (getByte(0x2002) & ~0b10000000));
-		} catch (AddressException e) {
-			e.printStackTrace();
-		}
 	}
 
 	@Override
 	public void onSpriteOverflowOver() {
-		try {
-			setByte(0x2002, (byte) (getByte(0x2002) & ~0b00100000));
-		} catch (AddressException e) {
-			e.printStackTrace();
-		}
 	}
 
 	@Override
 	public void onSprite0HitOver() {
-		try {
-			setByte(0x2002, (byte) (getByte(0x2002) & ~0b01000000));
-		} catch (AddressException e) {
-			e.printStackTrace();
-		}
 	}
 
 	@Override

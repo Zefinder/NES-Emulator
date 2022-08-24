@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import nes.exceptions.AddressException;
+import nes.listener.EventManager;
 import nes.listener.RegisterListener;
 
 public abstract class Bus implements RegisterListener{
@@ -14,6 +15,7 @@ public abstract class Bus implements RegisterListener{
 	public Bus() {
 		memoryMap = new LinkedHashMap<>();
 		lastAddress = -1;
+		EventManager.getInstance().addRegisterListener(this);
 	}
 
 	public void addToMemoryMap(byte[] byteArray) {
@@ -26,7 +28,7 @@ public abstract class Bus implements RegisterListener{
 		byte res = 0x00;
 
 		if (address > this.lastAddress)
-			throw new AddressException("The adress is out of the memory!");
+			throw new AddressException(String.format("The adress is out of the memory! (0x%04X)", address));
 
 		for (Integer maxAddress : memoryMap.keySet()) {
 			// Si l'adresse est inférieure à l'adresse alors c'est good !
@@ -54,6 +56,22 @@ public abstract class Bus implements RegisterListener{
 				break;
 			}
 		}
+	}
+	
+	public int getSize() {
+		return lastAddress + 1;
+	}
+	
+	public byte[] getValues() {
+		byte[] res = new byte[lastAddress + 1];
+		int currentAddress = 0;
+		
+		for (byte[] array : memoryMap.values()) {
+			System.arraycopy(array, 0, res, currentAddress, array.length);
+			currentAddress += array.length;
+		}
+		
+		return res;
 	}
 
 	public abstract byte getByteFromMemory(int address) throws AddressException;

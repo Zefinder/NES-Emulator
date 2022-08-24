@@ -31,8 +31,12 @@ public enum NesColors {
 		this.b = b;
 	}
 
-	public Color getColorFromCode(NesColors code) {
+	public Color getColorFromCode() {
 		return new Color(r, g, b);
+	}
+	
+	public int getRGBFromCode() {
+		return getColorFromCode().getRGB();
 	}
 
 	public static NesColors getColorCode(int code) {

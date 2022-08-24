@@ -1,6 +1,6 @@
 package nes.components.ppu.rendering;
 
-import nes.components.ppu.bus.PPUBus;
+import nes.components.Bus;
 import nes.components.ppu.register.PPURegisters;
 import nes.exceptions.AddressException;
 import nes.listener.EventManager;
@@ -13,7 +13,6 @@ public class PPURender {
 	private OAM[] secondary;
 
 	private int frameCounter;
-	private long debut, fin;
 
 	private boolean spriteHit;
 
@@ -22,10 +21,9 @@ public class PPURender {
 		secondary = new OAM[8];
 		tmpOAM = new OAM();
 		frameCounter = -1;
-		debut = System.currentTimeMillis();
 	}
 
-	public void render(int scanline, int cycle, PPURegisters register, PPUBus bus, boolean oddTick)
+	public void render(int scanline, int cycle, PPURegisters register, Bus bus, boolean oddTick)
 			throws AddressException {
 		if (scanline == 310) {
 			preRender(scanline, cycle, register, bus);
@@ -36,29 +34,32 @@ public class PPURender {
 			vblank(scanline, cycle, register);
 		}
 
-		if (cycle == 256) {
-			register.augY();
-		}
+		if (register.getExternalRegisters().doShowBg() && register.getExternalRegisters().doShowSprites()) {
+			if (cycle == 256) {
+				register.augY();
+			}
 
-		if (cycle == 257) {
-			int v = register.getBackgroundRegisters().getV();
-			int t = register.getBackgroundRegisters().getT();
-			register.getBackgroundRegisters().setV((v & ~0x041F) | (t & 0x41F));
-		}
+			if (cycle == 257) {
+				int v = register.getBackgroundRegisters().getV();
+				int t = register.getBackgroundRegisters().getT();
+				register.getBackgroundRegisters().setV((v & ~0x041F) | (t & 0x41F));
+			}
 
-		if ((cycle <= 256 && cycle % 8 == 0) || cycle == 328 || cycle == 336) {
-			register.augX();
+			if ((cycle <= 256 && cycle % 8 == 0) || cycle == 328 || cycle == 336) {
+				register.augX();
+			}
 		}
 
 	}
 
-	private void preRender(int scanline, int cycle, PPURegisters register, PPUBus bus) throws AddressException {
+	private void preRender(int scanline, int cycle, PPURegisters register, Bus bus) throws AddressException {
 		if (cycle == 1) {
 			EventManager.getInstance().stopNMI();
 			EventManager.getInstance().stopSpriteOverflow();
 			EventManager.getInstance().stopSprite0Hit();
 
-		} else if (cycle >= 280 && cycle <= 304) {
+		} else if (cycle >= 280 && cycle <= 304 && register.getExternalRegisters().doShowBg()
+				&& register.getExternalRegisters().doShowSprites()) {
 			int v = register.getBackgroundRegisters().getV();
 			int t = register.getBackgroundRegisters().getT();
 			register.getBackgroundRegisters().setV((v & ~0x7BE0) | (t & 0x7BE0));
@@ -67,7 +68,7 @@ public class PPURender {
 		}
 	}
 
-	private void visible(int scanline, int cycle, PPURegisters register, PPUBus bus) throws AddressException {
+	private void visible(int scanline, int cycle, PPURegisters register, Bus bus) throws AddressException {
 		if (cycle == 0) {
 			for (int i = 0; i < 8; i++) {
 				secondary[i] = register.getSpritesRegisters().getSecondaryOAM()[i].clone();
@@ -87,7 +88,7 @@ public class PPURender {
 		}
 	}
 
-	private void spriteEvaluation(int scanline, int cycle, PPURegisters register, PPUBus bus, boolean oddTick) {
+	private void spriteEvaluation(int scanline, int cycle, PPURegisters register, Bus bus, boolean oddTick) {
 		if (cycle >= 1 && cycle <= 64) {
 			if ((cycle - 1) % 8 == 0) {
 				register.getSpritesRegisters().getSecondaryOAM()[(cycle - 1) / 8] = new OAM();
@@ -119,18 +120,18 @@ public class PPURender {
 
 			if ((cycle - 1) % 8 == 0) {
 				tmpOAM = secondary[++secondaryCounter];
-				EventManager.getInstance().fireWriting2004(tmpOAM.getByte0());
+				EventManager.getInstance().fireChanging2004(tmpOAM.getByte0());
 			}
 
 			else if ((cycle - 1) % 8 == 1) {
-				EventManager.getInstance().fireWriting2004(tmpOAM.getByte1());
+				EventManager.getInstance().fireChanging2004(tmpOAM.getByte1());
 			}
 
 			else if ((cycle - 1) % 8 == 2) {
-				EventManager.getInstance().fireWriting2004(tmpOAM.getByte2());
+				EventManager.getInstance().fireChanging2004(tmpOAM.getByte2());
 
 			} else {
-				EventManager.getInstance().fireWriting2004(tmpOAM.getByte3());
+				EventManager.getInstance().fireChanging2004(tmpOAM.getByte3());
 			}
 		}
 	}
@@ -140,17 +141,14 @@ public class PPURender {
 			finOAM = false;
 			secondaryCounter = 0;
 			spriteCounter = 0;
-			if (++frameCounter == 50) {
+			if (++frameCounter == 50)
 				frameCounter = 0;
-				fin = System.currentTimeMillis();
-				System.out.println("Framerate : " + 50000.0 / (fin - debut) + " fps");
-				debut = System.currentTimeMillis();
-			}
+
 			EventManager.getInstance().fireNMI();
 		}
 	}
 
-	private void fetchNextTile(Tile tile, PPURegisters register, PPUBus bus) throws AddressException {
+	private void fetchNextTile(Tile tile, PPURegisters register, Bus bus) throws AddressException {
 		int v = register.getBackgroundRegisters().getV();
 		switch (counter) {
 		case 0:
@@ -173,7 +171,7 @@ public class PPURender {
 		counter = (++counter) % 8;
 	}
 
-	private void fetchNextTiles(PPURegisters register, PPUBus bus) throws AddressException {
+	private void fetchNextTiles(PPURegisters register, Bus bus) throws AddressException {
 		if (counter < 8)
 			fetchNextTile(register.getBackgroundRegisters().getTile1(), register, bus);
 		else
@@ -183,7 +181,7 @@ public class PPURender {
 
 	}
 
-	private void fetchNextSpriteData(int scanline, PPURegisters register, PPUBus bus) throws AddressException {
+	private void fetchNextSpriteData(int scanline, PPURegisters register, Bus bus) throws AddressException {
 		OAM sprite = register.getSpritesRegisters().getSecondaryOAM()[counter / 8];
 		if (counter % 8 == 4) {
 			if (!register.getExternalRegisters().getSpriteSize())
@@ -199,7 +197,7 @@ public class PPURender {
 		counter = (++counter) % 64;
 	}
 
-	private void renderPixel(int scanline, int cycle, PPURegisters register, PPUBus bus) throws AddressException {
+	private void renderPixel(int scanline, int cycle, PPURegisters register, Bus bus) throws AddressException {
 		NesColors universalBackground = NesColors.getColorCode(bus.getByteFromMemory(0x3F00));
 
 		NesColors bgPixel = (register.getExternalRegisters().doShowBg() ? fetchBackgroundPixel(register, bus)
@@ -235,7 +233,7 @@ public class PPURender {
 
 	}
 
-	private NesColors fetchBackgroundPixel(PPURegisters register, PPUBus bus) throws AddressException {
+	private NesColors fetchBackgroundPixel(PPURegisters register, Bus bus) throws AddressException {
 		int x = register.getBackgroundRegisters().getV() << 3 | register.getBackgroundRegisters().getX();
 		int y = (register.getBackgroundRegisters().getV() & 0b1111100000) >> 5
 				| register.getBackgroundRegisters().getV() >> 12;
@@ -252,7 +250,7 @@ public class PPURender {
 			return NesColors.getColorCode(bus.getByteFromMemory(paletteAddress + pattern));
 	}
 
-	private NesColors fetchSpritePixel(int scanline, int cycle, PPURegisters register, PPUBus bus)
+	private NesColors fetchSpritePixel(int scanline, int cycle, PPURegisters register, Bus bus)
 			throws AddressException {
 		int x = cycle;
 		int y = scanline;
@@ -274,7 +272,7 @@ public class PPURender {
 		return NesColors.getColorCode(bus.getByteFromMemory(0x3F00));
 	}
 
-	private byte[][] getPatternTable(int patternTableLow, PPUBus bus) throws AddressException {
+	private byte[][] getPatternTable(int patternTableLow, Bus bus) throws AddressException {
 		// TODO vérifier que ça marche bien !
 		byte[][] patternTable = new byte[8][8];
 

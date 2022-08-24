@@ -1,16 +1,17 @@
 package nes.components.ppu.bus;
 
 import nes.components.Bus;
+import nes.components.ppu.register.PPURegisters;
 import nes.exceptions.AddressException;
 import nes.listener.EventManager;
 
 public class PPUBus extends Bus {
 
-	private byte addrLow, addrHigh;
-	private byte w;
+	private PPURegisters registers;
 
-	public PPUBus() {
-		EventManager.getInstance().addRegisterListener(this);
+	public PPUBus(PPURegisters registers) {
+		super();
+		this.registers = registers;
 	}
 
 	@Override
@@ -21,6 +22,12 @@ public class PPUBus extends Bus {
 	@Override
 	public synchronized void setByteToMemory(int address, byte toSet) throws AddressException {
 		setByte(address, toSet);
+	}
+
+	@Override
+	protected synchronized void setByte(int address, byte value) throws AddressException {
+		super.setByte(address, value);
+		EventManager.getInstance().fireValueChanged(false, address, value);
 	}
 
 	@Override
@@ -49,18 +56,12 @@ public class PPUBus extends Bus {
 
 	@Override
 	public void on2006Written(byte newValue) {
-		if (w == 0)
-			addrHigh = newValue;
-		else
-			addrLow = newValue;
 	}
 
 	@Override
 	public void on2007Written(byte newValue) {
-		int lsb = (addrLow < 0 ? addrLow + 256 : addrLow);
-		int msb = (addrHigh < 0 ? addrHigh + 256 : addrHigh) << 8;
 		try {
-			setByte(msb | lsb, newValue);
+			setByte(registers.getBackgroundRegisters().getV(), newValue);
 		} catch (AddressException e) {
 			e.printStackTrace();
 		}
@@ -80,7 +81,6 @@ public class PPUBus extends Bus {
 
 	@Override
 	public void on2002Read() {
-		w = 0;
 	}
 
 	@Override
@@ -108,6 +108,42 @@ public class PPUBus extends Bus {
 	}
 
 	@Override
+	public void on2000Changed(byte newValue) {
+	}
+
+	@Override
+	public void on2001Changed(byte newValue) {
+	}
+
+	@Override
+	public void on2002Changed(byte newValue) {
+	}
+
+	@Override
+	public void on2003Changed(byte newValue) {
+	}
+
+	@Override
+	public void on2004Changed(byte newValue) {
+	}
+
+	@Override
+	public void on2005Changed(byte newValue) {
+	}
+
+	@Override
+	public void on2006Changed(byte newValue) {
+	}
+
+	@Override
+	public void on2007Changed(byte newValue) {
+	}
+
+	@Override
+	public void on4014Changed(byte newValue) {
+	}
+
+	@Override
 	public void onNMIRaised() {
 	}
 
@@ -132,7 +168,7 @@ public class PPUBus extends Bus {
 	}
 
 	@Override
-	public void startOAMTransfer(byte[] OAMdata) {		
+	public void startOAMTransfer(byte[] OAMdata) {
 	}
 
 }

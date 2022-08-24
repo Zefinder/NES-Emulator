@@ -26,17 +26,6 @@ public class InstructionReader {
 	}
 
 	public int getInstructionCycles(Instruction processing, CPURegisters registres) throws AddressException {
-		address = 0;
-		byte P = registres.getP();
-		C = (byte) (C_MASK & P);
-		Z = (byte) ((Z_MASK & P) >> 1);
-		I = (byte) ((I_MASK & P) >> 2);
-		D = (byte) ((D_MASK & P) >> 3);
-		B = (byte) ((B_MASK & P) >> 4);
-		V = (byte) ((V_MASK & P) >> 6);
-		N = (byte) (-(N_MASK & P) >> 7);
-		getByteFromInstruction(processing, registres.getA(), registres.getX(), registres.getY(), registres.getPc());
-
 		int cycles = 0;
 		switch (processing.getInstruction()) {
 		case ADC:
@@ -915,11 +904,11 @@ public class InstructionReader {
 		default:
 			break;
 		}
-		
+
 		return cycles;
 	}
 
-	public void processInstruction(Instruction toProcess, CPURegisters registres) throws AddressException {
+	public int processInstruction(Instruction toProcess, CPURegisters registres) throws AddressException {
 		address = 0;
 		byte P = registres.getP();
 		C = (byte) (C_MASK & P);
@@ -929,7 +918,9 @@ public class InstructionReader {
 		B = (byte) ((B_MASK & P) >> 4);
 		V = (byte) ((V_MASK & P) >> 6);
 		N = (byte) (-(N_MASK & P) >> 7);
+
 		getByteFromInstruction(toProcess, registres.getA(), registres.getX(), registres.getY(), registres.getPc());
+		int cycles = getInstructionCycles(toProcess, registres);
 
 		switch (toProcess.getInstruction()) {
 		case ADC:
@@ -1162,6 +1153,8 @@ public class InstructionReader {
 		default:
 			break;
 		}
+
+		return cycles;
 	}
 
 	public int[] getOperandAndAddress(Instruction processing, byte A, byte X, byte Y, int pc) throws AddressException {
@@ -1265,6 +1258,12 @@ public class InstructionReader {
 			address = ((msb << 8) | lsb) + tmpY;
 			operand2 = bus.getByteFromMemory(address);
 			break;
+
+		case NMI:
+			break;
+
+		default:
+			break;
 		}
 	}
 
@@ -1303,7 +1302,6 @@ public class InstructionReader {
 		registres.setA(A);
 		registres.setP(P);
 
-		
 	}
 
 	private void and(Instruction processing, CPURegisters registres) {
@@ -1328,7 +1326,6 @@ public class InstructionReader {
 		registres.setA(A);
 		registres.setP(P);
 
-		
 	}
 
 	private void asl(Instruction processing, CPURegisters registres) throws AddressException {
@@ -1383,27 +1380,27 @@ public class InstructionReader {
 		default:
 			break;
 		}
-		
+
 	}
 
 	private void bcc(Instruction processing, CPURegisters registres) {
 		if (C == 0)
 			registres.setPc(address);
-		
+
 	}
 
 	private void bcs(Instruction processing, CPURegisters registres) {
 		if (C == 1) {
 			registres.setPc(address);
 		}
-		
+
 	}
 
 	private void beq(Instruction processing, CPURegisters registres) {
 		if (Z == 1) {
 			registres.setPc(address);
 		}
-		
+
 	}
 
 	private void bit(Instruction processing, CPURegisters registres) {
@@ -1427,28 +1424,27 @@ public class InstructionReader {
 		registres.setA(A);
 		registres.setP(P);
 
-		
 	}
 
 	private void bmi(Instruction processing, CPURegisters registres) {
 		if (N == 1) {
 			registres.setPc(address);
 		}
-		
+
 	}
 
 	private void bne(Instruction processing, CPURegisters registres) {
 		if (Z == 0) {
 			registres.setPc(address);
 		}
-		
+
 	}
 
 	private void bpl(Instruction processing, CPURegisters registres) {
 		if (N == 0) {
 			registres.setPc(address);
 		}
-		
+
 	}
 
 	private void brk(Instruction processing, CPURegisters registres) throws AddressException {
@@ -1487,49 +1483,46 @@ public class InstructionReader {
 		int msb = (pch < 0 ? pch + 256 : pch);
 		registres.setPc((msb << 8) | lsb);
 
-		
 	}
 
 	private void bvc(Instruction processing, CPURegisters registres) {
 		if (V == 0) {
 			registres.setPc(address);
 		}
-		
+
 	}
 
 	private void bvs(Instruction processing, CPURegisters registres) {
 		if (V == 1) {
 			registres.setPc(address);
 		}
-		
+
 	}
 
 	private void clc(Instruction processing, CPURegisters registres) {
 		registres.setP((byte) (registres.getP() & ~C_MASK));
 
-		
 	}
 
 	private void cld(Instruction processing, CPURegisters registres) {
 		registres.setP((byte) (registres.getP() & ~D_MASK));
 
-		
 	}
 
 	private void cli(Instruction processing, CPURegisters registres) {
 		registres.setP((byte) (registres.getP() & ~I_MASK));
 
-		
 	}
 
 	private void clv(Instruction processing, CPURegisters registres) {
 		registres.setP((byte) (registres.getP() & ~V_MASK));
 
-		
 	}
 
 	private void cmp(Instruction processing, CPURegisters registres) {
-		int res = registres.getA() - operand2;
+		int tmp = (registres.getA() < 0 ? registres.getA() + 256 : registres.getA());
+		int tmp2 = (operand2 < 0 ? operand2 + 256 : operand2);
+		int res = tmp - tmp2;
 		byte P = registres.getP();
 
 		// Zero flag
@@ -1555,11 +1548,12 @@ public class InstructionReader {
 
 		registres.setP(P);
 
-		
 	}
 
 	private void cpx(Instruction processing, CPURegisters registres) {
-		int res = registres.getX() - operand2;
+		int tmp = (registres.getX() < 0 ? registres.getX() + 256 : registres.getX());
+		int tmp2 = (operand2 < 0 ? operand2 + 256 : operand2);
+		int res = tmp - tmp2;
 		byte P = registres.getP();
 
 		// Zero flag
@@ -1585,11 +1579,12 @@ public class InstructionReader {
 
 		registres.setP(P);
 
-		
 	}
 
 	private void cpy(Instruction processing, CPURegisters registres) {
-		int res = registres.getY() - operand2;
+		int tmp = (registres.getY() < 0 ? registres.getY() + 256 : registres.getY());
+		int tmp2 = (operand2 < 0 ? operand2 + 256 : operand2);
+		int res = tmp - tmp2;
 		byte P = registres.getP();
 
 		// Zero flag
@@ -1615,7 +1610,6 @@ public class InstructionReader {
 
 		registres.setP(P);
 
-		
 	}
 
 	private void dec(Instruction processing, CPURegisters registres) throws AddressException {
@@ -1638,7 +1632,7 @@ public class InstructionReader {
 
 		registres.setP(P);
 		bus.setByteToMemory(address, tmp);
-		
+
 	}
 
 	private void dex(Instruction processing, CPURegisters registres) {
@@ -1662,7 +1656,6 @@ public class InstructionReader {
 		registres.setX(tmp);
 		registres.setP(P);
 
-		
 	}
 
 	private void dey(Instruction processing, CPURegisters registres) {
@@ -1686,7 +1679,6 @@ public class InstructionReader {
 		registres.setY(tmp);
 		registres.setP(P);
 
-		
 	}
 
 	private void eor(Instruction processing, CPURegisters registres) {
@@ -1711,7 +1703,6 @@ public class InstructionReader {
 		registres.setA(A);
 		registres.setP(P);
 
-		
 	}
 
 	private void inc(Instruction processing, CPURegisters registres) throws AddressException {
@@ -1735,7 +1726,6 @@ public class InstructionReader {
 		registres.setP(P);
 		bus.setByteToMemory(address, tmp);
 
-		
 	}
 
 	private void inx(Instruction processing, CPURegisters registres) {
@@ -1759,7 +1749,6 @@ public class InstructionReader {
 		registres.setX(tmp);
 		registres.setP(P);
 
-		
 	}
 
 	private void iny(Instruction processing, CPURegisters registres) {
@@ -1783,13 +1772,11 @@ public class InstructionReader {
 		registres.setY(tmp);
 		registres.setP(P);
 
-		
 	}
 
 	private void jmp(Instruction processing, CPURegisters registres) {
-		registres.setPc(address);
-
-		
+		// Attention, jmp sur 3 bits
+		registres.setPc(address - 3);
 	}
 
 	private void jsr(Instruction processing, CPURegisters registres) throws AddressException {
@@ -1817,7 +1804,6 @@ public class InstructionReader {
 		// l'instruction)
 		registres.setPc(address - 3);
 
-		
 	}
 
 	private void lda(Instruction processing, CPURegisters registres) {
@@ -1841,7 +1827,6 @@ public class InstructionReader {
 		registres.setP(P);
 		registres.setA(A);
 
-		
 	}
 
 	private void ldx(Instruction processing, CPURegisters registres) {
@@ -1865,7 +1850,6 @@ public class InstructionReader {
 		registres.setP(P);
 		registres.setX(X);
 
-		
 	}
 
 	private void ldy(Instruction processing, CPURegisters registres) {
@@ -1889,7 +1873,6 @@ public class InstructionReader {
 		registres.setP(P);
 		registres.setY(Y);
 
-		
 	}
 
 	private void lsr(Instruction processing, CPURegisters registres) throws AddressException {
@@ -1930,11 +1913,10 @@ public class InstructionReader {
 			break;
 		}
 
-		
 	}
 
 	private void nop(Instruction processing, CPURegisters registres) {
-		
+
 	}
 
 	private void ora(Instruction processing, CPURegisters registres) {
@@ -1959,8 +1941,6 @@ public class InstructionReader {
 		registres.setA(A);
 		registres.setP(P);
 
-		
-
 	}
 
 	private void pha(Instruction processing, CPURegisters registres) throws AddressException {
@@ -1969,7 +1949,7 @@ public class InstructionReader {
 			registres.setSp(0x1FF);
 		else
 			registres.setSp(registres.getSp() - 1);
-		
+
 	}
 
 	private void php(Instruction processing, CPURegisters registres) throws AddressException {
@@ -1978,7 +1958,7 @@ public class InstructionReader {
 			registres.setSp(0x1FF);
 		else
 			registres.setSp(registres.getSp() - 1);
-		
+
 	}
 
 	private void pla(Instruction processing, CPURegisters registres) throws AddressException {
@@ -1987,7 +1967,7 @@ public class InstructionReader {
 		else
 			registres.setSp(registres.getSp() + 1);
 		registres.setA(bus.getByteFromMemory(registres.getSp()));
-		
+
 	}
 
 	private void plp(Instruction processing, CPURegisters registres) throws AddressException {
@@ -1996,7 +1976,7 @@ public class InstructionReader {
 		else
 			registres.setSp(registres.getSp() + 1);
 		registres.setP(bus.getByteFromMemory(registres.getSp()));
-		
+
 	}
 
 	private void rol(Instruction processing, CPURegisters registres) throws AddressException {
@@ -2049,7 +2029,7 @@ public class InstructionReader {
 		default:
 			break;
 		}
-		
+
 	}
 
 	private void ror(Instruction processing, CPURegisters registres) throws AddressException {
@@ -2102,7 +2082,7 @@ public class InstructionReader {
 		default:
 			break;
 		}
-		
+
 	}
 
 	private void rti(Instruction processing, CPURegisters registres) throws AddressException {
@@ -2130,7 +2110,6 @@ public class InstructionReader {
 		int msb = (pch < 0 ? pch + 256 : pch);
 		registres.setPc((msb << 8) | lsb);
 
-		
 	}
 
 	private void rts(Instruction processing, CPURegisters registres) throws AddressException {
@@ -2150,7 +2129,6 @@ public class InstructionReader {
 		int msb = (pch < 0 ? pch + 256 : pch);
 		registres.setPc((msb << 8) | lsb);
 
-		
 	}
 
 	private void sbc(Instruction processing, CPURegisters registres) {
@@ -2188,42 +2166,36 @@ public class InstructionReader {
 		registres.setA(A);
 		registres.setP(P);
 
-		
 	}
 
 	private void sec(Instruction processing, CPURegisters registres) {
 		registres.setP((byte) (registres.getP() | C_MASK));
 
-		
 	}
 
 	private void sed(Instruction processing, CPURegisters registres) {
 		registres.setP((byte) (registres.getP() | D_MASK));
 
-		
 	}
 
 	private void sei(Instruction processing, CPURegisters registres) {
 		registres.setP((byte) (registres.getP() | I_MASK));
 
-		
 	}
 
 	private void sta(Instruction processing, CPURegisters registres) throws AddressException {
 		bus.setByteToMemory(address, registres.getA());
-		
+
 	}
 
 	private void stx(Instruction processing, CPURegisters registres) throws AddressException {
 		bus.setByteToMemory(address, registres.getX());
 
-		
 	}
 
 	private void sty(Instruction processing, CPURegisters registres) throws AddressException {
 		bus.setByteToMemory(address, registres.getY());
 
-		
 	}
 
 	private void tax(Instruction processing, CPURegisters registres) {
@@ -2246,7 +2218,7 @@ public class InstructionReader {
 
 		registres.setX(X);
 		registres.setP(P);
-		
+
 	}
 
 	private void tay(Instruction processing, CPURegisters registres) {
@@ -2269,7 +2241,7 @@ public class InstructionReader {
 
 		registres.setY(Y);
 		registres.setP(P);
-		
+
 	}
 
 	private void tsx(Instruction processing, CPURegisters registres) throws AddressException {
@@ -2292,7 +2264,7 @@ public class InstructionReader {
 
 		registres.setX(X);
 		registres.setP(P);
-		
+
 	}
 
 	private void txa(Instruction processing, CPURegisters registres) {
@@ -2315,7 +2287,7 @@ public class InstructionReader {
 
 		registres.setA(A);
 		registres.setP(P);
-		
+
 	}
 
 	private void txs(Instruction processing, CPURegisters registres) {
@@ -2325,7 +2297,7 @@ public class InstructionReader {
 
 		registres.setSp(sp);
 		registres.setP(P);
-		
+
 	}
 
 	private void tya(Instruction processing, CPURegisters registres) {
@@ -2348,7 +2320,7 @@ public class InstructionReader {
 
 		registres.setA(A);
 		registres.setP(P);
-		
+
 	}
 
 	// Utilisé par le PPU donc à la fin, mise à la NMI

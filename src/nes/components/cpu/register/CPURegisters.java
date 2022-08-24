@@ -17,7 +17,7 @@ public class CPURegisters implements RegisterListener {
 	// Stack pointer
 	private int sp;
 
-	private boolean nmi;
+	private boolean nmi, nmiAllowed;
 
 	public CPURegisters() {
 		EventManager.getInstance().addRegisterListener(this);
@@ -72,11 +72,11 @@ public class CPURegisters implements RegisterListener {
 	}
 
 	public boolean hasNMI() {
-		if (nmi) {
-			nmi = !nmi;
-			return !nmi;
+		if (nmi && nmiAllowed) {
+			nmi = false;
+			return true;
 		}
-		return nmi;
+		return false;
 	}
 
 	public void stopNMI() {
@@ -85,6 +85,10 @@ public class CPURegisters implements RegisterListener {
 
 	@Override
 	public void on2000Written(byte newValue) {
+		if (newValue < 0)
+			nmiAllowed = true;
+		else
+			nmiAllowed = false;
 	}
 
 	@Override
@@ -153,6 +157,42 @@ public class CPURegisters implements RegisterListener {
 
 	@Override
 	public void on4014Read() {
+	}
+
+	@Override
+	public void on2000Changed(byte newValue) {
+	}
+
+	@Override
+	public void on2001Changed(byte newValue) {
+	}
+
+	@Override
+	public void on2002Changed(byte newValue) {
+	}
+
+	@Override
+	public void on2003Changed(byte newValue) {
+	}
+
+	@Override
+	public void on2004Changed(byte newValue) {
+	}
+
+	@Override
+	public void on2005Changed(byte newValue) {
+	}
+
+	@Override
+	public void on2006Changed(byte newValue) {
+	}
+
+	@Override
+	public void on2007Changed(byte newValue) {
+	}
+
+	@Override
+	public void on4014Changed(byte newValue) {
 	}
 
 	@Override

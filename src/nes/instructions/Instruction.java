@@ -6,7 +6,7 @@ public class Instruction {
 
 	public enum AddressingMode {
 		IMPLICIT, ACCUMULATOR, IMMEDIATE, ZEROPAGE, ZEROPAGE_X, ZEROPAGE_Y, RELATIVE, ABSOLUTE, ABSOLUTE_X, ABSOLUTE_Y,
-		INDIRECT, INDIRECT_X, INDIRECT_Y;
+		INDIRECT, INDIRECT_X, INDIRECT_Y, NMI;
 	}
 
 	public enum InstructionSet {
@@ -312,6 +312,10 @@ public class Instruction {
 			byteNumber = 2;
 			break;
 
+		case NMI:
+			byteNumber = 0;
+			break;
+			
 		default:
 			byteNumber = 1;
 			break;

@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -14,22 +15,29 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 
 import nes.components.NES;
 import nes.components.cpu.CPU;
 import nes.components.cpu.register.CPURegisters;
 import nes.components.ppu.PPU;
 import nes.components.ppu.register.PPURegisters;
+import nes.components.ppu.rendering.NesColors;
+import nes.components.ppu.rendering.Tile;
 import nes.exceptions.AddressException;
 import nes.exceptions.InstructionException;
 import nes.exceptions.MapperException;
 import nes.exceptions.NotNesFileException;
 import nes.instructions.Instruction;
+import nes.listener.BusListener;
+import nes.listener.EventManager;
 
-public class FullRegisterFrame extends JFrame implements KeyListener {
+public class FullRegisterFrame extends JFrame implements KeyListener, BusListener {
 
 	/**
 	 * 
@@ -37,7 +45,6 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 	private static final long serialVersionUID = -6222462540927450803L;
 	private Map<Integer, Instruction> instructionMap;
 	private NES nes;
-	@SuppressWarnings("unused")
 	private CPU cpu;
 	private PPU ppu;
 	private CPURegisters cpuRegistres;
@@ -48,6 +55,12 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 	private JLabel PPUCTRL, PPUMASK, PPUSTATUS, OAMADDR, OAMDATA, PPUSCROLL, PPUADDR, PPUDATA, OAMDMA;
 	private JLabel ppuV, ppuT, ppuX, ppuW, scanline, cycle;
 	private JLabel ins1, ins2, ins3, ins4, ins5;
+	private JLabel tileLabel1, tileLabel2;
+
+	private JTable cpuTable, ppuTable;
+	private BufferedImage tile1, tile2;
+
+	private String[][] cpuBusContent, ppuBusContent;
 
 	private boolean auto1, auto2, auto3, auto4, auto5;
 
@@ -58,6 +71,10 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 		this.cpuRegistres = cpu.getRegistres();
 		this.ppuRegistres = ppu.getRegistres();
 		this.instructionMap = nes.getInstructionMap();
+
+		this.cpuBusContent = new String[cpu.getBus().getSize()][2];
+		this.ppuBusContent = new String[ppu.getBus().getSize()][2];
+		EventManager.getInstance().addBusListener(this);
 
 		this.setTitle("NES");
 		this.setSize(800, 800);
@@ -71,8 +88,11 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 		JPanel intructionAndRegPanel = buildInstructionAndRegPanel();
 		this.add(intructionAndRegPanel, BorderLayout.EAST);
 
-		JPanel ppuRegisters = buildPPURegistersPanel();
-		this.add(ppuRegisters, BorderLayout.SOUTH);
+		JPanel ppuRegistersPanel = buildPPURegistersPanel();
+		this.add(ppuRegistersPanel, BorderLayout.SOUTH);
+
+		JPanel busValuesPanel = buildBusPanel();
+		this.add(busValuesPanel, BorderLayout.WEST);
 
 		final ScheduledExecutorService schAuto1 = Executors.newScheduledThreadPool(1);
 		schAuto1.scheduleAtFixedRate(new Runnable() {
@@ -177,7 +197,10 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 		this.setVisible(false);
 	}
 
-	private void update() {
+	private void update() throws AddressException {
+
+		/***** Flags *****/
+
 		n.setText(String.valueOf((cpuRegistres.getP() & 0b10000000) >> 7));
 		v.setText(String.valueOf((cpuRegistres.getP() & 0b01000000) >> 6));
 		b.setText(String.valueOf((cpuRegistres.getP() & 0b00110000) >> 4));
@@ -186,11 +209,15 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 		z.setText(String.valueOf((cpuRegistres.getP() & 0b00000010) >> 1));
 		c.setText(String.valueOf(cpuRegistres.getP() & 0b00000001));
 
+		/***** CPU registers *****/
+
 		a.setText(String.format("0x%02X", cpuRegistres.getA()));
 		x.setText(String.format("0x%02X", cpuRegistres.getX()));
 		y.setText(String.format("0x%02X", cpuRegistres.getY()));
 		sp.setText(String.format("0x%04X", cpuRegistres.getSp()));
 		pc.setText(String.format("0x%04X", cpuRegistres.getPc()));
+
+		/***** External registers *****/
 
 		PPUCTRL.setText(
 				String.format("0b%8s", Integer.toBinaryString(ppuRegistres.getExternalRegisters().getPPUCTRL() & 0xFF))
@@ -220,6 +247,8 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 				String.format("0b%8s", Integer.toBinaryString(ppuRegistres.getExternalRegisters().getOAMDMA() & 0xFF))
 						.replace(' ', '0'));
 
+		/***** Background registers *****/
+
 		ppuV.setText(
 				String.format("0b%15s", Integer.toBinaryString(ppuRegistres.getBackgroundRegisters().getV() & 0xFFFF))
 						.replace(' ', '0'));
@@ -236,6 +265,37 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 		scanline.setText(String.format("%d", ppu.getScanline()));
 		cycle.setText(String.format("%d", ppu.getCycle()));
 
+		/***** Next Tiles *****/
+
+		int x = ppuRegistres.getBackgroundRegisters().getV() << 3 | ppuRegistres.getBackgroundRegisters().getX();
+		int y = (ppuRegistres.getBackgroundRegisters().getV() & 0b1111100000) >> 5
+				| ppuRegistres.getBackgroundRegisters().getV() >> 12;
+
+		int[] colors = new int[64];
+		int universalColor = NesColors.getColorCode(ppu.getBus().getByteFromMemory(0x3F00)).getRGBFromCode();
+		Tile tile = ppuRegistres.getBackgroundRegisters().getTile1();
+
+		int paletteNumber = tile.getAttributeTable() >> (2 * ((x / 16) % 2) + 4 * ((y / 16) % 2)) & 0b00000011;
+		int paletteAddress = 0x3F01 + 4 * paletteNumber;
+
+		for (int row = 0; row < 8; row++) {
+			for (int column = 0; column < 8; column++) {
+				int pattern = tile.getPatternTable()[row][column];
+				if (pattern == 0)
+					for (int i = 0; i < 64; i++)
+						colors[i] = universalColor;
+
+				else
+					for (int i = 0; i < 64; i++)
+						colors[i] = NesColors.getColorCode(ppu.getBus().getByteFromMemory(paletteAddress + pattern))
+								.getRGBFromCode();
+
+				tile1.setRGB(column * 8, row * 8, 8, 8, colors, 0, 0);
+			}
+		}
+
+		/***** CPU instructions *****/
+
 		int index = 0;
 		Instruction instruction = instructionMap.get(cpuRegistres.getPc());
 		for (int key : instructionMap.keySet()) {
@@ -244,6 +304,7 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 
 			++index;
 		}
+
 		Object[] instructions = instructionMap.values().toArray();
 
 		if (instructions.length == 0 || index == instructions.length) {
@@ -287,9 +348,12 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 			ins4.setText(instructions[index + 1].toString());
 			ins5.setText(instructions[index + 2].toString());
 		}
+		
+		cpuTable.repaint();
+		ppuTable.repaint();
 	}
 
-	private void init() {
+	private void init() throws AddressException {
 		update();
 	}
 
@@ -303,7 +367,7 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 
 	private void nextVBlank() throws AddressException {
 		System.out.println("To next VBLANK...");
-		while (!ppuRegistres.getExternalRegisters().hasNMI()) {
+		while (ppuRegistres.getExternalRegisters().getPPUSTATUS() >= 0) {
 			nes.tick();
 		}
 		update();
@@ -363,6 +427,9 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 	}
 
 	private JPanel buildFlagPanel() {
+
+		/***** Flags *****/
+
 		JPanel flagPanel = new JPanel();
 		flagPanel.setLayout(new GridLayout(2, 7, 10, 10));
 
@@ -437,12 +504,17 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 		flagPanel.add(i);
 		flagPanel.add(z);
 		flagPanel.add(c);
+
+		flagPanel.setBorder(BorderFactory.createTitledBorder("Flags"));
+
 		return flagPanel;
 	}
 
 	private JPanel buildInstructionAndRegPanel() {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+
+		/***** CPU registers *****/
 
 		JPanel cpuRegistres = new JPanel();
 		cpuRegistres.setLayout(new GridLayout(5, 1, 5, 5));
@@ -474,6 +546,8 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 
 		cpuRegistres.setBorder(BorderFactory.createTitledBorder("cpuRegistres"));
 
+		/***** CPU instructions *****/
+
 		JPanel instructionPanel = new JPanel();
 		instructionPanel.setLayout(new GridLayout(5, 1));
 		ins1 = new JLabel("NOP");
@@ -497,10 +571,12 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 		return panel;
 	}
 
-	public JPanel buildPPURegistersPanel() {
+	private JPanel buildPPURegistersPanel() {
 		JPanel panel = new JPanel();
 
 		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+
+		/***** External registers *****/
 
 		JPanel external = new JPanel();
 		external.setLayout(new GridLayout(9, 2));
@@ -552,6 +628,8 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 
 		external.setBorder(BorderFactory.createTitledBorder("External Registers"));
 
+		/***** Background registers *****/
+
 		JPanel background = new JPanel();
 		background.setLayout(new GridLayout(6, 2));
 
@@ -585,10 +663,31 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 		background.add(cycleLabel);
 		background.add(cycle);
 
+		/***** Tiles *****/
+
+		JPanel tile = new JPanel();
+		tile.setLayout(new GridLayout(2, 2));
+
+		JLabel titleTile1 = new JLabel("Tile 1");
+		tile1 = new BufferedImage(64, 64, BufferedImage.TYPE_3BYTE_BGR);
+		tileLabel1 = new JLabel(new ImageIcon(tile1));
+
+		JLabel titleTile2 = new JLabel("Tile 2");
+		tile2 = new BufferedImage(64, 64, BufferedImage.TYPE_3BYTE_BGR);
+		tileLabel2 = new JLabel(new ImageIcon(tile2));
+
+		tile.add(titleTile1);
+		tile.add(tileLabel1);
+
+		tile.add(titleTile2);
+		tile.add(tileLabel2);
+
 		background.setBorder(BorderFactory.createTitledBorder("Background Registers"));
+		tile.setBorder(BorderFactory.createTitledBorder("Next tiles"));
 
 		panel.add(external);
 		panel.add(background);
+		panel.add(tile);
 
 		JPanel palettes = new JPanel();
 		palettes.setLayout(new GridLayout(2, 4));
@@ -596,7 +695,55 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 		return panel;
 	}
 
-	public void showFrame() {
+	private JPanel buildBusPanel() {
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+
+		/***** CPU bus *****/
+		JPanel cpuPanel = new JPanel();
+
+		cpuBusContent = new String[cpu.getBus().getSize()][2];
+		byte[] data = cpu.getBus().getValues();
+		for (int row = 0; row < data.length; row++) {
+			cpuBusContent[row][0] = String.format("0x%04X", row);
+			cpuBusContent[row][1] = String.format("0x%02X", data[row]);
+		}
+		cpuTable = new JTable(cpuBusContent, new String[] { "Address", "Value" });
+		cpuTable.setMinimumSize(cpuTable.getPreferredSize());
+		cpuTable.setEnabled(false);
+		cpuPanel.add(cpuTable);
+
+		JScrollPane cpuScrollPanel = new JScrollPane(cpuPanel);
+		cpuScrollPanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		cpuScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+		cpuScrollPanel.getVerticalScrollBar().setUnitIncrement(32);
+
+		/***** PPU bus *****/
+
+		JPanel ppuPanel = new JPanel();
+
+		ppuBusContent = new String[ppu.getBus().getSize()][2];
+		data = ppu.getBus().getValues();
+		for (int row = 0; row < data.length; row++) {
+			ppuBusContent[row][0] = String.format("0x%04X", row);
+			ppuBusContent[row][1] = String.format("0x%02X", data[row]);
+		}
+		ppuTable = new JTable(ppuBusContent, new String[] { "Address", "Value" });
+		ppuTable.setEnabled(false);
+		ppuPanel.add(ppuTable);
+
+		JScrollPane ppuScrollPanel = new JScrollPane(ppuPanel);
+		ppuScrollPanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		ppuScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+		ppuScrollPanel.getVerticalScrollBar().setUnitIncrement(32);
+
+		panel.add(cpuScrollPanel);
+		panel.add(ppuScrollPanel);
+		panel.setBorder(BorderFactory.createTitledBorder("Components' buses"));
+		return panel;
+	}
+
+	public void showFrame() throws AddressException {
 		init();
 		this.setVisible(true);
 	}
@@ -684,7 +831,11 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 		default:
 			break;
 		}
-		update();
+		try {
+			update();
+		} catch (AddressException e1) {
+			e1.printStackTrace();
+		}
 	}
 
 	@Override
@@ -694,6 +845,15 @@ public class FullRegisterFrame extends JFrame implements KeyListener {
 
 	@Override
 	public void keyReleased(KeyEvent e) {
+	}
+
+	@Override
+	public void onValueChanged(boolean isCpuBus, int address, byte value) {
+		if (isCpuBus)
+			cpuBusContent[address][1] = String.format("0x%02X", value);
+		else
+			ppuBusContent[address][1] = String.format("0x%02X", value);
+
 	}
 
 	public static void main(String[] args)

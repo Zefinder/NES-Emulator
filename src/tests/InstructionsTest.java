@@ -696,8 +696,7 @@ class InstructionsTest {
 		registres.setP((byte) 0x1);
 		instruction = new Instruction(InstructionSet.BCC, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
 	}
@@ -707,8 +706,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BCC, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0xE);
 		assertTrue(cycles == 3);
 	}
@@ -719,8 +717,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BCC, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x10C);
 		assertTrue(cycles == 5);
 	}
@@ -729,8 +726,8 @@ class InstructionsTest {
 	public void bcsFail() throws AddressException {
 		instruction = new Instruction(InstructionSet.BCS, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
 	}
@@ -741,8 +738,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BCS, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0xE);
 		assertTrue(cycles == 3);
 	}
@@ -754,8 +750,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BCS, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x10C);
 		assertTrue(cycles == 5);
 	}
@@ -764,8 +759,8 @@ class InstructionsTest {
 	public void beqFail() throws AddressException {
 		instruction = new Instruction(InstructionSet.BEQ, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
 	}
@@ -776,8 +771,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BEQ, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0xE);
 		assertTrue(cycles == 3);
 	}
@@ -789,8 +783,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BEQ, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x10C);
 		assertTrue(cycles == 5);
 	}
@@ -822,8 +815,8 @@ class InstructionsTest {
 	public void bmiFail() throws AddressException {
 		instruction = new Instruction(InstructionSet.BMI, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
 	}
@@ -834,8 +827,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BMI, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0xE);
 		assertTrue(cycles == 3);
 	}
@@ -847,8 +839,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BMI, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x10C);
 		assertTrue(cycles == 5);
 	}
@@ -858,8 +849,8 @@ class InstructionsTest {
 		registres.setP((byte) 0b00000010);
 		instruction = new Instruction(InstructionSet.BNE, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
 	}
@@ -869,8 +860,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BNE, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0xE);
 		assertTrue(cycles == 3);
 	}
@@ -881,8 +871,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BNE, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x10C);
 		assertTrue(cycles == 5);
 	}
@@ -892,8 +881,8 @@ class InstructionsTest {
 		registres.setP((byte) 0b10000000);
 		instruction = new Instruction(InstructionSet.BPL, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
 	}
@@ -903,8 +892,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BPL, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0xE);
 		assertTrue(cycles == 3);
 	}
@@ -915,8 +903,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BPL, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x10C);
 		assertTrue(cycles == 5);
 	}
@@ -952,8 +939,8 @@ class InstructionsTest {
 		registres.setP((byte) 0b01000000);
 		instruction = new Instruction(InstructionSet.BVC, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
 	}
@@ -963,8 +950,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BVC, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0xE);
 		assertTrue(cycles == 3);
 	}
@@ -975,8 +961,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BVC, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x10C);
 		assertTrue(cycles == 5);
 	}
@@ -985,8 +970,8 @@ class InstructionsTest {
 	public void bvsFail() throws AddressException {
 		instruction = new Instruction(InstructionSet.BVS, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
 	}
@@ -997,8 +982,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BVS, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0xE);
 		assertTrue(cycles == 3);
 	}
@@ -1010,8 +994,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.BVS, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
 
-		int cycles = instructionReader.getInstructionCycles(instruction, registres);
-		instructionReader.processInstruction(instruction, registres);
+		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x10C);
 		assertTrue(cycles == 5);
 	}

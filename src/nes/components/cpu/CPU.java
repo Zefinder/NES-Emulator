@@ -1,7 +1,6 @@
 package nes.components.cpu;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
+import java.util.ArrayList;
 
 import nes.components.Bus;
 import nes.components.Component;
@@ -14,14 +13,17 @@ import nes.instructions.Instruction.AddressingMode;
 import nes.instructions.Instruction.InstructionSet;
 import nes.instructions.InstructionReader;
 
-public class CPU implements Component {
+public class CPU implements Component, Runnable {
 
 	// Registres CPU
 	private CPURegisters registres;
 
-	private int waitingCycles = 0;
-	private boolean readyForNext;
-//	private Instruction instruction;
+	private volatile int waitingCycles = 0;
+	private volatile boolean readyForNext;
+
+	// A effacer après les tests
+	private ArrayList<Instruction> listInstructions;
+	private ArrayList<Integer> listPc;
 
 	// Liste des constituants du bus
 	private byte[] memory;
@@ -34,7 +36,6 @@ public class CPU implements Component {
 	private InstructionReader instructionReader;
 
 	private Thread cpuThread;
-	private BlockingQueue<Instruction> instructionQueue;
 
 	public CPU() {
 		registres = new CPURegisters();
@@ -47,30 +48,12 @@ public class CPU implements Component {
 
 		bus = new CPUBus();
 
-		// Mémoire et ses réflexions
-		bus.addToMemoryMap(memory);
-		bus.addToMemoryMap(memory);
-		bus.addToMemoryMap(memory);
-		bus.addToMemoryMap(memory);
-
-		// Registres PPU et ses réflexions
-		for (int i = 0x2007; i <= 0x3FFF; i = i + 0x08) {
-			bus.addToMemoryMap(ppuRegisters);
-		}
-
-		// APU et les registres IO
-		bus.addToMemoryMap(apuIORegisters);
-
-		// APU et Registres IO non utilisés (test mode)
-		bus.addToMemoryMap(testMode);
-
-		// Cartouche
-		bus.addToMemoryMap(catridge);
-
 		instructionReader = new InstructionReader(bus);
-		instructionQueue = new LinkedBlockingDeque<>();
 
-		cpuThread = new Thread(new InstructionThread());
+		listInstructions = new ArrayList<>();
+		listPc = new ArrayList<>();
+
+		cpuThread = new Thread(this);
 		cpuThread.start();
 		readyForNext = true;
 	}
@@ -109,22 +92,13 @@ public class CPU implements Component {
 
 	@Override
 	public void tick() throws AddressException {
-		Instruction instruction;
-		if (waitingCycles == 0 && readyForNext) {
+
+		if (waitingCycles <= 0) {
+			while (!readyForNext) {
+				// Si pas prêt, alors on fait rien
+			}
 			readyForNext = false;
-			if (registres.hasNMI()) {
-				instruction = new Instruction(InstructionSet.NMI, AddressingMode.IMPLICIT);
-			} else {
-				instruction = getInstruction();
-			}
-			waitingCycles = instructionReader.getInstructionCycles(instruction, registres);
-			try {
-				instructionQueue.put(instruction);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-//			cpuThread = new Thread(new InstructionThread(instruction));
-//			cpuThread.start();
+
 		} else {
 			--waitingCycles;
 		}
@@ -132,6 +106,25 @@ public class CPU implements Component {
 
 	@Override
 	public void initMapping(Mapper mapper) throws AddressException {
+		// Mémoire et ses réflexions
+		bus.addToMemoryMap(memory);
+		bus.addToMemoryMap(memory);
+		bus.addToMemoryMap(memory);
+		bus.addToMemoryMap(memory);
+
+		// Registres PPU et ses réflexions
+		for (int i = 0x2007; i <= 0x3FFF; i = i + 0x08) {
+			bus.addToMemoryMap(ppuRegisters);
+		}
+
+		// APU et les registres IO
+		bus.addToMemoryMap(apuIORegisters);
+
+		// APU et Registres IO non utilisés (test mode)
+		bus.addToMemoryMap(testMode);
+
+		// Cartouche
+		bus.addToMemoryMap(catridge);
 		registres.setPc(mapper.mapCPUMemory(bus));
 	}
 
@@ -153,36 +146,39 @@ public class CPU implements Component {
 	}
 
 	/* A supprimer après les tests */
-	public void nextInstruction() throws AddressException {
-		Instruction toProcess = getInstruction();
-		instructionReader.processInstruction(toProcess, registres);
-		System.out.println(toProcess);
-		registres.setPc(registres.getPc() + toProcess.getByteNumber());
+	public Bus getBus() {
+		return bus;
 	}
 
-	private class InstructionThread implements Runnable {
+	@Override
+	public void run() {
+		Instruction instruction;
+		while (true)
+			try {
+				if (!readyForNext) {
+					if (registres.hasNMI()) {
+						instruction = new Instruction(InstructionSet.NMI, AddressingMode.NMI);
+					} else {
+						instruction = getInstruction();
+						if (instruction.getInstruction() == InstructionSet.JMP && instruction.getAdress() == 0x8057)
+							System.out.println("AAAAAAAAAAAH");
+					}
 
-//		private Instruction instruction;
-//		
-//		public InstructionThread(Instruction instruction) {
-//			this.instruction = instruction;
-//		}
-
-		@Override
-		public void run() {
-			while (true)
-				try {
-					Instruction instruction = instructionQueue.take();
-					System.out.println(instruction);
-					instructionReader.processInstruction(instruction, registres);
+					if (waitingCycles < -1)
+						System.out.println("Cycles d'attente en retard : " + waitingCycles);
+					
+//					waitingCycles = instructionReader.getInstructionCycles(instruction, registres);
+					waitingCycles =instructionReader.processInstruction(instruction, registres);
 					--waitingCycles;
 					registres.setPc(registres.getPc() + instruction.getByteNumber());
-					readyForNext = true;
-				} catch (AddressException | InterruptedException e) {
-					e.printStackTrace();
-				}
 
-		}
+					listInstructions.add(instruction);
+					listPc.add(registres.getPc());
+					readyForNext = true;
+				}
+			} catch (AddressException e) {
+				e.printStackTrace();
+			}
 
 	}
 
