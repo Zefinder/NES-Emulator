@@ -14,13 +14,17 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
 
 import nes.components.NES;
 import nes.components.cpu.CPU;
@@ -43,6 +47,10 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 	 * 
 	 */
 	private static final long serialVersionUID = -6222462540927450803L;
+
+	private static final int[] COLORSET = { Color.WHITE.getRGB(), Color.LIGHT_GRAY.getRGB(), Color.GRAY.getRGB(),
+			Color.BLACK.getRGB() };
+
 	private Map<Integer, Instruction> instructionMap;
 	private NES nes;
 	private CPU cpu;
@@ -60,7 +68,12 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 	private JTable cpuTable, ppuTable;
 	private BufferedImage tile1, tile2;
 
+	private BufferedImage[] palettes;
+
 	private String[][] cpuBusContent, ppuBusContent;
+
+	private int[][] greyPatternTable;
+	private int[][][] patternTable;
 
 	private boolean auto1, auto2, auto3, auto4, auto5;
 
@@ -94,65 +107,65 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		JPanel busValuesPanel = buildBusPanel();
 		this.add(busValuesPanel, BorderLayout.WEST);
 
-		final ScheduledExecutorService schAuto1 = Executors.newScheduledThreadPool(1);
-		schAuto1.scheduleAtFixedRate(new Runnable() {
-
-			private int counter = 0;
-
-			@Override
-			public void run() {
-				try {
-					if (auto1) {
-						nes.tick();
-						counter = ++counter % 5;
-						if (counter == 0)
-							update();
-					}
-				} catch (AddressException e) {
-					e.printStackTrace();
-				}
-			}
-		}, 0, 31250, TimeUnit.MICROSECONDS);
-
-		final ScheduledExecutorService schAuto2 = Executors.newScheduledThreadPool(1);
-		schAuto2.scheduleAtFixedRate(new Runnable() {
-
-			private int counter = 0;
-
-			@Override
-			public void run() {
-				try {
-					if (auto2) {
-						nes.tick();
-						counter = ++counter % 5;
-						if (counter == 0)
-							update();
-					}
-				} catch (AddressException e) {
-					e.printStackTrace();
-				}
-			}
-		}, 0, 7812, TimeUnit.MICROSECONDS);
-
-		final ScheduledExecutorService schAuto3 = Executors.newScheduledThreadPool(1);
-		schAuto3.scheduleAtFixedRate(new Runnable() {
-
-			private int counter = 0;
-
-			@Override
-			public void run() {
-				try {
-					if (auto3) {
-						nes.tick();
-						counter = ++counter % 5;
-						if (counter == 0)
-							update();
-					}
-				} catch (AddressException e) {
-					e.printStackTrace();
-				}
-			}
-		}, 0, 1953125, TimeUnit.NANOSECONDS);
+//		final ScheduledExecutorService schAuto1 = Executors.newScheduledThreadPool(1);
+//		schAuto1.scheduleAtFixedRate(new Runnable() {
+//
+//			private int counter = 0;
+//
+//			@Override
+//			public void run() {
+//				try {
+//					if (auto1) {
+//						nes.tick();
+//						counter = ++counter % 5;
+//						if (counter == 0)
+//							update();
+//					}
+//				} catch (AddressException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		}, 0, 31250, TimeUnit.MICROSECONDS);
+//
+//		final ScheduledExecutorService schAuto2 = Executors.newScheduledThreadPool(1);
+//		schAuto2.scheduleAtFixedRate(new Runnable() {
+//
+//			private int counter = 0;
+//
+//			@Override
+//			public void run() {
+//				try {
+//					if (auto2) {
+//						nes.tick();
+//						counter = ++counter % 5;
+//						if (counter == 0)
+//							update();
+//					}
+//				} catch (AddressException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		}, 0, 7812, TimeUnit.MICROSECONDS);
+//
+//		final ScheduledExecutorService schAuto3 = Executors.newScheduledThreadPool(1);
+//		schAuto3.scheduleAtFixedRate(new Runnable() {
+//
+//			private int counter = 0;
+//
+//			@Override
+//			public void run() {
+//				try {
+//					if (auto3) {
+//						nes.tick();
+//						counter = ++counter % 5;
+//						if (counter == 0)
+//							update();
+//					}
+//				} catch (AddressException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		}, 0, 1953125, TimeUnit.NANOSECONDS);
 
 		final ScheduledExecutorService schAuto4 = Executors.newScheduledThreadPool(1);
 		schAuto4.scheduleAtFixedRate(new Runnable() {
@@ -256,7 +269,7 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 				String.format("0b%15s", Integer.toBinaryString(ppuRegistres.getBackgroundRegisters().getT() & 0xFFFF))
 						.replace(' ', '0'));
 
-		ppuX.setText(String.format("0b%3s", Integer.toBinaryString(ppuRegistres.getBackgroundRegisters().getX() & 0x3))
+		ppuX.setText(String.format("0b%3s", Integer.toBinaryString(ppuRegistres.getBackgroundRegisters().getX() & 0x7))
 				.replace(' ', '0'));
 
 		ppuW.setText(String.format("0b%1s", Integer.toBinaryString(ppuRegistres.getBackgroundRegisters().getW() & 0x1))
@@ -267,31 +280,68 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 
 		/***** Next Tiles *****/
 
-		int x = ppuRegistres.getBackgroundRegisters().getV() << 3 | ppuRegistres.getBackgroundRegisters().getX();
-		int y = (ppuRegistres.getBackgroundRegisters().getV() & 0b1111100000) >> 5
-				| ppuRegistres.getBackgroundRegisters().getV() >> 12;
+		int V = ppuRegistres.getBackgroundRegisters().getV();
+		int x = (V << 3 | ppuRegistres.getBackgroundRegisters().getX()) & 0b11111111;
+		int y = (V & 0b1111100000) >> 2 | V >> 12;
 
 		int[] colors = new int[64];
 		int universalColor = NesColors.getColorCode(ppu.getBus().getByteFromMemory(0x3F00)).getRGBFromCode();
 		Tile tile = ppuRegistres.getBackgroundRegisters().getTile1();
 
 		int paletteNumber = tile.getAttributeTable() >> (2 * ((x / 16) % 2) + 4 * ((y / 16) % 2)) & 0b00000011;
-		int paletteAddress = 0x3F01 + 4 * paletteNumber;
+		int paletteAddress = 0x3F00 + 4 * paletteNumber;
 
 		for (int row = 0; row < 8; row++) {
 			for (int column = 0; column < 8; column++) {
 				int pattern = tile.getPatternTable()[row][column];
 				if (pattern == 0)
-					for (int i = 0; i < 64; i++)
-						colors[i] = universalColor;
+					colors[row * 8 + column] = universalColor;
 
 				else
-					for (int i = 0; i < 64; i++)
-						colors[i] = NesColors.getColorCode(ppu.getBus().getByteFromMemory(paletteAddress + pattern))
-								.getRGBFromCode();
+					colors[row * 8 + column] = NesColors
+							.getColorCode(ppu.getBus().getByteFromMemory(paletteAddress + pattern)).getRGBFromCode();
 
-				tile1.setRGB(column * 8, row * 8, 8, 8, colors, 0, 0);
 			}
+		}
+
+		drawImage(tile1, 8, 8, 8, colors);
+
+//		tile = ppuRegistres.getBackgroundRegisters().getTile2();
+//		
+//		paletteNumber = tile.getAttributeTable() >> (2 * ((x / 16) % 2) + 4 * ((y / 16) % 2)) & 0b00000011;
+//		paletteAddress = 0x3F01 + 4 * paletteNumber;
+//
+//		for (int row = 0; row < 8; row++) {
+//			for (int column = 0; column < 8; column++) {
+//				int pattern = tile.getPatternTable()[row][column];
+//				if (pattern == 0)
+//					for (int i = 0; i < 64; i++)
+//						colors[i] = universalColor;
+//
+//				else
+//					for (int i = 0; i < 64; i++)
+//						colors[i] = NesColors.getColorCode(ppu.getBus().getByteFromMemory(paletteAddress + pattern))
+//								.getRGBFromCode();
+//
+//				tile2.setRGB(column * 8, row * 8, 8, 8, colors, 0, 0);
+//			}
+//		}
+
+		/***** Palettes *****/
+		NesColors color;
+		int colorNumber;
+		colors = new int[16];
+		int n = 0;
+		for (BufferedImage palette : palettes) {
+			for (int pixel = 0; pixel < 4; pixel++) {
+				color = NesColors.getColorCode(ppu.getBus().getByteFromMemory(0x3F00 + 4 * n + pixel));
+				colorNumber = color.getRGBFromCode();
+				for (int i = 0; i < 16; i++) {
+					colors[i] = colorNumber;
+				}
+				palette.setRGB(0, 16 * pixel, 16, 16, colors, 0, 0);
+			}
+			n++;
 		}
 
 		/***** CPU instructions *****/
@@ -348,13 +398,38 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 			ins4.setText(instructions[index + 1].toString());
 			ins5.setText(instructions[index + 2].toString());
 		}
-		
-		cpuTable.repaint();
-		ppuTable.repaint();
+
+//		cpuTable.repaint();
+//		ppuTable.repaint();
+		this.repaint();
 	}
 
 	private void init() throws AddressException {
+		initPatternTable();
 		update();
+	}
+
+	private void initPatternTable() {
+		patternTable = new int[0x200][8][8];
+		greyPatternTable = new int[0x200][64];
+		byte[] ppuBus = ppu.getBus().getValues();
+
+		byte[] patterns = new byte[16];
+
+		for (int i = 0x0; i < 0x2000; i += 16) {
+			System.arraycopy(ppuBus, i, patterns, 0, 16);
+			for (int row = 0; row < 8; row++) {
+				byte lowPlan = patterns[row];
+				byte highPlan = patterns[row + 8];
+
+				for (int column = 0; column < 8; column++) {
+					greyPatternTable[i / 16][row * 8 + (7 - column)] = COLORSET[(lowPlan & 1) + 2 * (highPlan & 1)];
+					patternTable[i / 16][row][7 - column] = (lowPlan & 1) + 2 * (highPlan & 1);
+					lowPlan >>= 1;
+					highPlan >>= 1;
+				}
+			}
+		}
 	}
 
 	private void nextPPUStep() throws AddressException {
@@ -626,8 +701,6 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		external.add(label4014);
 		external.add(OAMDMA);
 
-		external.setBorder(BorderFactory.createTitledBorder("External Registers"));
-
 		/***** Background registers *****/
 
 		JPanel background = new JPanel();
@@ -682,15 +755,69 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		tile.add(titleTile2);
 		tile.add(tileLabel2);
 
+		/***** Palettes *****/
+
+		JPanel palettesPanel = new JPanel();
+		palettesPanel.setLayout(new GridLayout(2, 5));
+		palettes = new BufferedImage[8];
+		JLabel bgLabel = new JLabel("BG");
+
+		BufferedImage palette0 = new BufferedImage(16, 64, BufferedImage.TYPE_3BYTE_BGR);
+		JLabel p0 = new JLabel(new ImageIcon(palette0));
+
+		BufferedImage palette1 = new BufferedImage(16, 64, BufferedImage.TYPE_3BYTE_BGR);
+		JLabel p1 = new JLabel(new ImageIcon(palette1));
+
+		BufferedImage palette2 = new BufferedImage(16, 64, BufferedImage.TYPE_3BYTE_BGR);
+		JLabel p2 = new JLabel(new ImageIcon(palette2));
+
+		BufferedImage palette3 = new BufferedImage(16, 64, BufferedImage.TYPE_3BYTE_BGR);
+		JLabel p3 = new JLabel(new ImageIcon(palette3));
+
+		JLabel spriteLabel = new JLabel("Sprites");
+
+		BufferedImage palette4 = new BufferedImage(16, 64, BufferedImage.TYPE_3BYTE_BGR);
+		JLabel p4 = new JLabel(new ImageIcon(palette4));
+
+		BufferedImage palette5 = new BufferedImage(16, 64, BufferedImage.TYPE_3BYTE_BGR);
+		JLabel p5 = new JLabel(new ImageIcon(palette5));
+
+		BufferedImage palette6 = new BufferedImage(16, 64, BufferedImage.TYPE_3BYTE_BGR);
+		JLabel p6 = new JLabel(new ImageIcon(palette6));
+
+		BufferedImage palette7 = new BufferedImage(16, 64, BufferedImage.TYPE_3BYTE_BGR);
+		JLabel p7 = new JLabel(new ImageIcon(palette7));
+
+		palettes[0] = palette0;
+		palettes[1] = palette1;
+		palettes[2] = palette2;
+		palettes[3] = palette3;
+		palettes[4] = palette4;
+		palettes[5] = palette5;
+		palettes[6] = palette6;
+		palettes[7] = palette7;
+
+		palettesPanel.add(bgLabel);
+		palettesPanel.add(p0);
+		palettesPanel.add(p1);
+		palettesPanel.add(p2);
+		palettesPanel.add(p3);
+
+		palettesPanel.add(spriteLabel);
+		palettesPanel.add(p4);
+		palettesPanel.add(p5);
+		palettesPanel.add(p6);
+		palettesPanel.add(p7);
+
+		external.setBorder(BorderFactory.createTitledBorder("External Registers"));
 		background.setBorder(BorderFactory.createTitledBorder("Background Registers"));
 		tile.setBorder(BorderFactory.createTitledBorder("Next tiles"));
+		palettesPanel.setBorder(BorderFactory.createTitledBorder("Palettes"));
 
 		panel.add(external);
 		panel.add(background);
 		panel.add(tile);
-
-		JPanel palettes = new JPanel();
-		palettes.setLayout(new GridLayout(2, 4));
+		panel.add(palettesPanel);
 
 		return panel;
 	}
@@ -743,6 +870,30 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		return panel;
 	}
 
+	private void drawImage(BufferedImage image, int length, int height, int pixelSize, int[] colors) {
+		if (colors.length != length * height)
+			return;
+
+		// On met la taille du pixel au carré comme ça il n'y a pas à faire le calcul à
+		// chaque fois
+		int sqrPixelSize = pixelSize * pixelSize;
+
+		int[] toDraw = new int[sqrPixelSize];
+
+		for (int row = 0; row < height; row++) {
+			for (int column = 0; column < length; column++) {
+
+				// Indice = nombre de lignes passées + colonne actuelle
+				int index = row * length + column;
+				for (int pixel = 0; pixel < sqrPixelSize; pixel++) {
+					toDraw[pixel] = colors[index];
+				}
+
+				image.setRGB(column * pixelSize, row * pixelSize, pixelSize, pixelSize, toDraw, 0, 0);
+			}
+		}
+	}
+
 	public void showFrame() throws AddressException {
 		init();
 		this.setVisible(true);
@@ -774,6 +925,15 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 				e1.printStackTrace();
 			}
 			break;
+
+		case KeyEvent.VK_P:
+			PatternDialog dialog = new PatternDialog();
+			dialog.showFrame();
+			break;
+
+		case KeyEvent.VK_N:
+			NametableDialog nametableDialog = new NametableDialog();
+			nametableDialog.showFrame();
 
 		case KeyEvent.VK_NUMPAD0:
 		case KeyEvent.VK_0:
@@ -853,7 +1013,6 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 			cpuBusContent[address][1] = String.format("0x%02X", value);
 		else
 			ppuBusContent[address][1] = String.format("0x%02X", value);
-
 	}
 
 	public static void main(String[] args)
@@ -867,6 +1026,210 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		FullRegisterFrame frame = new FullRegisterFrame(nes, cpu, ppu);
 		frame.showFrame();
 
+	}
+
+	private class PatternDialog extends JDialog {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -3556201488102299177L;
+
+		public PatternDialog() {
+			this.setTitle("Pattern table display");
+			this.setSize(930, 800);
+			this.setLocationRelativeTo(null);
+			this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+			this.setModalityType(ModalityType.APPLICATION_MODAL);
+
+			JTabbedPane imagePanel = buildImagePanel();
+			this.add(imagePanel);
+
+			this.setVisible(false);
+		}
+
+		public void showFrame() {
+			this.setVisible(true);
+		}
+
+		private JTabbedPane buildImagePanel() {
+			JTabbedPane tabPanel = new JTabbedPane();
+
+			JPanel panel = new JPanel();
+			panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+
+			JPanel hPanel = new JPanel();
+			hPanel.setLayout(new BoxLayout(hPanel, BoxLayout.LINE_AXIS));
+			hPanel.add(new JLabel(String.format("0x%04X", 0x0000)));
+			hPanel.add(Box.createHorizontalStrut(20));
+
+			BufferedImage image;
+			int counter = 0x0000;
+			for (int[] imageColor : greyPatternTable) {
+				image = new BufferedImage(32, 32, BufferedImage.TYPE_3BYTE_BGR);
+				drawImage(image, 8, 8, 4, imageColor);
+
+				hPanel.add(new JLabel(new ImageIcon(image)));
+				hPanel.add(Box.createHorizontalStrut(5));
+				counter += 0x10;
+				if (counter % 0x100 == 0) {
+					panel.add(hPanel);
+					panel.add(Box.createVerticalStrut(10));
+					hPanel = new JPanel();
+					hPanel.setLayout(new BoxLayout(hPanel, BoxLayout.LINE_AXIS));
+					hPanel.add(new JLabel(String.format("0x%04X", counter)));
+					hPanel.add(Box.createHorizontalStrut(20));
+				}
+
+				if (counter == 0x1000) {
+					tabPanel.add("Left table", panel);
+					panel = new JPanel();
+					panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+				}
+			}
+			tabPanel.add("Right table", panel);
+
+			return tabPanel;
+		}
+
+	}
+
+	private class NametableDialog extends JDialog implements KeyListener {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 8391388047763240403L;
+		private int nametable;
+
+		private JPanel nametablePanel;
+
+		public NametableDialog() {
+			this.setTitle("Pattern table display");
+			this.setSize(820, 770);
+			this.setLocationRelativeTo(null);
+			this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+			this.setModalityType(ModalityType.APPLICATION_MODAL);
+
+			nametable = 0;
+
+			nametablePanel = buildNametablePanel(nametable);
+			this.add(nametablePanel);
+
+			this.addKeyListener(this);
+			this.setVisible(false);
+		}
+
+		private JPanel buildNametablePanel(int nametable) {
+			JPanel panel = new JPanel();
+
+			byte[] ppuBus = ppu.getBus().getValues();
+			int[][] palettes = new int[4][4];
+
+			for (int paletteNumber = 0; paletteNumber < 4; paletteNumber++) {
+				for (int color = 0; color < 4; color++) {
+					if (color == 0)
+						palettes[paletteNumber][0] = NesColors.getColorCode(ppuBus[0x3F00]).getRGBFromCode();
+					else
+						palettes[paletteNumber][color] = NesColors
+								.getColorCode(ppuBus[0x3F00 + 4 * paletteNumber + color]).getRGBFromCode();
+				}
+			}
+
+			DefaultTableModel model = new DefaultTableModel(30, 32) {
+				/**
+				 * 
+				 */
+				private static final long serialVersionUID = 1547716186599944171L;
+
+				@Override
+				public Class<?> getColumnClass(int column) {
+					return ImageIcon.class;
+				}
+			};
+
+			for (int row = 0; row < 30; row++) {
+				for (int column = 0; column < 32; column++) {
+					// La table des attributs contient 4 tuiles (2x2), donc on prend numéro de
+					// tuile/2
+					int tileNumber = row * 32 + column;
+
+					// L'image est en 8x8 mais on fait des 3x3 pixels
+					BufferedImage image = new BufferedImage(24, 24, BufferedImage.TYPE_3BYTE_BGR);
+					int[] colors = new int[64];
+
+					// On prend le pattern dans la table
+					int[][] pattern = patternTable[0x100 | Math.abs(ppuBus[0x2000 + nametable * 0x400 + tileNumber])];
+
+					// La table des attributs commence en 0x23C0
+					byte attribute = ppuBus[0x23C0 + nametable * 0x400 + tileNumber / 2];
+
+					// 2x2 => column%2 pour savoir quelle palette prendre en x et row%2 en y
+					int[] palette = palettes[(attribute >> (2 * (column % 2) + 4 * (row % 2))) & 0b00000011];
+
+					for (int patternRow = 0; patternRow < 8; patternRow++) {
+						for (int patternColumn = 0; patternColumn < 8; patternColumn++) {
+							// On prend la couleur qui correspond au pattern
+							colors[patternRow * 8 + patternColumn] = palette[pattern[patternRow][patternColumn]];
+						}
+					}
+					drawImage(image, 8, 8, 3, colors);
+					model.setValueAt(new ImageIcon(image), row, column);
+				}
+			}
+
+			JTable nametable1 = new JTable(model);
+			nametable1.setRowHeight(24);
+
+			for (int column = 0; column < 32; column++) {
+				nametable1.getColumnModel().getColumn(column).setMaxWidth(24);
+			}
+			nametable1.setShowGrid(false);
+			nametable1.setEnabled(false);
+			nametable1.setFocusable(false);
+
+			panel.add(nametable1);
+
+			return panel;
+		}
+
+		public void showFrame() {
+			this.setVisible(true);
+		}
+
+		@Override
+		public void keyTyped(KeyEvent e) {
+		}
+
+		@Override
+		public void keyPressed(KeyEvent e) {
+			switch (e.getKeyCode()) {
+			case KeyEvent.VK_KP_LEFT:
+			case KeyEvent.VK_LEFT:
+				if (nametable != 0) {
+					nametable--;
+				}
+
+				break;
+
+			case KeyEvent.VK_KP_RIGHT:
+			case KeyEvent.VK_RIGHT:
+				if (nametable != 3) {
+					nametable++;
+				}
+				break;
+			}
+
+			System.out.println(nametable);
+			nametablePanel = buildNametablePanel(nametable);
+			this.setContentPane(nametablePanel);
+			this.repaint();
+			this.revalidate();
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e) {
+		}
 	}
 
 }

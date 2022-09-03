@@ -160,8 +160,8 @@ public class CPU implements Component, Runnable {
 						instruction = new Instruction(InstructionSet.NMI, AddressingMode.NMI);
 					} else {
 						instruction = getInstruction();
-						if (instruction.getInstruction() == InstructionSet.JMP && instruction.getAdress() == 0x8057)
-							System.out.println("AAAAAAAAAAAH");
+//						if (instruction.getAdress() == 0x4014)
+//							System.out.println("AAAAAAAAAAAH");
 					}
 
 					if (waitingCycles < -1)

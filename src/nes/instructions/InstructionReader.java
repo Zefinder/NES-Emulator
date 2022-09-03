@@ -1454,13 +1454,13 @@ public class InstructionReader {
 		byte P = registres.getP();
 
 		// On push pc et P dans le stack
-		bus.setByteToMemory(registres.getSp(), pcl);
+		bus.setByteToMemory(registres.getSp(), pch);
 		if (registres.getSp() == 0x100)
 			registres.setSp(0x1FF);
 		else
 			registres.setSp(registres.getSp() - 1);
 
-		bus.setByteToMemory(registres.getSp(), pch);
+		bus.setByteToMemory(registres.getSp(), pcl);
 		if (registres.getSp() == 0x100)
 			registres.setSp(0x1FF);
 		else
@@ -1786,13 +1786,13 @@ public class InstructionReader {
 		byte pch = (byte) ((registres.getPc() & 0xFF00) >> 8);
 
 		// On push pc dans le stack
-		bus.setByteToMemory(registres.getSp(), pcl);
+		bus.setByteToMemory(registres.getSp(), pch);
 		if (registres.getSp() == 0x100)
 			registres.setSp(0x1FF);
 		else
 			registres.setSp(registres.getSp() - 1);
 
-		bus.setByteToMemory(registres.getSp(), pch);
+		bus.setByteToMemory(registres.getSp(), pcl);
 		if (registres.getSp() == 0x100)
 			registres.setSp(0x1FF);
 		else
@@ -2096,13 +2096,13 @@ public class InstructionReader {
 			registres.setSp(0x100);
 		else
 			registres.setSp(registres.getSp() + 1);
-		byte pch = bus.getByteFromMemory(registres.getSp());
+		byte pcl = bus.getByteFromMemory(registres.getSp());
 
 		if (registres.getSp() == 0x1FF)
 			registres.setSp(0x100);
 		else
 			registres.setSp(registres.getSp() + 1);
-		byte pcl = bus.getByteFromMemory(registres.getSp());
+		byte pch = bus.getByteFromMemory(registres.getSp());
 
 		registres.setP(P);
 
@@ -2117,13 +2117,13 @@ public class InstructionReader {
 			registres.setSp(0x100);
 		else
 			registres.setSp(registres.getSp() + 1);
-		byte pch = bus.getByteFromMemory(registres.getSp());
+		byte pcl = bus.getByteFromMemory(registres.getSp());
 
 		if (registres.getSp() == 0x1FF)
 			registres.setSp(0x100);
 		else
 			registres.setSp(registres.getSp() + 1);
-		byte pcl = bus.getByteFromMemory(registres.getSp());
+		byte pch = bus.getByteFromMemory(registres.getSp());
 
 		int lsb = (pcl < 0 ? pcl + 256 : pcl);
 		int msb = (pch < 0 ? pch + 256 : pch);
@@ -2332,18 +2332,21 @@ public class InstructionReader {
 		int msb = (pch < 0 ? pch + 256 : pch);
 //		int oldAddress = (msb << 8) | lsb;
 		// On push pc et P dans le stack
-		bus.setByteToMemory(registres.getSp(), pcl);
-		if (registres.getSp() == 0x100)
-			registres.setSp(0x1FF);
-		else
-			registres.setSp(registres.getSp() - 1);
-
 		bus.setByteToMemory(registres.getSp(), pch);
 		if (registres.getSp() == 0x100)
 			registres.setSp(0x1FF);
 		else
 			registres.setSp(registres.getSp() - 1);
 
+		// On met le low - 1 pour contrebalancer le fait que NMI n'ait pas de byte
+		// d'instruction et où on doit exécuter l'instruction qui aurait dû être
+		// exécutée
+		bus.setByteToMemory(registres.getSp(), (byte) (pcl - 1));
+		if (registres.getSp() == 0x100)
+			registres.setSp(0x1FF);
+		else
+			registres.setSp(registres.getSp() - 1);
+	
 		bus.setByteToMemory(registres.getSp(), P);
 		if (registres.getSp() == 0x100)
 			registres.setSp(0x1FF);

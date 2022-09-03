@@ -221,7 +221,7 @@ public class Instruction {
 			break;
 
 		case INDIRECT_Y:
-			suffix = String.format("($%02x, Y)", (byte) lsb);
+			suffix = String.format("($%02x), Y", (byte) lsb);
 			break;
 
 		default:

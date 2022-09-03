@@ -17,10 +17,17 @@ public class Mapper0 extends Mapper {
 		}
 
 		for (int i = 0xC000; i <= 0xFFFF; i++) {
-			cpuBus.setByteToMemory(i, prgRom[i - 0x8000 - repeat * 0x4000]); // Si on répète, on reprend les 0x4000 premiers
+			cpuBus.setByteToMemory(i, prgRom[i - 0x8000 - repeat * 0x4000]); // Si on répète, on reprend les 0x4000
+																				// premiers
 		}
 
-		return 0x8000;
+		int lsb = prgRom[prgRom.length - 4];
+		lsb = (lsb < 0 ? lsb + 256 : lsb);
+
+		int msb = prgRom[prgRom.length - 3];
+		msb = (msb < 0 ? msb + 256 : msb);
+
+		return (msb << 8) | lsb;
 	}
 
 	@Override
@@ -28,7 +35,7 @@ public class Mapper0 extends Mapper {
 		for (int i = 0; i < chrRom.length; i++) {
 			ppuBus.setByteToMemory(i, chrRom[i]);
 		}
-		
+
 		return verticalScrolling;
 	}
 

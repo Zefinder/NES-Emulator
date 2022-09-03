@@ -129,8 +129,14 @@ public class OAM implements Cloneable {
 		oam.setByte1(this.getByte1());
 		oam.setByte2(this.getByte2());
 		oam.setByte3(this.getByte3());
+		oam.setPaternTableData(this.getPaternTableData());
 		
 		return oam;
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("[%02X, %02X, %02X, %02X]", byte0, byte1, byte2, byte3);
 	}
 
 }

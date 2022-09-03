@@ -99,7 +99,7 @@ public class PPU implements Component, Runnable {
 			// J'ai peut être honte d'écrire ça, oui
 			// J'aurais pu utiliser une variable condition, oui xD
 		}
-		readyForNext = false;
+  		readyForNext = false;
 		
 	}
 

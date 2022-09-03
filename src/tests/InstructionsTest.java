@@ -919,16 +919,16 @@ class InstructionsTest {
 		assertTrue(registres.getSp() == 0x1FC);
 		assertTrue(registres.getP() == (byte) 0b10010010);
 		assertTrue(bus.getByteFromMemory(registres.getSp() + 1) == (byte) 0b10000010);
-		assertTrue(bus.getByteFromMemory(registres.getSp() + 2) == (byte) 0x4F);
-		assertTrue(bus.getByteFromMemory(registres.getSp() + 3) == (byte) 0xEE);
+		assertTrue(bus.getByteFromMemory(registres.getSp() + 3) == (byte) 0x4F);
+		assertTrue(bus.getByteFromMemory(registres.getSp() + 2) == (byte) 0xEE);
 
 		instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0xF666);
 		assertTrue(registres.getSp() == 0x1F9);
 		assertTrue(registres.getP() == (byte) 0b10010010);
 		assertTrue(bus.getByteFromMemory(registres.getSp() + 1) == (byte) 0b10010010);
-		assertTrue(bus.getByteFromMemory(registres.getSp() + 2) == (byte) 0xF6);
-		assertTrue(bus.getByteFromMemory(registres.getSp() + 3) == (byte) 0x66);
+		assertTrue(bus.getByteFromMemory(registres.getSp() + 3) == (byte) 0xF6);
+		assertTrue(bus.getByteFromMemory(registres.getSp() + 2) == (byte) 0x66);
 
 	}
 
@@ -1591,7 +1591,7 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.JMP, AddressingMode.ABSOLUTE);
 		instruction.setArgument((byte) 0xEE, (byte) 0x4F);
 		instructionReader.processInstruction(instruction, registres);
-		assertTrue(registres.getPc() == 0x4FEE);
+		assertTrue(registres.getPc() == 0x4FEE - 3);
 	}
 
 	@Test
@@ -1599,11 +1599,11 @@ class InstructionsTest {
 		instruction = new Instruction(InstructionSet.JMP, AddressingMode.INDIRECT);
 		instruction.setArgument((byte) 0xEE, (byte) 0x4F);
 		instructionReader.processInstruction(instruction, registres);
-		assertTrue(registres.getPc() == 0x26FF);
+		assertTrue(registres.getPc() == 0x26FF - 3);
 
 		instruction.setArgument((byte) 0xFF, (byte) 0x26);
 		instructionReader.processInstruction(instruction, registres);
-		assertTrue(registres.getPc() == 0x10);
+		assertTrue(registres.getPc() == 0x10 - 3);
 	}
 
 	// JSR
@@ -1614,8 +1614,8 @@ class InstructionsTest {
 		instruction.setArgument((byte) 0xEE, (byte) 0x4F);
 		instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x4FEB);
-		assertTrue(bus.getByteFromMemory(registres.getSp() + 1) == (byte) 0x22);
-		assertTrue(bus.getByteFromMemory(registres.getSp() + 2) == (byte) 0x68);
+		assertTrue(bus.getByteFromMemory(registres.getSp() + 2) == (byte) 0x22);
+		assertTrue(bus.getByteFromMemory(registres.getSp() + 1) == (byte) 0x68);
 		assertTrue(registres.getSp() == 0x1FD);
 	}
 
@@ -2419,6 +2419,15 @@ class InstructionsTest {
 		// Break
 		registres.setPc(0x4FEE);
 		registres.setP((byte) 0b10000010);
+		instruction = new Instruction(InstructionSet.NMI, AddressingMode.NMI);
+		instructionReader.processInstruction(instruction, registres);
+
+		instruction = new Instruction(InstructionSet.RTI, AddressingMode.IMPLICIT);
+		instructionReader.processInstruction(instruction, registres);
+		assertTrue(registres.getPc() == 0x4FEE);
+		assertTrue(registres.getSp() == 0x1FF);
+		assertTrue(registres.getP() == (byte) 0b10000010);
+		
 		instruction = new Instruction(InstructionSet.BRK, AddressingMode.IMPLICIT);
 		instructionReader.processInstruction(instruction, registres);
 

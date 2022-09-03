@@ -32,4 +32,9 @@ public class Tile {
 	public byte[][] getPatternTable() {
 		return patternTable;
 	}
+	
+	@Override
+	public String toString() {
+		return String.format("[%02X, %02X]", nametable, attributeTable);
+	}
 }

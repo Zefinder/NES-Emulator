@@ -34,9 +34,9 @@ public class Desassembler {
 		allBytes = reader.readAllBytes();
 		reader.close();
 
-		if (!isNesFile()) 
+		if (!isNesFile())
 			throw new NotNesFileException("The file isn't a NES file!");
-		
+
 	}
 
 	public void disassemble(int counterOffset) throws IOException, InstructionException {
@@ -120,12 +120,13 @@ public class Desassembler {
 	}
 
 	public byte[] getChrRom() {
-		byte[] prgRom = Arrays.copyOfRange(allBytes, 0x10 + prgChunk, 0x10 + prgChunk + chrChunksNumber * chrChunk);
-		return prgRom;
+		byte[] chrRom = Arrays.copyOfRange(allBytes, 0x10 + prgChunksNumber * prgChunk,
+				0x10 + prgChunksNumber * prgChunk + chrChunksNumber * chrChunk);
+		return chrRom;
 	}
 
 	private boolean isNesFile() throws IOException {
-		byte[] nesVerif = {allBytes[0], allBytes[1], allBytes[2], allBytes[3]};
+		byte[] nesVerif = { allBytes[0], allBytes[1], allBytes[2], allBytes[3] };
 		return Arrays.equals(nesVerif, new byte[] { 0x4E, 0x45, 0x53, 0x1A });
 	}
 
@@ -141,9 +142,9 @@ public class Desassembler {
 
 	public static void main(String[] args) {
 		try {
-			Desassembler des = new Desassembler(new File("./Super Mario Bros.nes"));
+			Desassembler des = new Desassembler(new File("./Donkey Kong.nes"));
 			des.disassemble(0x8000);
-			des.writeInstructions(new File("./Super Mario Bros.nes.lst"));
+			des.writeInstructions(new File("./Donkey Kong.nes.lst"));
 		} catch (IOException | NotNesFileException | InstructionException e) {
 			e.printStackTrace();
 		}

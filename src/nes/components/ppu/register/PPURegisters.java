@@ -135,11 +135,12 @@ public class PPURegisters implements RegisterListener {
 	@Override
 	public void on2006Written(byte newValue) {
 		externalRegisters.setPPUADDR(newValue);
+		int tmp = (newValue < 0 ? newValue + 256 : newValue);
 		if (backgroundRegisters.getW() == 0) {
-			backgroundRegisters.setT((backgroundRegisters.getT() & ~0xFF00) | ((newValue & 0x003F) << 8));
+			backgroundRegisters.setT((backgroundRegisters.getT() & ~0xFF00) | ((tmp & 0x003F) << 8));
 			backgroundRegisters.setW((byte) 1);
 		} else {
-			backgroundRegisters.setT((backgroundRegisters.getT() & ~0x00FF) | newValue);
+			backgroundRegisters.setT((backgroundRegisters.getT() & ~0x00FF) | tmp);
 			backgroundRegisters.setV(backgroundRegisters.getT());
 			backgroundRegisters.setW((byte) 0);
 		}
@@ -148,7 +149,8 @@ public class PPURegisters implements RegisterListener {
 	@Override
 	public void on2007Written(byte newValue) {
 		externalRegisters.setPPUDATA(newValue);
-		backgroundRegisters.setV(backgroundRegisters.getV() + externalRegisters.getVRAMIncrement());
+		backgroundRegisters.setV((backgroundRegisters.getV() + externalRegisters.getVRAMIncrement()) % 0x4000);
+
 	}
 
 	@Override

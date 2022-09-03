@@ -10,7 +10,7 @@ public class PPURender {
 	private int counter, spriteCounter, secondaryCounter;
 	private boolean finOAM;
 	private OAM tmpOAM;
-	private OAM[] secondary;
+	private OAM[] secondary, nextSecondary;
 
 	private int frameCounter;
 
@@ -19,6 +19,11 @@ public class PPURender {
 	public PPURender() {
 		finOAM = false;
 		secondary = new OAM[8];
+		nextSecondary = new OAM[8];
+		for (int i = 0; i < 8; i++) {
+			secondary[i] = new OAM();
+			nextSecondary[i] = new OAM();
+		}
 		tmpOAM = new OAM();
 		frameCounter = -1;
 	}
@@ -28,7 +33,9 @@ public class PPURender {
 		if (scanline == 310) {
 			preRender(scanline, cycle, register, bus);
 		} else if (scanline < 239) {
-			visible(scanline, cycle, register, bus);
+			if (register.getExternalRegisters().doShowBg() && register.getExternalRegisters().doShowSprites()) {
+				visible(scanline, cycle, register, bus);
+			}
 			spriteEvaluation(scanline, cycle, register, bus, oddTick);
 		} else if (scanline > 239) { // Rien à la scanline 239
 			vblank(scanline, cycle, register);
@@ -45,9 +52,9 @@ public class PPURender {
 				register.getBackgroundRegisters().setV((v & ~0x041F) | (t & 0x41F));
 			}
 
-			if ((cycle <= 256 && cycle % 8 == 0) || cycle == 328 || cycle == 336) {
-				register.augX();
-			}
+//			if ((cycle <= 256 && cycle % 8 == 0) || cycle == 328 || cycle == 336) {
+//				register.augX();
+//			}
 		}
 
 	}
@@ -57,6 +64,7 @@ public class PPURender {
 			EventManager.getInstance().stopNMI();
 			EventManager.getInstance().stopSpriteOverflow();
 			EventManager.getInstance().stopSprite0Hit();
+			spriteHit = false;
 
 		} else if (cycle >= 280 && cycle <= 304 && register.getExternalRegisters().doShowBg()
 				&& register.getExternalRegisters().doShowSprites()) {
@@ -75,9 +83,9 @@ public class PPURender {
 			}
 
 		} else if (cycle <= 256) {
-			renderPixel(cycle, cycle, register, bus);
+			renderPixel(scanline, cycle, register, bus);
 			fetchNextTile(register.getBackgroundRegisters().getTile2(), register, bus);
-
+			register.augX();
 			if (cycle % 8 == 0) { // Chaque 8 cycles, on a fini de fetch une tuile !
 				register.getBackgroundRegisters().setTile1(register.getBackgroundRegisters().getTile2());
 			}
@@ -89,9 +97,12 @@ public class PPURender {
 	}
 
 	private void spriteEvaluation(int scanline, int cycle, PPURegisters register, Bus bus, boolean oddTick) {
-		if (cycle >= 1 && cycle <= 64) {
+		if (cycle == 0) {
+			spriteCounter = 0;
+			secondaryCounter = 0;
+		} else if (cycle >= 1 && cycle <= 64) {
 			if ((cycle - 1) % 8 == 0) {
-				register.getSpritesRegisters().getSecondaryOAM()[(cycle - 1) / 8] = new OAM();
+				nextSecondary[(cycle - 1) / 8] = new OAM();
 			}
 
 		} else if (cycle <= 256) {
@@ -100,10 +111,19 @@ public class PPURender {
 
 			} else if (!oddTick && !finOAM) {
 				int size = (register.getExternalRegisters().getSpriteSize() ? 1 : 0);
-				if (scanline + 1 >= tmpOAM.getByte0() && scanline + 1 <= tmpOAM.getByte0() + 8 + 8 * size) {
+				int y = (tmpOAM.getByte0() < 0 ? tmpOAM.getByte0() + 256 : tmpOAM.getByte0());
+				if (scanline + 1 >= y && scanline + 1 < y + 8 + 8 * size) {
 					if (secondaryCounter < 8) {
-						secondary[secondaryCounter] = tmpOAM.clone();
-
+						try {
+							int byte1 = tmpOAM.getByte1();
+							byte1 = (byte1 < 0 ? byte1 + 256 : byte1);
+							tmpOAM.setPaternTableData(getPatternTable(
+									register.getExternalRegisters().getSpritePatternTableAddr() | (byte1 << 4), bus));
+						} catch (AddressException e) {
+							e.printStackTrace();
+						}
+						nextSecondary[secondaryCounter] = tmpOAM.clone();
+						secondaryCounter++;
 					} else {
 						EventManager.getInstance().fireSpriteOverflow();
 						finOAM = true;
@@ -113,13 +133,16 @@ public class PPURender {
 				}
 			}
 
+			if (cycle == 256) {
+				register.getSpritesRegisters().setSecondaryOAM(nextSecondary);
+			}
 		} else if (cycle <= 320) {
 			if (cycle == 257) {
 				secondaryCounter = -1;
 			}
 
 			if ((cycle - 1) % 8 == 0) {
-				tmpOAM = secondary[++secondaryCounter];
+				tmpOAM = nextSecondary[++secondaryCounter];
 				EventManager.getInstance().fireChanging2004(tmpOAM.getByte0());
 			}
 
@@ -197,7 +220,7 @@ public class PPURender {
 		counter = (++counter) % 64;
 	}
 
-	private void renderPixel(int scanline, int cycle, PPURegisters register, Bus bus) throws AddressException {
+	private void renderPixel(int scanline, int cycle, PPURegisters register, Bus bus) throws AddressException {	
 		NesColors universalBackground = NesColors.getColorCode(bus.getByteFromMemory(0x3F00));
 
 		NesColors bgPixel = (register.getExternalRegisters().doShowBg() ? fetchBackgroundPixel(register, bus)
@@ -208,7 +231,7 @@ public class PPURender {
 				: NesColors.X0D);
 
 		if (bgPixel != universalBackground) {
-			if (spritePixel != universalBackground) {
+			if (spritePixel != universalBackground) { 
 				if (!spriteHit && cycle != 256 && register.getExternalRegisters().doShowBg()
 						&& register.getExternalRegisters().doShowSprites()) {
 					spriteHit = !spriteHit;
@@ -234,15 +257,20 @@ public class PPURender {
 	}
 
 	private NesColors fetchBackgroundPixel(PPURegisters register, Bus bus) throws AddressException {
-		int x = register.getBackgroundRegisters().getV() << 3 | register.getBackgroundRegisters().getX();
-		int y = (register.getBackgroundRegisters().getV() & 0b1111100000) >> 5
-				| register.getBackgroundRegisters().getV() >> 12;
+		int V = register.getBackgroundRegisters().getV();
+		int x = (V << 3 | register.getBackgroundRegisters().getX()) & 0b11111111;
+		int y = (V & 0b1111100000) >> 2 | V >> 12;
 		Tile tile = register.getBackgroundRegisters().getTile1();
 
-		int paletteNumber = tile.getAttributeTable() >> (2 * ((x / 16) % 2) + 4 * ((y / 16) % 2)) & 0b00000011;
-		int paletteAddress = 0x3F01 + 4 * paletteNumber;
-		int pattern = tile.getPatternTable()[register.getBackgroundRegisters().getV() >> 12][register
-				.getBackgroundRegisters().getX()];
+		int offset = 0;
+		if (x % 16 >= 8)
+			offset += 2;
+		if (y % 16 >= 8)
+			offset += 4;
+
+		int paletteNumber = (tile.getAttributeTable() >> offset) & 0b00000011;
+		int paletteAddress = 0x3F00 + 4 * paletteNumber;
+		int pattern = tile.getPatternTable()[V >> 12][register.getBackgroundRegisters().getX()];
 
 		if (pattern == 0) {
 			return NesColors.getColorCode(bus.getByteFromMemory(0x3F00));
@@ -250,17 +278,15 @@ public class PPURender {
 			return NesColors.getColorCode(bus.getByteFromMemory(paletteAddress + pattern));
 	}
 
-	private NesColors fetchSpritePixel(int scanline, int cycle, PPURegisters register, Bus bus)
-			throws AddressException {
-		int x = cycle;
-		int y = scanline;
+	private NesColors fetchSpritePixel(int y, int x, PPURegisters register, Bus bus) throws AddressException {
 
 		for (OAM oam : secondary) {
-			if (x >= oam.getByte3() && x < oam.getByte3() + 8) {
-				tmpOAM = oam;
+			int byte3 = (oam.getByte3() < 0 ? oam.getByte3() + 256 : oam.getByte3());
+			int byte0 = (oam.getByte0() < 0 ? oam.getByte0() + 256 : oam.getByte0());
+			if (x >= byte3 && x < byte3 + 8 && y >= byte0 && y < byte0 + 8) {
 				int paletteNumber = oam.getByte2() & 0b00000011;
-				int paletteAddress = 0x3F11 + 4 * paletteNumber;
-				int pattern = oam.getPaternTableData()[y - oam.getByte0()][x - oam.getByte3()];
+				int paletteAddress = 0x3F10 + 4 * paletteNumber;
+				int pattern = oam.getPaternTableData()[y - byte0][x - byte3];
 
 				if (pattern == 0) {
 					return NesColors.getColorCode(bus.getByteFromMemory(0x3F00));
@@ -273,15 +299,13 @@ public class PPURender {
 	}
 
 	private byte[][] getPatternTable(int patternTableLow, Bus bus) throws AddressException {
-		// TODO vérifier que ça marche bien !
 		byte[][] patternTable = new byte[8][8];
-
 		for (int row = 0; row < 8; row++) {
 			byte lowPlan = bus.getByteFromMemory(patternTableLow + row);
 			byte highPlan = bus.getByteFromMemory(patternTableLow + row + 8);
 
 			for (int column = 0; column < 8; column++) {
-				patternTable[row][column] = (byte) ((lowPlan & 1) + 2 * (highPlan & 1));
+				patternTable[row][7 - column] = (byte) ((lowPlan & 1) + 2 * (highPlan & 1));
 				lowPlan >>= 1;
 				highPlan >>= 1;
 			}

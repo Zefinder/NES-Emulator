@@ -21,6 +21,44 @@ public class PPUBus extends Bus {
 
 	@Override
 	public synchronized void setByteToMemory(int address, byte toSet) throws AddressException {
+		address = (address > 0x3F1F ? 0x3F00 + (address - 0x3F00) % 0x20 : address);
+		
+		switch (address) {
+		case 0x3F00:
+			setByte(0x3F10, toSet);
+			break;
+
+		case 0x3F04:
+			setByte(0x3F14, toSet);
+			break;
+
+		case 0x3F08:
+			setByte(0x3F18, toSet);
+			break;
+
+		case 0x3F0C:
+			setByte(0x3F1C, toSet);
+			break;
+
+		case 0x3F10:
+			setByte(0x3F00, toSet);
+			break;
+
+		case 0x3F14:
+			setByte(0x3F04, toSet);
+			break;
+
+		case 0x3F18:
+			setByte(0x3F08, toSet);
+			break;
+
+		case 0x3F1C:
+			setByte(0x3F0C, toSet);
+			break;
+
+		default:
+			break;
+		}
 		setByte(address, toSet);
 	}
 
@@ -61,7 +99,7 @@ public class PPUBus extends Bus {
 	@Override
 	public void on2007Written(byte newValue) {
 		try {
-			setByte(registers.getBackgroundRegisters().getV(), newValue);
+			setByteToMemory(registers.getBackgroundRegisters().getV(), newValue);
 		} catch (AddressException e) {
 			e.printStackTrace();
 		}
