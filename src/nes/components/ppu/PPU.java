@@ -62,8 +62,6 @@ public class PPU implements Component, Runnable {
 		scanline = 310;
 		oddTick = false;
 		readyForNext = true;
-
-		System.out.println("Fraise");
 	}
 
 	public void setHorizontalNametableMirroring() {

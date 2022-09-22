@@ -148,7 +148,9 @@ public class PPURegisters implements RegisterListener {
 
 	@Override
 	public void on2007Written(byte newValue) {
+		// FIXME S'assurer d'écrire dans le bus AVANT de changer l'adresse de VRAM
 		externalRegisters.setPPUDATA(newValue);
+		EventManager.getInstance().fireValueChanged(false, backgroundRegisters.getV(), newValue);
 		backgroundRegisters.setV((backgroundRegisters.getV() + externalRegisters.getVRAMIncrement()) % 0x4000);
 
 	}

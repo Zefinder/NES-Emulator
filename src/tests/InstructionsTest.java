@@ -2424,7 +2424,7 @@ class InstructionsTest {
 
 		instruction = new Instruction(InstructionSet.RTI, AddressingMode.IMPLICIT);
 		instructionReader.processInstruction(instruction, registres);
-		assertTrue(registres.getPc() == 0x4FEE);
+		assertTrue(registres.getPc() == 0x4FED);
 		assertTrue(registres.getSp() == 0x1FF);
 		assertTrue(registres.getP() == (byte) 0b10000010);
 		
@@ -2433,7 +2433,7 @@ class InstructionsTest {
 
 		instruction = new Instruction(InstructionSet.RTI, AddressingMode.IMPLICIT);
 		instructionReader.processInstruction(instruction, registres);
-		assertTrue(registres.getPc() == 0x4FEE);
+		assertTrue(registres.getPc() == 0x4FED);
 		assertTrue(registres.getSp() == 0x1FF);
 		assertTrue(registres.getP() == (byte) 0b10000010);
 	}

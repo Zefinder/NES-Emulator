@@ -3,13 +3,15 @@ package nes.components.cpu.bus;
 import nes.components.Bus;
 import nes.exceptions.AddressException;
 import nes.listener.EventManager;
+import nes.listener.RegisterListener;
 
-public class CPUBus extends Bus {
+public class CPUBus extends Bus  implements RegisterListener {
 
 	private byte L;
 
 	public CPUBus() {
 		super();
+		EventManager.getInstance().addRegisterListener(this);
 	}
 
 	// FIXME ATTENTION ATTENDRE LES CYCLES AVANT D'ECRIRE DANS CERTAINS REGISTRES

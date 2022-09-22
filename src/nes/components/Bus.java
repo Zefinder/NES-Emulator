@@ -7,7 +7,7 @@ import nes.exceptions.AddressException;
 import nes.listener.EventManager;
 import nes.listener.RegisterListener;
 
-public abstract class Bus implements RegisterListener{
+public abstract class Bus {
 
 	private Map<Integer, byte[]> memoryMap;
 	private int lastAddress;
@@ -15,7 +15,6 @@ public abstract class Bus implements RegisterListener{
 	public Bus() {
 		memoryMap = new LinkedHashMap<>();
 		lastAddress = -1;
-		EventManager.getInstance().addRegisterListener(this);
 	}
 
 	public void addToMemoryMap(byte[] byteArray) {

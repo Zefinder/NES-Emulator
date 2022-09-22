@@ -24,6 +24,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableModel;
 
 import nes.components.NES;
@@ -32,6 +33,7 @@ import nes.components.cpu.register.CPURegisters;
 import nes.components.ppu.PPU;
 import nes.components.ppu.register.PPURegisters;
 import nes.components.ppu.rendering.NesColors;
+import nes.components.ppu.rendering.OAM;
 import nes.components.ppu.rendering.Tile;
 import nes.exceptions.AddressException;
 import nes.exceptions.InstructionException;
@@ -68,7 +70,8 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 	private JTable cpuTable, ppuTable;
 	private BufferedImage tile1, tile2;
 
-	private BufferedImage[] palettes;
+	private JLabel[] labelSprites;
+	private BufferedImage[] palettes, spriteTiles;
 
 	private String[][] cpuBusContent, ppuBusContent;
 
@@ -87,6 +90,8 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 
 		this.cpuBusContent = new String[cpu.getBus().getSize()][2];
 		this.ppuBusContent = new String[ppu.getBus().getSize()][2];
+		this.labelSprites = new JLabel[8];
+		this.spriteTiles = new BufferedImage[8];
 		EventManager.getInstance().addBusListener(this);
 
 		this.setTitle("NES");
@@ -106,6 +111,9 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 
 		JPanel busValuesPanel = buildBusPanel();
 		this.add(busValuesPanel, BorderLayout.WEST);
+
+		JPanel spritePanel = buildSpritePanel();
+		this.add(spritePanel, BorderLayout.CENTER);
 
 //		final ScheduledExecutorService schAuto1 = Executors.newScheduledThreadPool(1);
 //		schAuto1.scheduleAtFixedRate(new Runnable() {
@@ -342,6 +350,39 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 				palette.setRGB(0, 16 * pixel, 16, 16, colors, 0, 0);
 			}
 			n++;
+		}
+
+		/***** Sprites *****/
+		OAM[] sprites = ppu.getRegistres().getSpritesRegisters().getSecondaryOAM();
+		for (int spriteNumber = 0; spriteNumber < 8; spriteNumber++) {
+			OAM sprite = sprites[spriteNumber];
+			BufferedImage spriteImage = spriteTiles[spriteNumber];
+
+			colors = new int[64];
+			int byte1 = (sprite.getByte1() < 0 ? sprite.getByte1() + 256 : sprite.getByte1());
+			int[][] patternTable = this.patternTable[byte1];
+
+			int[] palette = new int[4];
+			paletteNumber = sprite.getPalette();
+			for (colorNumber = 0; colorNumber < 4; colorNumber++) {
+				if (colorNumber == 0)
+					palette[colorNumber] = NesColors.getColorCode(ppu.getBus().getByteFromMemory(0x3F00))
+							.getRGBFromCode();
+				else
+					palette[colorNumber] = NesColors
+							.getColorCode(ppu.getBus().getByteFromMemory(0x3F10 + paletteNumber * 4 + colorNumber))
+							.getRGBFromCode();
+			}
+
+			for (int row = 0; row < 8; row++) {
+				for (int column = 0; column < 8; column++) {
+					colors[8 * row + column] = palette[patternTable[row][column]];
+				}
+			}
+
+			drawImage(spriteImage, 8, 8, 8, colors);
+			
+			labelSprites[spriteNumber].setText(sprite.toString());
 		}
 
 		/***** CPU instructions *****/
@@ -741,11 +782,11 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		JPanel tile = new JPanel();
 		tile.setLayout(new GridLayout(2, 2));
 
-		JLabel titleTile1 = new JLabel("Tile 1");
+		JLabel titleTile1 = new JLabel("Tile 1", SwingConstants.CENTER);
 		tile1 = new BufferedImage(64, 64, BufferedImage.TYPE_3BYTE_BGR);
 		tileLabel1 = new JLabel(new ImageIcon(tile1));
 
-		JLabel titleTile2 = new JLabel("Tile 2");
+		JLabel titleTile2 = new JLabel("Tile 2", SwingConstants.CENTER);
 		tile2 = new BufferedImage(64, 64, BufferedImage.TYPE_3BYTE_BGR);
 		tileLabel2 = new JLabel(new ImageIcon(tile2));
 
@@ -760,7 +801,7 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		JPanel palettesPanel = new JPanel();
 		palettesPanel.setLayout(new GridLayout(2, 5));
 		palettes = new BufferedImage[8];
-		JLabel bgLabel = new JLabel("BG");
+		JLabel bgLabel = new JLabel("BG", SwingConstants.CENTER);
 
 		BufferedImage palette0 = new BufferedImage(16, 64, BufferedImage.TYPE_3BYTE_BGR);
 		JLabel p0 = new JLabel(new ImageIcon(palette0));
@@ -774,7 +815,7 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		BufferedImage palette3 = new BufferedImage(16, 64, BufferedImage.TYPE_3BYTE_BGR);
 		JLabel p3 = new JLabel(new ImageIcon(palette3));
 
-		JLabel spriteLabel = new JLabel("Sprites");
+		JLabel spriteLabel = new JLabel("Sprites", SwingConstants.CENTER);
 
 		BufferedImage palette4 = new BufferedImage(16, 64, BufferedImage.TYPE_3BYTE_BGR);
 		JLabel p4 = new JLabel(new ImageIcon(palette4));
@@ -867,6 +908,87 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		panel.add(cpuScrollPanel);
 		panel.add(ppuScrollPanel);
 		panel.setBorder(BorderFactory.createTitledBorder("Components' buses"));
+		return panel;
+	}
+
+	private JPanel buildSpritePanel() {
+		JPanel panel = new JPanel();
+		panel.setLayout(new GridLayout(4, 4));
+
+		JLabel labelS0 = new JLabel("Sprite 0", SwingConstants.CENTER);
+		BufferedImage sprite0 = new BufferedImage(64, 64, BufferedImage.TYPE_3BYTE_BGR);
+		spriteTiles[0] = sprite0;
+		labelSprites[0] = labelS0;
+		JLabel spriteLabel0 = new JLabel(new ImageIcon(sprite0));
+
+		JLabel labelS1 = new JLabel("Sprite 1", SwingConstants.CENTER);
+		BufferedImage sprite1 = new BufferedImage(64, 64, BufferedImage.TYPE_3BYTE_BGR);
+		spriteTiles[1] = sprite1;
+		labelSprites[1] = labelS1;
+		JLabel spriteLabel1 = new JLabel(new ImageIcon(sprite1));
+
+		JLabel labelS2 = new JLabel("Sprite 2", SwingConstants.CENTER);
+		BufferedImage sprite2 = new BufferedImage(64, 64, BufferedImage.TYPE_3BYTE_BGR);
+		spriteTiles[2] = sprite2;
+		labelSprites[2] = labelS2;
+		JLabel spriteLabel2 = new JLabel(new ImageIcon(sprite2));
+
+		JLabel labelS3 = new JLabel("Sprite 3", SwingConstants.CENTER);
+		BufferedImage sprite3 = new BufferedImage(64, 64, BufferedImage.TYPE_3BYTE_BGR);
+		spriteTiles[3] = sprite3;
+		labelSprites[3] = labelS3;
+		JLabel spriteLabel3 = new JLabel(new ImageIcon(sprite3));
+
+		JLabel labelS4 = new JLabel("Sprite 4", SwingConstants.CENTER);
+		BufferedImage sprite4 = new BufferedImage(64, 64, BufferedImage.TYPE_3BYTE_BGR);
+		spriteTiles[4] = sprite4;
+		labelSprites[4] = labelS4;
+		JLabel spriteLabel4 = new JLabel(new ImageIcon(sprite4));
+
+		JLabel labelS5 = new JLabel("Sprite 5", SwingConstants.CENTER);
+		BufferedImage sprite5 = new BufferedImage(64, 64, BufferedImage.TYPE_3BYTE_BGR);
+		spriteTiles[5] = sprite5;
+		labelSprites[5] = labelS5;
+		JLabel spriteLabel5 = new JLabel(new ImageIcon(sprite5));
+
+		JLabel labelS6 = new JLabel("Sprite 6", SwingConstants.CENTER);
+		BufferedImage sprite6 = new BufferedImage(64, 64, BufferedImage.TYPE_3BYTE_BGR);
+		spriteTiles[6] = sprite6;
+		labelSprites[6] = labelS6;
+		JLabel spriteLabel6 = new JLabel(new ImageIcon(sprite6));
+
+		JLabel labelS7 = new JLabel("Sprite 7", SwingConstants.CENTER);
+		BufferedImage sprite7 = new BufferedImage(64, 64, BufferedImage.TYPE_3BYTE_BGR);
+		spriteTiles[7] = sprite7;
+		labelSprites[7] = labelS7;
+		JLabel spriteLabel7 = new JLabel(new ImageIcon(sprite7));
+
+		panel.add(labelS0);
+		panel.add(spriteLabel0);
+
+		panel.add(labelS1);
+		panel.add(spriteLabel1);
+
+		panel.add(labelS2);
+		panel.add(spriteLabel2);
+
+		panel.add(labelS3);
+		panel.add(spriteLabel3);
+
+		panel.add(labelS4);
+		panel.add(spriteLabel4);
+
+		panel.add(labelS5);
+		panel.add(spriteLabel5);
+
+		panel.add(labelS6);
+		panel.add(spriteLabel6);
+
+		panel.add(labelS7);
+		panel.add(spriteLabel7);
+
+		panel.setBorder(BorderFactory.createTitledBorder("Next Sprites"));
+
 		return panel;
 	}
 
