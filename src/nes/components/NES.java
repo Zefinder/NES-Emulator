@@ -65,6 +65,9 @@ public class NES implements Component {
 		initMapping(mapper);
 		System.out.println("No problem with the ROM, all was mapped!");
 
+		Screen screen = new Screen(romFile.getName());
+		screen.connectScreen();
+		
 		cpu.start();
 		ppu.start();
 

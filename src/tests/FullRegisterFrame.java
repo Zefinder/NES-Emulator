@@ -78,6 +78,7 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 	private int[][] greyPatternTable;
 	private int[][][] patternTable;
 
+	@SuppressWarnings("unused")
 	private boolean auto1, auto2, auto3, auto4, auto5;
 
 	public FullRegisterFrame(NES nes, CPU cpu, PPU ppu) {
@@ -381,7 +382,7 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 			}
 
 			drawImage(spriteImage, 8, 8, 8, colors);
-			
+
 			labelSprites[spriteNumber].setText(sprite.toString());
 		}
 
@@ -1142,7 +1143,7 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		CPU cpu = new CPU();
 		PPU ppu = new PPU();
 
-		NES nes = new NES(cpu, ppu, new File("./Super Mario Bros.nes"));
+		NES nes = new NES(cpu, ppu, new File("./Donkey Kong.nes"));
 		nes.start();
 
 		FullRegisterFrame frame = new FullRegisterFrame(nes, cpu, ppu);
@@ -1272,7 +1273,7 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 
 			for (int row = 0; row < 30; row++) {
 				for (int column = 0; column < 32; column++) {
-					// La table des attributs contient 4 tuiles (2x2), donc on prend numéro de
+					// La table des attributs contient 16 tuiles (4x4), donc on prend numéro de
 					// tuile/2
 					int tileNumber = row * 32 + column;
 
@@ -1281,13 +1282,20 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 					int[] colors = new int[64];
 
 					// On prend le pattern dans la table
-					int[][] pattern = patternTable[0x100 | Math.abs(ppuBus[0x2000 + nametable * 0x400 + tileNumber])];
+					int tile = (ppuBus[0x2000 + nametable * 0x400 + tileNumber] < 0
+							? ppuBus[0x2000 + nametable * 0x400 + tileNumber] + 256
+							: ppuBus[0x2000 + nametable * 0x400 + tileNumber]);
+					int[][] pattern = patternTable[0x100 | tile];
 
 					// La table des attributs commence en 0x23C0
-					byte attribute = ppuBus[0x23C0 + nametable * 0x400 + tileNumber / 2];
+					byte attribute = ppuBus[0x23C0 + nametable * 0x400 + 8 * (row >> 2) + (column >> 2)];
 
-					// 2x2 => column%2 pour savoir quelle palette prendre en x et row%2 en y
-					int[] palette = palettes[(attribute >> (2 * (column % 2) + 4 * (row % 2))) & 0b00000011];
+					// 4x4, on prend le mod 4 pour ramener les lignes et colonnes à 0 1 2 3
+					// Si la colonne est en 0 ou 1, alors c'est à gauche, 2 ou 3 à droite
+					// On divise par 2 pour avoir 2 valeurs : 0 (si 0 ou 1) et 1 (si 2 ou 3)
+					// Même raisonnement pour les lignes
+					int[] palette = palettes[(attribute >> (2 * ((column % 4) >> 1) + 4 * ((row % 4) >> 1)))
+							& 0b00000011];
 
 					for (int patternRow = 0; patternRow < 8; patternRow++) {
 						for (int patternColumn = 0; patternColumn < 8; patternColumn++) {

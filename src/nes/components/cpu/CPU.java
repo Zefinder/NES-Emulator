@@ -54,6 +54,7 @@ public class CPU implements Component, Runnable {
 		listPc = new ArrayList<>();
 
 		cpuThread = new Thread(this);
+		cpuThread.setName("Thread CPU");
 		cpuThread.start();
 		readyForNext = true;
 	}
@@ -160,7 +161,7 @@ public class CPU implements Component, Runnable {
 						instruction = new Instruction(InstructionSet.NMI, AddressingMode.NMI);
 					} else {
 						instruction = getInstruction();
-//						if (instruction.getAdress() == 0x4014)
+//						if (instruction.getAdress() == 0x2007)
 //							System.out.println("AAAAAAAAAAAH");
 					}
 

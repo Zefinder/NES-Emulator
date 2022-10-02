@@ -8,7 +8,7 @@ import nes.listener.EventManager;
 public class PPURender {
 
 	private int counter, spriteCounter, secondaryCounter;
-	private boolean finOAM;
+	private boolean finOAM, tile2;
 	private OAM tmpOAM;
 	private OAM[] secondary, nextSecondary;
 
@@ -18,6 +18,7 @@ public class PPURender {
 
 	public PPURender() {
 		finOAM = false;
+		tile2 = false;
 		secondary = new OAM[8];
 		nextSecondary = new OAM[8];
 		for (int i = 0; i < 8; i++) {
@@ -51,10 +52,6 @@ public class PPURender {
 				int t = register.getBackgroundRegisters().getT();
 				register.getBackgroundRegisters().setV((v & ~0x041F) | (t & 0x41F));
 			}
-
-//			if ((cycle <= 256 && cycle % 8 == 0) || cycle == 328 || cycle == 336) {
-//				register.augX();
-//			}
 		}
 
 	}
@@ -88,6 +85,7 @@ public class PPURender {
 			register.augX();
 			if (cycle % 8 == 0) { // Chaque 8 cycles, on a fini de fetch une tuile !
 				register.getBackgroundRegisters().setTile1(register.getBackgroundRegisters().getTile2());
+				register.getBackgroundRegisters().renewTile2();
 			}
 		} else if (cycle <= 320) {
 			fetchNextSpriteData(scanline, register, bus);
@@ -184,8 +182,9 @@ public class PPURender {
 			break;
 
 		case 4:
-			tile.setPatternTable(getPatternTable(
-					register.getExternalRegisters().getBgPatternTableAddr() | tile.getNametable() << 4, bus));
+			int nametable = (tile.getNametable() < 0 ? tile.getNametable() + 256 : tile.getNametable());
+			tile.setPatternTable(
+					getPatternTable(register.getExternalRegisters().getBgPatternTableAddr() | nametable << 4, bus));
 			break;
 
 		default:
@@ -195,13 +194,15 @@ public class PPURender {
 	}
 
 	private void fetchNextTiles(PPURegisters register, Bus bus) throws AddressException {
-		if (counter < 8)
+		if (!tile2) {
 			fetchNextTile(register.getBackgroundRegisters().getTile1(), register, bus);
-		else
+			if (counter == 0)
+				tile2 = true;
+		} else {
 			fetchNextTile(register.getBackgroundRegisters().getTile2(), register, bus);
-
-		counter = (++counter) % 16;
-
+			if (counter == 0)
+				tile2 = false;
+		}
 	}
 
 	private void fetchNextSpriteData(int scanline, PPURegisters register, Bus bus) throws AddressException {
@@ -220,7 +221,7 @@ public class PPURender {
 		counter = (++counter) % 64;
 	}
 
-	private void renderPixel(int scanline, int cycle, PPURegisters register, Bus bus) throws AddressException {	
+	private void renderPixel(int scanline, int cycle, PPURegisters register, Bus bus) throws AddressException {
 		NesColors universalBackground = NesColors.getColorCode(bus.getByteFromMemory(0x3F00));
 
 		NesColors bgPixel = (register.getExternalRegisters().doShowBg() ? fetchBackgroundPixel(register, bus)
@@ -231,7 +232,7 @@ public class PPURender {
 				: NesColors.X0D);
 
 		if (bgPixel != universalBackground) {
-			if (spritePixel != universalBackground) { 
+			if (spritePixel != universalBackground) {
 				if (!spriteHit && cycle != 256 && register.getExternalRegisters().doShowBg()
 						&& register.getExternalRegisters().doShowSprites()) {
 					spriteHit = !spriteHit;
@@ -259,18 +260,21 @@ public class PPURender {
 	private NesColors fetchBackgroundPixel(PPURegisters register, Bus bus) throws AddressException {
 		int V = register.getBackgroundRegisters().getV();
 		int x = (V << 3 | register.getBackgroundRegisters().getX()) & 0b11111111;
-		int y = (V & 0b1111100000) >> 2 | V >> 12;
+		int y = (V & 0b1111100000) >> 2 | ((V >> 12) & 0b111);
 		Tile tile = register.getBackgroundRegisters().getTile1();
+		int column = x / 8;
+		int row = y / 8;
 
 		int offset = 0;
-		if (x % 16 >= 8)
-			offset += 2;
-		if (y % 16 >= 8)
-			offset += 4;
+//		if (x % 4 >= 2)
+//			offset += 2;
+//		if (y % 4 >= 2)
+//			offset += 4;
 
+		offset = (2 * ((column % 4) >> 1) + 4 * ((row % 4) >> 1));
 		int paletteNumber = (tile.getAttributeTable() >> offset) & 0b00000011;
 		int paletteAddress = 0x3F00 + 4 * paletteNumber;
-		int pattern = tile.getPatternTable()[V >> 12][register.getBackgroundRegisters().getX()];
+		int pattern = tile.getPatternTable()[(V >> 12) & 0b111][register.getBackgroundRegisters().getX()];
 
 		if (pattern == 0) {
 			return NesColors.getColorCode(bus.getByteFromMemory(0x3F00));

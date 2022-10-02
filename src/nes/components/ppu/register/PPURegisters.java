@@ -58,7 +58,7 @@ public class PPURegisters implements RegisterListener {
 	private void augCoarseX() {
 		int v = backgroundRegisters.getV();
 
-		if ((v & 0x001F) == 31) {
+		if ((v & 0x001F) == 0x001F) {
 			v &= ~0x001F;
 			v ^= 0x0400;
 		} else
@@ -72,13 +72,12 @@ public class PPURegisters implements RegisterListener {
 	// YYYYY => déplacement grossier
 	public void augY() {
 		int v = backgroundRegisters.getV();
-		int y = 0; // Si on OR avec 0, c'est comme si on n'a rien fait !
+		int y = (v & 0x03E0) >> 5; // 0x03E0 = 0b000 00 11111 00000 (déplacement grossier)
 
 		if ((v & 0x7000) != 0x7000) { // si le déplacement en y est inférieur à 7
 			v += 0x1000; // Ben on ajoute 1 m'enfin
 		} else {
 			v &= ~0x7000; // Sinon on le met à 0 et là, c'est le drame...
-			y = (v & 0x03E0) >> 5; // 0x03E0 = 0b000 00 11111 00000 (déplacement grossier)
 			if (y == 0x1D) { // Soit 0b11101
 				y = 0; // Le déplacement grossier est remis à 0 (parce que oui)
 				v ^= 0x0800; // On change de nametable

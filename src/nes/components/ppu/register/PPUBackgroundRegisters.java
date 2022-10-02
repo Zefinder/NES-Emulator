@@ -67,4 +67,8 @@ public class PPUBackgroundRegisters {
 		this.tile2 = tile2;
 	}
 
+	public void renewTile2() {
+		this.tile2 = new Tile();
+	}
+
 }

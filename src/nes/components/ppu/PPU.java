@@ -57,6 +57,7 @@ public class PPU implements Component, Runnable {
 
 
 		ppuThread = new Thread(this);
+		ppuThread.setName("Thread PPU");
 		ppuThread.start();
 		
 		scanline = 310;
