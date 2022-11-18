@@ -2033,7 +2033,8 @@ public class InstructionReader {
 	}
 
 	private void ror(Instruction processing, CPURegisters registres) throws AddressException {
-		byte tmp = (byte) ((operand2 >> 1) | (C << 7));
+		int tmpOperand2 = (operand2 < 0 ? operand2 + 256 : operand2);
+		byte tmp = (byte) ((tmpOperand2 >> 1) | (C << 7));
 		byte P = registres.getP();
 
 		// On reset le carry flag
@@ -2346,7 +2347,7 @@ public class InstructionReader {
 			registres.setSp(0x1FF);
 		else
 			registres.setSp(registres.getSp() - 1);
-	
+
 		bus.setByteToMemory(registres.getSp(), P);
 		if (registres.getSp() == 0x100)
 			registres.setSp(0x1FF);

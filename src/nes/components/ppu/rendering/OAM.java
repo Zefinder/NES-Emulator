@@ -22,7 +22,7 @@ public class OAM implements Cloneable {
 		this.byte3 = byte3;
 		patternTable = new byte[8][8];
 	}
-	
+
 	// Byte 0
 	public byte getByte0() {
 		return byte0;
@@ -42,14 +42,14 @@ public class OAM implements Cloneable {
 	}
 
 	public int getTileAddress8x8(PPURegisters registres) {
-		int tmp = (byte1 < 0 ? byte1 + 256 : byte1);
-		return registres.getExternalRegisters().getSpritePatternTableAddr() + tmp;
+		int tmp = (byte1 < 0 ? byte1 + 256 : byte1) << 4;
+		return registres.getExternalRegisters().getSpritePatternTableAddr() | tmp;
 	}
 
 	public int getTileAddress8x16() {
 		int tmp = (byte1 < 0 ? (byte1 & 0b11111110) + 256 : (byte1 & 0b11111110)) << 4;
 
-		return tmp + (byte1 & 0x0000001) << 12;
+		return ((byte1 & 0x0000001) << 12) | tmp;
 	}
 
 	// Byte 2
@@ -121,7 +121,7 @@ public class OAM implements Cloneable {
 	public void setPaternTableData(byte[][] patternTable) {
 		this.patternTable = patternTable;
 	}
-	
+
 	@Override
 	protected OAM clone() {
 		OAM oam = new OAM();
@@ -130,10 +130,10 @@ public class OAM implements Cloneable {
 		oam.setByte2(this.getByte2());
 		oam.setByte3(this.getByte3());
 		oam.setPaternTableData(this.getPaternTableData());
-		
+
 		return oam;
 	}
-	
+
 	@Override
 	public String toString() {
 		return String.format("[%02X, %02X, %02X, %02X]", byte0, byte1, byte2, byte3);

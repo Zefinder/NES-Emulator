@@ -68,7 +68,8 @@ public class PPURender {
 			int v = register.getBackgroundRegisters().getV();
 			int t = register.getBackgroundRegisters().getT();
 			register.getBackgroundRegisters().setV((v & ~0x7BE0) | (t & 0x7BE0));
-		} else if (cycle >= 321 && cycle <= 336) {
+		} else if (cycle >= 321 && cycle <= 336 && register.getExternalRegisters().doShowBg()
+				&& register.getExternalRegisters().doShowSprites()) {
 			fetchNextTiles(register, bus);
 		}
 	}
@@ -81,7 +82,9 @@ public class PPURender {
 
 		} else if (cycle <= 256) {
 			renderPixel(scanline, cycle, register, bus);
-			fetchNextTile(register.getBackgroundRegisters().getTile2(), register, bus);
+			// Attention, il faut prendre la PROCHAINE TUILE
+			fetchNextTile(register.getBackgroundRegisters().getTile2(), register, bus,
+					register.getBackgroundRegisters().getV() + 1);
 			register.augX();
 			if (cycle % 8 == 0) { // Chaque 8 cycles, on a fini de fetch une tuile !
 				register.getBackgroundRegisters().setTile1(register.getBackgroundRegisters().getTile2());
@@ -132,7 +135,7 @@ public class PPURender {
 			}
 
 			if (cycle == 256) {
-				register.getSpritesRegisters().setSecondaryOAM(nextSecondary);
+				register.getSpritesRegisters().setSecondaryOAM(nextSecondary.clone());
 			}
 		} else if (cycle <= 320) {
 			if (cycle == 257) {
@@ -169,10 +172,10 @@ public class PPURender {
 		}
 	}
 
-	private void fetchNextTile(Tile tile, PPURegisters register, Bus bus) throws AddressException {
-		int v = register.getBackgroundRegisters().getV();
+	private void fetchNextTile(Tile tile, PPURegisters register, Bus bus, int v) throws AddressException {
 		switch (counter) {
 		case 0:
+//			System.out.println("Adresse de la tuile : " + (0x2000 | (v & 0x0FFF)));
 			tile.setNametable(bus.getByteFromMemory(0x2000 | (v & 0x0FFF)));
 			break;
 
@@ -194,12 +197,15 @@ public class PPURender {
 	}
 
 	private void fetchNextTiles(PPURegisters register, Bus bus) throws AddressException {
+		// TODO Attention au fetch, vérifier qu'il fetch bien le bon truc !
 		if (!tile2) {
-			fetchNextTile(register.getBackgroundRegisters().getTile1(), register, bus);
+			fetchNextTile(register.getBackgroundRegisters().getTile1(), register, bus,
+					register.getBackgroundRegisters().getV());
 			if (counter == 0)
 				tile2 = true;
 		} else {
-			fetchNextTile(register.getBackgroundRegisters().getTile2(), register, bus);
+			fetchNextTile(register.getBackgroundRegisters().getTile2(), register, bus,
+					register.getBackgroundRegisters().getV() + 1);
 			if (counter == 0)
 				tile2 = false;
 		}
@@ -227,8 +233,9 @@ public class PPURender {
 		NesColors bgPixel = (register.getExternalRegisters().doShowBg() ? fetchBackgroundPixel(register, bus)
 				: NesColors.X0D);
 
+		// Attention, on démarre à écrire cycle 1
 		NesColors spritePixel = (register.getExternalRegisters().doShowSprites()
-				? fetchSpritePixel(scanline, cycle, register, bus)
+				? fetchSpritePixel(scanline, cycle - 1, register, bus)
 				: NesColors.X0D);
 
 		if (bgPixel != universalBackground) {
@@ -286,7 +293,7 @@ public class PPURender {
 
 		for (OAM oam : secondary) {
 			int byte3 = (oam.getByte3() < 0 ? oam.getByte3() + 256 : oam.getByte3());
-			int byte0 = (oam.getByte0() < 0 ? oam.getByte0() + 256 : oam.getByte0());
+			int byte0 = (oam.getByte0() < 0 ? oam.getByte0() + 256 : oam.getByte0()) + 1;
 			if (x >= byte3 && x < byte3 + 8 && y >= byte0 && y < byte0 + 8) {
 				int paletteNumber = oam.getByte2() & 0b00000011;
 				int paletteAddress = 0x3F10 + 4 * paletteNumber;

@@ -1,6 +1,8 @@
 package nes.components;
 
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -46,7 +48,7 @@ public class Screen extends JFrame implements PPURenderListener, Runnable {
 	}
 
 	private JPanel buildScreen() {
-		screen = new BufferedImage(SCREENX_SIZE * 8 * 3, SCREENY_SIZE * 8 * 3, BufferedImage.TYPE_3BYTE_BGR);
+		screen = new BufferedImage(SCREENX_SIZE * 8, SCREENY_SIZE * 8, BufferedImage.TYPE_3BYTE_BGR);
 		JPanel panel = new ImagePanel(screen);
 
 		return panel;
@@ -67,6 +69,7 @@ public class Screen extends JFrame implements PPURenderListener, Runnable {
 			try {
 				NesColors pixel = pixelQueue.take();
 				drawPixel(pixel.getRGBFromCode());
+
 				screenPanel.repaint();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -74,21 +77,14 @@ public class Screen extends JFrame implements PPURenderListener, Runnable {
 	}
 
 	private void drawPixel(int pixel) {
-		int pixelSqr = PIXEL_SIZE * PIXEL_SIZE;
-		int[] toDraw = new int[pixelSqr];
-
-		for (int i = 0; i < pixelSqr; i++) {
-			toDraw[i] = pixel;
-		}
-
-		screen.setRGB(x*PIXEL_SIZE, y*PIXEL_SIZE, PIXEL_SIZE, PIXEL_SIZE, toDraw, 0, 0);
+		screen.setRGB(x, y, pixel);
 		if (++x >= 256) {
 			x = 0;
 			if (++y >= 239)
 				y = 0;
 		}
 	}
-
+	
 	public void connectScreen() {
 		this.setVisible(true);
 		Thread t = new Thread(this);
@@ -101,17 +97,26 @@ public class Screen extends JFrame implements PPURenderListener, Runnable {
 		 * 
 		 */
 		private static final long serialVersionUID = -3757478389543862468L;
-		private BufferedImage image;
 
 		public ImagePanel(BufferedImage image) {
-			this.image = image;
 		}
 
 		@Override
 		protected void paintComponent(Graphics g) {
 			super.paintComponent(g);
-			g.drawImage(image, 19, 19, this);
+			Graphics2D g2 = (Graphics2D) g;
+	        
+	        AffineTransform t = new AffineTransform();
+	        
+	        float currentImgWidth = screen.getWidth()*PIXEL_SIZE, currentImgHeight = screen.getHeight()*PIXEL_SIZE;
+	        t.translate(808/2-currentImgWidth/2, 762/2-currentImgHeight/2);
+	        //J'applique le "scale"
+	        t.scale(PIXEL_SIZE, PIXEL_SIZE);
+	        //Et j'affiche en utilisant la transformation
+	        g2.drawImage(screen, t, null);
+	        g2.dispose();
 		}
 
 	}
+
 }

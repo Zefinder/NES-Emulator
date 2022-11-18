@@ -1,6 +1,7 @@
 package tests;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,6 +82,7 @@ class InstructionsTest {
 
 		bus.setByteToMemory(0x86, (byte) 0x4A);
 		bus.setByteToMemory(0x87, (byte) 0x26);
+		bus.setByteToMemory(0x88, (byte) 0x81);
 
 		bus.setByteToMemory(0xAB, (byte) 0x01);
 
@@ -726,7 +728,7 @@ class InstructionsTest {
 	public void bcsFail() throws AddressException {
 		instruction = new Instruction(InstructionSet.BCS, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		
+
 		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
@@ -759,7 +761,7 @@ class InstructionsTest {
 	public void beqFail() throws AddressException {
 		instruction = new Instruction(InstructionSet.BEQ, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		
+
 		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
@@ -815,7 +817,7 @@ class InstructionsTest {
 	public void bmiFail() throws AddressException {
 		instruction = new Instruction(InstructionSet.BMI, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		
+
 		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
@@ -849,7 +851,7 @@ class InstructionsTest {
 		registres.setP((byte) 0b00000010);
 		instruction = new Instruction(InstructionSet.BNE, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		
+
 		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
@@ -881,7 +883,7 @@ class InstructionsTest {
 		registres.setP((byte) 0b10000000);
 		instruction = new Instruction(InstructionSet.BPL, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		
+
 		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
@@ -939,7 +941,7 @@ class InstructionsTest {
 		registres.setP((byte) 0b01000000);
 		instruction = new Instruction(InstructionSet.BVC, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		
+
 		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
@@ -970,7 +972,7 @@ class InstructionsTest {
 	public void bvsFail() throws AddressException {
 		instruction = new Instruction(InstructionSet.BVS, AddressingMode.RELATIVE);
 		instruction.setArgument((byte) 0xE, (byte) 0);
-		
+
 		int cycles = instructionReader.processInstruction(instruction, registres);
 		assertTrue(registres.getPc() == 0x0);
 		assertTrue(cycles == 2);
@@ -2236,10 +2238,15 @@ class InstructionsTest {
 		assertTrue(bus.getByteFromMemory(0x40) == 12);
 		assertTrue(registres.getP() == (byte) 0b00000000);
 
-		instruction.setArgument((byte) 0x86, (byte) 0);
+		instruction.setArgument((byte) 0x88, (byte) 0);
 		instructionReader.processInstruction(instruction, registres);
-		assertTrue(bus.getByteFromMemory(0x86) == (byte) 0x94);
-		assertTrue(registres.getP() == (byte) 0b10000000);
+		assertTrue(bus.getByteFromMemory(0x88) == (byte) 0x02);
+		assertTrue(registres.getP() == (byte) 0b00000001);
+		
+		instruction.setArgument((byte) 0x88, (byte) 0);
+		instructionReader.processInstruction(instruction, registres);
+		assertTrue(bus.getByteFromMemory(0x88) == (byte) 0x05);
+		assertTrue(registres.getP() == (byte) 0b00000000);
 	}
 
 	@Test
@@ -2288,6 +2295,20 @@ class InstructionsTest {
 		assertTrue(registres.getP() == (byte) 0b00000000);
 	}
 
+	@Test
+	public void rolCFlag() throws AddressException {
+		registres.setA((byte) 0x80);
+
+		instruction = new Instruction(InstructionSet.ROL, AddressingMode.ACCUMULATOR);
+		instructionReader.processInstruction(instruction, registres);
+		assertEquals((byte) 0, registres.getA());
+		assertEquals((byte) 1, (registres.getP() & 0b1));
+
+		instructionReader.processInstruction(instruction, registres);
+		assertEquals((byte) 0x01, registres.getA());
+		assertEquals((byte) 0, (registres.getP() & 0b1));
+	}
+	
 	@Test
 	public void rolZFlag() throws AddressException {
 		registres.setA((byte) 0x80);
@@ -2340,10 +2361,15 @@ class InstructionsTest {
 		assertTrue(bus.getByteFromMemory(0x40) == 3);
 		assertTrue(registres.getP() == (byte) 0b00000000);
 
-		instruction.setArgument((byte) 0x86, (byte) 0);
+		instruction.setArgument((byte) 0x88, (byte) 0);
 		instructionReader.processInstruction(instruction, registres);
-		assertTrue(bus.getByteFromMemory(0x86) == (byte) 0x25);
-		assertTrue(registres.getP() == (byte) 0b00000000);
+		assertTrue(bus.getByteFromMemory(0x88) == (byte) 0x40);
+		assertTrue(registres.getP() == (byte) 0b00000001);
+		
+		instruction.setArgument((byte) 0x88, (byte) 0);
+		instructionReader.processInstruction(instruction, registres);
+		assertTrue(bus.getByteFromMemory(0x88) == (byte) 0xA0);
+		assertTrue(registres.getP() == (byte) 0b10000000);
 	}
 
 	@Test
@@ -2393,6 +2419,20 @@ class InstructionsTest {
 	}
 
 	@Test
+	public void rorCFlag() throws AddressException {
+		registres.setA((byte) 1);
+
+		instruction = new Instruction(InstructionSet.ROR, AddressingMode.ACCUMULATOR);
+		instructionReader.processInstruction(instruction, registres);
+		assertEquals((byte) 0, registres.getA());
+		assertEquals((byte) 1, (registres.getP() & 0b1));
+
+		instructionReader.processInstruction(instruction, registres);
+		assertEquals((byte) 0x80, registres.getA());
+		assertEquals((byte) 0, (registres.getP() & 0b1));
+	}
+
+	@Test
 	public void rorZFlag() throws AddressException {
 		registres.setA((byte) 1);
 
@@ -2427,7 +2467,7 @@ class InstructionsTest {
 		assertTrue(registres.getPc() == 0x4FED);
 		assertTrue(registres.getSp() == 0x1FF);
 		assertTrue(registres.getP() == (byte) 0b10000010);
-		
+
 		instruction = new Instruction(InstructionSet.BRK, AddressingMode.IMPLICIT);
 		instructionReader.processInstruction(instruction, registres);
 

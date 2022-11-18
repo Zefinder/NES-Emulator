@@ -79,6 +79,13 @@ public class Desassembler {
 	}
 
 	public Map<Integer, Instruction> getInstructionList() {
+		if (prgChunksNumber == 1) {
+			try {
+				disassemble(0xC000);
+			} catch (IOException | InstructionException e) {
+				e.printStackTrace();
+			}
+		}
 		return instructionMap;
 	}
 
