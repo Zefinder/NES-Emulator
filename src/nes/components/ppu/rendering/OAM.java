@@ -75,7 +75,7 @@ public class OAM implements Cloneable {
 	}
 
 	public void setPriority(int priority) {
-		priority %= 2;
+		priority &= 0b1;
 		priority = priority << 5;
 		byte2 &= 0b11011111;
 		byte2 |= priority;

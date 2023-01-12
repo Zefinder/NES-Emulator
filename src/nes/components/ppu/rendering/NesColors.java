@@ -53,7 +53,6 @@ public enum NesColors {
 
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
 		return String.format("%s (%d %d %d)", this.name(), r, g, b);
 	}
 }

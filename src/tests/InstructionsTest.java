@@ -19,14 +19,6 @@ import nes.instructions.InstructionReader;
 class InstructionsTest {
 
 	private static CPURegisters registres;
-
-	// Liste des constituants du bus
-	private static byte[] memory;
-	private static byte[] ppuRegisters;
-	private static byte[] apuIORegisters;
-	private static byte[] testMode;
-	private static byte[] catridge;
-
 	private static Bus bus;
 	private static InstructionReader instructionReader;
 
@@ -35,37 +27,9 @@ class InstructionsTest {
 	@BeforeAll
 	public static void init() throws AddressException {
 		registres = new CPURegisters();
-
-		memory = new byte[0x800];
-		ppuRegisters = new byte[0x08];
-		apuIORegisters = new byte[0x18];
-		testMode = new byte[0x08];
-		catridge = new byte[0xBFE0];
-
-		bus = new CPUBus();
-
-		// Mémoire et ses réflexions
-		bus.addToMemoryMap(memory);
-		bus.addToMemoryMap(memory);
-		bus.addToMemoryMap(memory);
-		bus.addToMemoryMap(memory);
-
-		// Registres PPU et ses réflexions
-		for (int i = 0x2007; i <= 0x3FFF; i = i + 0x08) {
-			bus.addToMemoryMap(ppuRegisters);
-		}
-
-		// APU et les registres IO
-		bus.addToMemoryMap(apuIORegisters);
-
-		// APU et Registres IO non utilisés (test mode)
-		bus.addToMemoryMap(testMode);
-
-		// Cartouche
-		bus.addToMemoryMap(catridge);
+		bus = new CPUBus(0x10000);
 
 		instructionReader = new InstructionReader(bus);
-
 	}
 
 	@BeforeEach
@@ -2242,7 +2206,7 @@ class InstructionsTest {
 		instructionReader.processInstruction(instruction, registres);
 		assertTrue(bus.getByteFromMemory(0x88) == (byte) 0x02);
 		assertTrue(registres.getP() == (byte) 0b00000001);
-		
+
 		instruction.setArgument((byte) 0x88, (byte) 0);
 		instructionReader.processInstruction(instruction, registres);
 		assertTrue(bus.getByteFromMemory(0x88) == (byte) 0x05);
@@ -2308,7 +2272,7 @@ class InstructionsTest {
 		assertEquals((byte) 0x01, registres.getA());
 		assertEquals((byte) 0, (registres.getP() & 0b1));
 	}
-	
+
 	@Test
 	public void rolZFlag() throws AddressException {
 		registres.setA((byte) 0x80);
@@ -2365,7 +2329,7 @@ class InstructionsTest {
 		instructionReader.processInstruction(instruction, registres);
 		assertTrue(bus.getByteFromMemory(0x88) == (byte) 0x40);
 		assertTrue(registres.getP() == (byte) 0b00000001);
-		
+
 		instruction.setArgument((byte) 0x88, (byte) 0);
 		instructionReader.processInstruction(instruction, registres);
 		assertTrue(bus.getByteFromMemory(0x88) == (byte) 0xA0);

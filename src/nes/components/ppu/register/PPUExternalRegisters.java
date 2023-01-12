@@ -113,7 +113,7 @@ public class PPUExternalRegisters {
 	}
 
 	public void setNametableAddress(byte addressNumber) {
-		byte tmp = (byte) (addressNumber % 4);
+		byte tmp = (byte) (addressNumber & 0b11);
 		PPUCTRL |= tmp;
 	}
 

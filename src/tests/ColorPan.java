@@ -10,7 +10,12 @@ import javax.swing.JFrame;
  * Sert pour les tests de fonctionnalités !
  */
 public class ColorPan extends JComponent {
-    public void paint(Graphics g) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 68441270052728483L;
+
+	public void paint(Graphics g) {
         int width = getSize().width;
         int height = getSize().height;
         int[] data = new int[width * height];

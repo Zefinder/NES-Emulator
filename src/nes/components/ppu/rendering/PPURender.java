@@ -86,7 +86,7 @@ public class PPURender {
 			fetchNextTile(register.getBackgroundRegisters().getTile2(), register, bus,
 					register.getBackgroundRegisters().getV() + 1);
 			register.augX();
-			if (cycle % 8 == 0) { // Chaque 8 cycles, on a fini de fetch une tuile !
+			if ((cycle & 0b111) == 0) { // Chaque 8 cycles, on a fini de fetch une tuile !
 				register.getBackgroundRegisters().setTile1(register.getBackgroundRegisters().getTile2());
 				register.getBackgroundRegisters().renewTile2();
 			}
@@ -102,7 +102,7 @@ public class PPURender {
 			spriteCounter = 0;
 			secondaryCounter = 0;
 		} else if (cycle >= 1 && cycle <= 64) {
-			if ((cycle - 1) % 8 == 0) {
+			if (((cycle - 1) & 0b111) == 0) {
 				nextSecondary[(cycle - 1) / 8] = new OAM();
 			}
 
@@ -142,20 +142,24 @@ public class PPURender {
 				secondaryCounter = -1;
 			}
 
-			if ((cycle - 1) % 8 == 0) {
+			int tmp = (cycle - 1) & 0b111;
+			switch (tmp) {
+			case 0:
 				tmpOAM = nextSecondary[++secondaryCounter];
 				EventManager.getInstance().fireChanging2004(tmpOAM.getByte0());
-			}
+				break;
 
-			else if ((cycle - 1) % 8 == 1) {
+			case 1:
 				EventManager.getInstance().fireChanging2004(tmpOAM.getByte1());
-			}
+				break;
 
-			else if ((cycle - 1) % 8 == 2) {
+			case 2:
 				EventManager.getInstance().fireChanging2004(tmpOAM.getByte2());
+				break;
 
-			} else {
+			default:
 				EventManager.getInstance().fireChanging2004(tmpOAM.getByte3());
+				break;
 			}
 		}
 	}
@@ -193,7 +197,9 @@ public class PPURender {
 		default:
 			break;
 		}
-		counter = (++counter) % 8;
+
+		if (counter == 8)
+			counter = 0;
 	}
 
 	private void fetchNextTiles(PPURegisters register, Bus bus) throws AddressException {
@@ -213,7 +219,7 @@ public class PPURender {
 
 	private void fetchNextSpriteData(int scanline, PPURegisters register, Bus bus) throws AddressException {
 		OAM sprite = register.getSpritesRegisters().getSecondaryOAM()[counter / 8];
-		if (counter % 8 == 4) {
+		if ((counter & 0b111) == 4) {
 			if (!register.getExternalRegisters().getSpriteSize())
 				sprite.setPaternTableData(getPatternTable(sprite.getTileAddress8x8(register), bus));
 			else {
@@ -224,7 +230,8 @@ public class PPURender {
 			}
 		}
 
-		counter = (++counter) % 64;
+		if (++counter == 64)
+			counter = 0;
 	}
 
 	private void renderPixel(int scanline, int cycle, PPURegisters register, Bus bus) throws AddressException {
@@ -278,7 +285,7 @@ public class PPURender {
 //		if (y % 4 >= 2)
 //			offset += 4;
 
-		offset = (2 * ((column % 4) >> 1) + 4 * ((row % 4) >> 1));
+		offset = (2 * ((column & 0b11) >> 1) + 4 * ((row & 0b11) >> 1));
 		int paletteNumber = (tile.getAttributeTable() >> offset) & 0b00000011;
 		int paletteAddress = 0x3F00 + 4 * paletteNumber;
 		int pattern = tile.getPatternTable()[(V >> 12) & 0b111][register.getBackgroundRegisters().getX()];

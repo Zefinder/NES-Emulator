@@ -89,8 +89,6 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		this.ppuRegistres = ppu.getRegistres();
 		this.instructionMap = nes.getInstructionMap();
 
-		this.cpuBusContent = new String[cpu.getBus().getSize()][2];
-		this.ppuBusContent = new String[ppu.getBus().getSize()][2];
 		this.labelSprites = new JLabel[8];
 		this.spriteTiles = new BufferedImage[8];
 		EventManager.getInstance().addBusListener(this);
@@ -116,25 +114,21 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		JPanel spritePanel = buildSpritePanel();
 		this.add(spritePanel, BorderLayout.CENTER);
 
-//		final ScheduledExecutorService schAuto1 = Executors.newScheduledThreadPool(1);
-//		schAuto1.scheduleAtFixedRate(new Runnable() {
-//
-//			private int counter = 0;
-//
-//			@Override
-//			public void run() {
-//				try {
-//					if (auto1) {
-//						nes.tick();
-//						counter = ++counter % 5;
-//						if (counter == 0)
-//							update();
-//					}
-//				} catch (AddressException e) {
-//					e.printStackTrace();
-//				}
-//			}
-//		}, 0, 31250, TimeUnit.MICROSECONDS);
+		final ScheduledExecutorService schAuto1 = Executors.newScheduledThreadPool(1);
+		schAuto1.scheduleAtFixedRate(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					if (auto1) {
+						nes.tick();
+						update();
+					}
+				} catch (AddressException e) {
+					e.printStackTrace();
+				}
+			}
+		}, 0, 31250, TimeUnit.MICROSECONDS);
 //
 //		final ScheduledExecutorService schAuto2 = Executors.newScheduledThreadPool(1);
 //		schAuto2.scheduleAtFixedRate(new Runnable() {
@@ -176,45 +170,45 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 //			}
 //		}, 0, 1953125, TimeUnit.NANOSECONDS);
 
-		final ScheduledExecutorService schAuto4 = Executors.newScheduledThreadPool(1);
-		schAuto4.scheduleAtFixedRate(new Runnable() {
+//		final ScheduledExecutorService schAuto4 = Executors.newScheduledThreadPool(1);
+//		schAuto4.scheduleAtFixedRate(new Runnable() {
+//
+//			private int counter = 0;
+//
+//			@Override
+//			public void run() {
+//				try {
+//					if (auto4) {
+//						nes.tick();
+//						counter = ++counter % 5;
+//						if (counter == 0)
+//							update();
+//					}
+//				} catch (AddressException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		}, 0, 488281, TimeUnit.NANOSECONDS);
 
-			private int counter = 0;
-
-			@Override
-			public void run() {
-				try {
-					if (auto4) {
-						nes.tick();
-						counter = ++counter % 5;
-						if (counter == 0)
-							update();
-					}
-				} catch (AddressException e) {
-					e.printStackTrace();
-				}
-			}
-		}, 0, 488281, TimeUnit.NANOSECONDS);
-
-		final ScheduledExecutorService schAuto5 = Executors.newScheduledThreadPool(1);
-		schAuto5.scheduleAtFixedRate(new Runnable() {
-
-			private int counter = 0;
-
-			@Override
-			public void run() {
-				try {
-					if (auto5) {
-						nes.tick();
-						counter = ++counter % 150000;
-						if (counter == 0)
-							update();
-					}
-				} catch (AddressException e) {
-					e.printStackTrace();
-				}
-			}
-		}, 0, 37, TimeUnit.NANOSECONDS);
+//		final ScheduledExecutorService schAuto5 = Executors.newScheduledThreadPool(1);
+//		schAuto5.scheduleAtFixedRate(new Runnable() {
+//
+////			private int counter = 0;
+//
+//			@Override
+//			public void run() {
+//				try {
+//					if (auto5) {
+//						nes.tick();
+////						counter = ++counter % 150000;
+////						if (counter == 0)
+////							update();
+//					}
+//				} catch (AddressException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		}, 0, 190, TimeUnit.NANOSECONDS);
 
 		this.setVisible(false);
 	}
@@ -475,11 +469,14 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 	}
 
 	private void nextPPUStep() throws AddressException {
-		nes.nextPPUTick();
+		nes.tick();
 	}
 
 	private void nextCPUStep() throws AddressException {
-		nes.nextCPUTick();
+		nes.tick();
+		nes.tick();
+		nes.tick();
+		nes.tick();
 	}
 
 	private void nextVBlank() throws AddressException {
@@ -871,8 +868,8 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		/***** CPU bus *****/
 		JPanel cpuPanel = new JPanel();
 
-		cpuBusContent = new String[cpu.getBus().getSize()][2];
 		byte[] data = cpu.getBus().getValues();
+		cpuBusContent = new String[data.length][2];
 		for (int row = 0; row < data.length; row++) {
 			cpuBusContent[row][0] = String.format("0x%04X", row);
 			cpuBusContent[row][1] = String.format("0x%02X", data[row]);
@@ -891,7 +888,8 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 
 		JPanel ppuPanel = new JPanel();
 
-		ppuBusContent = new String[ppu.getBus().getSize()][2];
+		data = ppu.getBus().getValues();
+		ppuBusContent = new String[data.length][2];
 		data = ppu.getBus().getValues();
 		for (int row = 0; row < data.length; row++) {
 			ppuBusContent[row][0] = String.format("0x%04X", row);
@@ -1143,7 +1141,7 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		CPU cpu = new CPU();
 		PPU ppu = new PPU();
 
-		NES nes = new NES(cpu, ppu, new File("./Donkey Kong.nes"));
+		NES nes = new NES(cpu, ppu, new File("./Super Mario Bros.nes"));
 		nes.start();
 
 		FullRegisterFrame frame = new FullRegisterFrame(nes, cpu, ppu);

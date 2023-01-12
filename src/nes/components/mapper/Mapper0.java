@@ -36,6 +36,8 @@ public class Mapper0 extends Mapper {
 			ppuBus.setByteToMemory(i, chrRom[i]);
 		}
 
+		// TODO à implémenter
+//		((PPUBus) ppuBus).setVerticalScrolling(verticalScrolling);
 		return verticalScrolling;
 	}
 

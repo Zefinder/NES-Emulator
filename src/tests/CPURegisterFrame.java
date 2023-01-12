@@ -137,7 +137,9 @@ public class CPURegisterFrame extends JFrame implements KeyListener {
 	}
 
 	private void nextInstruction() throws AddressException {
-		nes.nextCPUTick();
+		nes.tick();
+		nes.tick();
+		nes.tick();
 		update();
 	}
 
@@ -312,7 +314,7 @@ public class CPURegisterFrame extends JFrame implements KeyListener {
 	@Override
 	public void keyReleased(KeyEvent e) {
 	}
-	
+
 	public static void main(String[] args)
 			throws NotNesFileException, IOException, InstructionException, AddressException, MapperException {
 		CPU cpu = new CPU();

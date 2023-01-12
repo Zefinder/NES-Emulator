@@ -25,13 +25,6 @@ public class CPU implements Component, Runnable {
 	private ArrayList<Instruction> listInstructions;
 	private ArrayList<Integer> listPc;
 
-	// Liste des constituants du bus
-	private byte[] memory;
-	private byte[] ppuRegisters;
-	private byte[] apuIORegisters;
-	private byte[] testMode;
-	private byte[] catridge;
-
 	private Bus bus;
 	private InstructionReader instructionReader;
 
@@ -40,13 +33,7 @@ public class CPU implements Component, Runnable {
 	public CPU() {
 		registres = new CPURegisters();
 
-		memory = new byte[0x800];
-		ppuRegisters = new byte[0x08];
-		apuIORegisters = new byte[0x18];
-		testMode = new byte[0x08];
-		catridge = new byte[0xBFE0];
-
-		bus = new CPUBus();
+		bus = new CPUBus(0x10000);
 
 		instructionReader = new InstructionReader(bus);
 
@@ -107,25 +94,6 @@ public class CPU implements Component, Runnable {
 
 	@Override
 	public void initMapping(Mapper mapper) throws AddressException {
-		// Mémoire et ses réflexions
-		bus.addToMemoryMap(memory);
-		bus.addToMemoryMap(memory);
-		bus.addToMemoryMap(memory);
-		bus.addToMemoryMap(memory);
-
-		// Registres PPU et ses réflexions
-		for (int i = 0x2007; i <= 0x3FFF; i = i + 0x08) {
-			bus.addToMemoryMap(ppuRegisters);
-		}
-
-		// APU et les registres IO
-		bus.addToMemoryMap(apuIORegisters);
-
-		// APU et Registres IO non utilisés (test mode)
-		bus.addToMemoryMap(testMode);
-
-		// Cartouche
-		bus.addToMemoryMap(catridge);
 		registres.setPc(mapper.mapCPUMemory(bus));
 	}
 
@@ -134,6 +102,7 @@ public class CPU implements Component, Runnable {
 	}
 
 	private Instruction getInstruction() throws AddressException {
+		// TODO Prendre depuis l'instruction
 		Instruction instruction = new Instruction(bus.getByteFromMemory(registres.getPc()));
 		if (instruction.getByteNumber() == 2) {
 			instruction.setArgument(bus.getByteFromMemory(registres.getPc() + 1), (byte) 0);
@@ -167,9 +136,9 @@ public class CPU implements Component, Runnable {
 
 					if (waitingCycles < -1)
 						System.out.println("Cycles d'attente en retard : " + waitingCycles);
-					
+
 //					waitingCycles = instructionReader.getInstructionCycles(instruction, registres);
-					waitingCycles =instructionReader.processInstruction(instruction, registres);
+					waitingCycles = instructionReader.processInstruction(instruction, registres);
 					--waitingCycles;
 					registres.setPc(registres.getPc() + instruction.getByteNumber());
 

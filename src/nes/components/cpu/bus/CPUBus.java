@@ -5,12 +5,12 @@ import nes.exceptions.AddressException;
 import nes.listener.EventManager;
 import nes.listener.RegisterListener;
 
-public class CPUBus extends Bus  implements RegisterListener {
+public class CPUBus extends Bus implements RegisterListener {
 
 	private byte L;
 
-	public CPUBus() {
-		super();
+	public CPUBus(int memorySize) {
+		super(memorySize, true);
 		EventManager.getInstance().addRegisterListener(this);
 	}
 
@@ -119,12 +119,6 @@ public class CPUBus extends Bus  implements RegisterListener {
 			break;
 		}
 
-	}
-	
-	@Override
-	protected synchronized void setByte(int address, byte value) throws AddressException {
-		super.setByte(address, value);
-		EventManager.getInstance().fireValueChanged(true, address, value);
 	}
 
 	@Override
@@ -277,7 +271,7 @@ public class CPUBus extends Bus  implements RegisterListener {
 	public void on4014Read() {
 		// Rien ici
 	}
-	
+
 	@Override
 	public void on2000Changed(byte newValue) {
 		try {

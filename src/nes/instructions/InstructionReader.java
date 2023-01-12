@@ -1191,13 +1191,13 @@ public class InstructionReader {
 
 		case ZEROPAGE_X:
 			lsb = (processing.getLsb() < 0 ? processing.getLsb() + 256 : processing.getLsb());
-			address = (lsb + tmpX) % 0x100;
+			address = (lsb + tmpX) & 0xFF;
 			operand2 = bus.getByteFromMemory(address);
 			break;
 
 		case ZEROPAGE_Y:
 			lsb = (processing.getLsb() < 0 ? processing.getLsb() + 256 : processing.getLsb());
-			address = (lsb + tmpY) % 0x100;
+			address = (lsb + tmpY) & 0xFF;
 			operand2 = bus.getByteFromMemory(address);
 			break;
 
@@ -1236,9 +1236,9 @@ public class InstructionReader {
 
 		case INDIRECT_X:
 			lsb = (processing.getLsb() < 0 ? processing.getLsb() + 256 : processing.getLsb());
-			lsb = bus.getByteFromMemory((lsb + tmpX) % 0x100);
+			lsb = bus.getByteFromMemory((lsb + tmpX) & 0xFF);
 			msb = (processing.getLsb() < 0 ? processing.getLsb() + 256 : processing.getLsb());
-			msb = bus.getByteFromMemory((msb + tmpX + 1) % 0x100);
+			msb = bus.getByteFromMemory((msb + tmpX + 1) & 0xFF);
 
 			lsb = (lsb < 0 ? lsb + 256 : lsb);
 			msb = (msb < 0 ? msb + 256 : msb);

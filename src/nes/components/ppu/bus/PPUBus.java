@@ -1,19 +1,14 @@
 package nes.components.ppu.bus;
 
 import nes.components.Bus;
-import nes.components.ppu.register.PPURegisters;
 import nes.exceptions.AddressException;
 import nes.listener.BusListener;
-import nes.listener.EventManager;
 
 public class PPUBus extends Bus implements BusListener {
 
-	private PPURegisters registers;
-
-	public PPUBus(PPURegisters registers) {
-		super();
-		EventManager.getInstance().addBusListener(this);
-		this.registers = registers;
+	public PPUBus(int memorySize) {
+		super(memorySize, false);
+//		EventManager.getInstance().addBusListener(this);
 	}
 
 	@Override
@@ -62,11 +57,6 @@ public class PPUBus extends Bus implements BusListener {
 			break;
 		}
 		setByte(address, toSet);
-	}
-
-	@Override
-	protected synchronized void setByte(int address, byte value) throws AddressException {
-		super.setByte(address, value);
 	}
 
 	@Override
