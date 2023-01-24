@@ -1,12 +1,15 @@
 package nes.components.mapper;
 
+import java.util.Map;
+
 import nes.components.Bus;
 import nes.exceptions.AddressException;
+import nes.instructions.Instruction;
 
 public class Mapper0 extends Mapper {
 
-	public Mapper0(byte[] prgRom, byte[] chrRom, boolean verticalScrolling) {
-		super(prgRom, chrRom, verticalScrolling);
+	public Mapper0(byte[] prgRom, byte[] chrRom, Map<Integer, Instruction> instructionMap, boolean verticalScrolling) {
+		super(prgRom, chrRom, instructionMap, verticalScrolling);
 	}
 
 	@Override

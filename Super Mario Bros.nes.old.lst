@@ -743,10 +743,10 @@
 0x8646:		CMP #1
 0x8648:		BNE *+7
 0x864A:		LDA #11
-0x864C:		STA $0773
+0x864C:		STA $0773	% ligne 1468
 0x864F:		JMP $8745
 0x8652:		LDA #0
-0x8654:		JSR $8808
+0x8654:		JSR $8808	% WriteGameText
 0x8657:		JMP $8745
 0x865A:		JSR $bc35
 0x865D:		LDX $0300
@@ -847,11 +847,11 @@
 0x873C:		STA $0400, X
 0x873F:		DEX 
 0x8740:		BNE *-7
-0x8742:		JSR $8325
+0x8742:		JSR $8325	
 0x8745:		INC $073c
 0x8748:		RTS 
-0x8749:		LDA #250
-0x874B:		JSR $bc3b
+0x8749:		LDA #250	% WriteTopScore
+0x874B:		JSR $bc3b	% .data sans intérêt
 0x874E:		INC $0772
 0x8751:		RTS 
 0x8752:		JSR $0543
@@ -962,7 +962,7 @@
 0x8801:		NOP 
 0x8802:		LSR $4e
 0x8804:		EOR $6e61, Y
-0x8807:		ROR $0a48
+0x8807:		ROR $0a48	% WriteGameText, 0x48 => PHA !
 0x880A:		TAY 
 0x880B:		CPY #4
 0x880D:		BCC *+14

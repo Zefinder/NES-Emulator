@@ -115,7 +115,20 @@ public class CPUBus extends Bus implements RegisterListener {
 			break;
 
 		default:
-			setByte(address, toSet);
+
+			if (address < 0x2000) {
+				address &= 0x7FF;
+				setByte(address, toSet);
+				setByte(address + 0x800, toSet);
+				setByte(address + 0x1000, toSet);
+				setByte(address + 0x1800, toSet);
+			} else if (address < 0x4000) {
+				address = 0x2000 + (address & 0x7);
+				for (int i = 0x0; i < 0x2000; i += 8)
+					setByte(address + i, toSet);
+			} else
+				setByte(address, toSet);
+
 			break;
 		}
 

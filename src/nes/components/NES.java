@@ -139,7 +139,11 @@ public class NES implements Component {
 	}
 
 	public void setMapper(byte[] prgRom, byte[] chrRom, boolean verticalScrolling) {
-		mapper = new Mapper0(prgRom, chrRom, verticalScrolling);
+		mapper = new Mapper0(prgRom, chrRom, instructionMap, verticalScrolling);
+	}
+	
+	public Map<Integer, Instruction> getInstructionMap() {
+		return instructionMap;
 	}
 
 	public static void main(String[] args)
@@ -182,10 +186,6 @@ public class NES implements Component {
 
 	private void framerate(long debut, long fin) {
 		System.out.println("Framerate : " + 50000.0 / (fin - debut) + " tps");
-	}
-
-	public Map<Integer, Instruction> getInstructionMap() {
-		return instructionMap;
 	}
 
 }

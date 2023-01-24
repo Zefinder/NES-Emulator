@@ -105,7 +105,7 @@ public class PPU implements Component, Runnable {
 
 				if (cycle == 341) {
 					cycle = 0;
-					if (scanline == 311)
+					if (++scanline == 311)
 						scanline = 0;
 				}
 

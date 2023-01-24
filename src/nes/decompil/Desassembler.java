@@ -52,7 +52,7 @@ public class Desassembler {
 					throw new InstructionException("Incomplete instruction for " + instruction.getInstruction() + "!");
 
 				byteRead = allBytes[++i];
-				instruction.setArgument(byteRead, (byte) 0);
+				instruction.setArgument(byteRead, 0);
 
 			} else if (byteNumber == 3) {
 				byte msb, lsb;

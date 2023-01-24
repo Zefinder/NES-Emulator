@@ -114,21 +114,21 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 		JPanel spritePanel = buildSpritePanel();
 		this.add(spritePanel, BorderLayout.CENTER);
 
-		final ScheduledExecutorService schAuto1 = Executors.newScheduledThreadPool(1);
-		schAuto1.scheduleAtFixedRate(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					if (auto1) {
-						nes.tick();
-						update();
-					}
-				} catch (AddressException e) {
-					e.printStackTrace();
-				}
-			}
-		}, 0, 31250, TimeUnit.MICROSECONDS);
+//		final ScheduledExecutorService schAuto1 = Executors.newScheduledThreadPool(1);
+//		schAuto1.scheduleAtFixedRate(new Runnable() {
+//
+//			@Override
+//			public void run() {
+//				try {
+//					if (auto1) {
+//						nes.tick();
+//						update();
+//					}
+//				} catch (AddressException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		}, 0, 31250, TimeUnit.MICROSECONDS);
 //
 //		final ScheduledExecutorService schAuto2 = Executors.newScheduledThreadPool(1);
 //		schAuto2.scheduleAtFixedRate(new Runnable() {
@@ -190,25 +190,26 @@ public class FullRegisterFrame extends JFrame implements KeyListener, BusListene
 //			}
 //		}, 0, 488281, TimeUnit.NANOSECONDS);
 
-//		final ScheduledExecutorService schAuto5 = Executors.newScheduledThreadPool(1);
-//		schAuto5.scheduleAtFixedRate(new Runnable() {
-//
-////			private int counter = 0;
-//
-//			@Override
-//			public void run() {
-//				try {
-//					if (auto5) {
-//						nes.tick();
-////						counter = ++counter % 150000;
-////						if (counter == 0)
-////							update();
-//					}
-//				} catch (AddressException e) {
-//					e.printStackTrace();
-//				}
-//			}
-//		}, 0, 190, TimeUnit.NANOSECONDS);
+		final ScheduledExecutorService schAuto5 = Executors.newScheduledThreadPool(1);
+		schAuto5.scheduleAtFixedRate(new Runnable() {
+
+			private int counter = 0;
+
+			@Override
+			public void run() {
+				try {
+					if (auto5) {
+						nes.tick();
+						if (++counter == 150000) {
+							update();
+							counter = 0;
+						}
+					}
+				} catch (AddressException e) {
+					e.printStackTrace();
+				}
+			}
+		}, 0, 190, TimeUnit.NANOSECONDS);
 
 		this.setVisible(false);
 	}

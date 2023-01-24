@@ -2339,10 +2339,7 @@ public class InstructionReader {
 		else
 			registres.setSp(registres.getSp() - 1);
 
-		// On met le low - 1 pour contrebalancer le fait que NMI n'ait pas de byte
-		// d'instruction et où on doit exécuter l'instruction qui aurait dû être
-		// exécutée
-		bus.setByteToMemory(registres.getSp(), (byte) (pcl - 1));
+		bus.setByteToMemory(registres.getSp(), pcl);
 		if (registres.getSp() == 0x100)
 			registres.setSp(0x1FF);
 		else
@@ -2361,6 +2358,9 @@ public class InstructionReader {
 		msb = (pch < 0 ? pch + 256 : pch);
 		int address = (msb << 8) | lsb;
 		registres.setPc(address);
+
+		// On met à jour P
+		P &= 0b11101111;
 
 //		System.out.println("On va à l'adresse : " + String.format("0x%04x", address));
 //		System.out.println("Adresse de retour : " + String.format("0x%04x", oldAddress + 1));

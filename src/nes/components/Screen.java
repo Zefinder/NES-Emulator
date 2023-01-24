@@ -84,7 +84,7 @@ public class Screen extends JFrame implements PPURenderListener, Runnable {
 				y = 0;
 		}
 	}
-	
+
 	public void connectScreen() {
 		this.setVisible(true);
 		Thread t = new Thread(this);
@@ -105,16 +105,16 @@ public class Screen extends JFrame implements PPURenderListener, Runnable {
 		protected void paintComponent(Graphics g) {
 			super.paintComponent(g);
 			Graphics2D g2 = (Graphics2D) g;
-	        
-	        AffineTransform t = new AffineTransform();
-	        
-	        float currentImgWidth = screen.getWidth()*PIXEL_SIZE, currentImgHeight = screen.getHeight()*PIXEL_SIZE;
-	        t.translate(808/2-currentImgWidth/2, 762/2-currentImgHeight/2);
-	        //J'applique le "scale"
-	        t.scale(PIXEL_SIZE, PIXEL_SIZE);
-	        //Et j'affiche en utilisant la transformation
-	        g2.drawImage(screen, t, null);
-	        g2.dispose();
+
+			AffineTransform t = new AffineTransform();
+
+			float currentImgWidth = screen.getWidth() * PIXEL_SIZE, currentImgHeight = screen.getHeight() * PIXEL_SIZE;
+			t.translate(808 / 2 - currentImgWidth / 2, 762 / 2 - currentImgHeight / 2);
+			// J'applique le "scale"
+			t.scale(PIXEL_SIZE, PIXEL_SIZE);
+			// Et j'affiche en utilisant la transformation
+			g2.drawImage(screen, t, null);
+			g2.dispose();
 		}
 
 	}

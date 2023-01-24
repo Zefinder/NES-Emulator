@@ -1,6 +1,8 @@
 package nes.components.cpu;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import nes.components.Bus;
 import nes.components.Component;
@@ -18,12 +20,14 @@ public class CPU implements Component, Runnable {
 	// Registres CPU
 	private CPURegisters registres;
 
-	private volatile int waitingCycles = 0;
+	private int waitingCycles = 0;
 	private volatile boolean readyForNext;
+	private Instruction instruction;
 
-	// A effacer après les tests
-	private ArrayList<Instruction> listInstructions;
-	private ArrayList<Integer> listPc;
+	private Map<Integer, Instruction> instructionMap;
+
+	private List<Instruction> instructionList;
+	private List<Integer> pcList;
 
 	private Bus bus;
 	private InstructionReader instructionReader;
@@ -32,13 +36,11 @@ public class CPU implements Component, Runnable {
 
 	public CPU() {
 		registres = new CPURegisters();
-
 		bus = new CPUBus(0x10000);
-
 		instructionReader = new InstructionReader(bus);
 
-		listInstructions = new ArrayList<>();
-		listPc = new ArrayList<>();
+		instructionList = new ArrayList<>();
+		pcList = new ArrayList<>();
 
 		cpuThread = new Thread(this);
 		cpuThread.setName("Thread CPU");
@@ -59,6 +61,7 @@ public class CPU implements Component, Runnable {
 		for (int i = 0x4000; i <= 0x4013; i++) {
 			bus.setByteToMemory(i, (byte) 0x00);
 		}
+
 	}
 
 	@Override
@@ -95,6 +98,7 @@ public class CPU implements Component, Runnable {
 	@Override
 	public void initMapping(Mapper mapper) throws AddressException {
 		registres.setPc(mapper.mapCPUMemory(bus));
+		this.instructionMap = mapper.getInstructionMap();
 	}
 
 	public CPURegisters getRegistres() {
@@ -102,15 +106,26 @@ public class CPU implements Component, Runnable {
 	}
 
 	private Instruction getInstruction() throws AddressException {
-		// TODO Prendre depuis l'instruction
-		Instruction instruction = new Instruction(bus.getByteFromMemory(registres.getPc()));
-		if (instruction.getByteNumber() == 2) {
-			instruction.setArgument(bus.getByteFromMemory(registres.getPc() + 1), (byte) 0);
+		// FIXME On ne peut pas faire comme ça !
+		// Désassembler les instructions jusqu'à un jump.
+		// Refaire jusqu'au prochain jump
+		int pc = registres.getPc();
+		byte byteRead = bus.getByteFromMemory(pc);
+		Instruction instruction = new Instruction(byteRead);
+		int byteNumber = instruction.getByteNumber();
+		byte lsb = bus.getByteFromMemory(pc + 1), msb = bus.getByteFromMemory(pc + 2);
 
-		} else if (instruction.getByteNumber() == 3) {
-			instruction.setArgument(bus.getByteFromMemory(registres.getPc() + 1),
-					bus.getByteFromMemory(registres.getPc() + 2));
+		switch (byteNumber) {
+		case 2:
+			instruction.setArgument(lsb, 0);
+			break;
 
+		case 3:
+			instruction.setArgument(lsb, msb);
+			break;
+
+		default:
+			break;
 		}
 		return instruction;
 	}
@@ -122,29 +137,40 @@ public class CPU implements Component, Runnable {
 
 	@Override
 	public void run() {
-		Instruction instruction;
+		
 		while (true)
 			try {
 				if (!readyForNext) {
-					if (registres.hasNMI()) {
-						instruction = new Instruction(InstructionSet.NMI, AddressingMode.NMI);
+					if (waitingCycles > 0) {
+						waitingCycles--;
+						if (instruction == null)
+							instruction = getInstruction();
+						
+						readyForNext = true;
+
 					} else {
-						instruction = getInstruction();
-//						if (instruction.getAdress() == 0x2007)
-//							System.out.println("AAAAAAAAAAAH");
+						if (registres.hasNMI()) {
+							instruction = new Instruction(InstructionSet.NMI, AddressingMode.NMI);
+							instructionReader.processInstruction(instruction, registres);
+							instruction = getInstruction();
+						}
+
+						if (waitingCycles < -1)
+							System.out.println("Cycles d'attente en retard : " + waitingCycles);
+
+						if (instruction == null) {
+							System.err.println(String.format("Instruction null, pc=0x%04X", registres.getPc()));
+							System.exit(0);
+						}
+
+						waitingCycles = instructionReader.processInstruction(instruction, registres);
+						--waitingCycles;
+						registres.setPc(registres.getPc() + instruction.getByteNumber());
+
+						instructionList.add(instruction);
+						pcList.add(registres.getPc());
+						readyForNext = true;
 					}
-
-					if (waitingCycles < -1)
-						System.out.println("Cycles d'attente en retard : " + waitingCycles);
-
-//					waitingCycles = instructionReader.getInstructionCycles(instruction, registres);
-					waitingCycles = instructionReader.processInstruction(instruction, registres);
-					--waitingCycles;
-					registres.setPc(registres.getPc() + instruction.getByteNumber());
-
-					listInstructions.add(instruction);
-					listPc.add(registres.getPc());
-					readyForNext = true;
 				}
 			} catch (AddressException e) {
 				e.printStackTrace();
