@@ -24,7 +24,7 @@ public class CompilerException extends Exception {
 	public static void callNumberException(int lineNumber, String line, int offset) throws CompilerException {
 		throw new CompilerException(String.format(
 				"[ERROR]: Number argument must be a valid number! (line %d)\n%s\n%s\n",
-				lineNumber, line, padLeftSpaces("^", 4)));
+				lineNumber, line, padLeftSpaces("^", offset)));
 	}
 	
 	private static String padLeftSpaces(String inputString, int length) {

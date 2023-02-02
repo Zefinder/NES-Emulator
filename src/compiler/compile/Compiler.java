@@ -22,6 +22,7 @@ public class Compiler {
 	private List<String> linesToCompile;
 	private List<Constant> constantList;
 	private List<Label> labelList;
+	private List<Instruction> jumpInstructionList;
 
 	private Map<Integer, Instruction> instructionMap;
 
@@ -29,6 +30,7 @@ public class Compiler {
 		constantList = new ArrayList<>();
 		linesToCompile = new ArrayList<>();
 		labelList = new ArrayList<>();
+		jumpInstructionList = new ArrayList<>();
 
 		instructionMap = new LinkedHashMap<>();
 
@@ -68,8 +70,7 @@ public class Compiler {
 				String[] splitedLine = line.split(";");
 				line = splitedLine.length == 0 ? "" : splitedLine[0].strip();
 
-				if (!line.isEmpty())
-					linesToCompile.add(line);
+				linesToCompile.add(line);
 			}
 
 			reader.close();
@@ -94,30 +95,30 @@ public class Compiler {
 
 	private boolean readCompilationDirectives() {
 		boolean hadError = false;
-		List<String> toRemove = new ArrayList<>();
+
 		for (int i = 0; i < linesToCompile.size(); i++) {
 			String line = linesToCompile.get(i);
+			if (line.isEmpty())
+				continue;
 
 			try {
-				if (line.contains(".mem ")) {
+				if (line.toLowerCase().contains(".mem ")) {
 					if (memorySize != 0)
 						System.out.println(
 								String.format("[WARNING]: Multiple definition of memory size (line %d)", i + 1));
 
 					try {
 						memorySize = getNumberFromString(line.substring(5));
-						toRemove.add(line);
 					} catch (NumberFormatException e) {
 						CompilerException.callNumberException(i + 1, line, 5);
 					}
-				} else if (line.contains(".index ")) {
+				} else if (line.toLowerCase().contains(".index ")) {
 					if (registerSize != 0)
 						System.out.println(
 								String.format("[WARNING]: Multiple definition of register size (line %d)", i + 1));
 
 					try {
 						registerSize = getNumberFromString(line.substring(7));
-						toRemove.add(line);
 					} catch (NumberFormatException e) {
 						CompilerException.callNumberException(i + 1, line, 7);
 					}
@@ -138,16 +139,17 @@ public class Compiler {
 			registerSize = 8;
 		}
 
-		linesToCompile.removeAll(toRemove);
 		return hadError;
 	}
 
 	private boolean readConstants() {
 		boolean hadError = false;
-		List<String> toRemove = new ArrayList<>();
 
 		for (int i = 0; i < linesToCompile.size(); i++) {
 			String line = linesToCompile.get(i);
+			if (line.isEmpty())
+				continue;
+
 			try {
 				if (line.contains("=")) {
 					String[] split = line.split("=");
@@ -188,9 +190,8 @@ public class Compiler {
 								constantName, i + 1));
 
 					constantList.add(constant);
-					toRemove.add(line);
 
-				} else if (line.contains(".eq ")) {
+				} else if (line.toLowerCase().contains(".eq ")) {
 					String[] split = line.split(" ");
 					if (split.length != 3)
 						throw new CompilerException(String
@@ -220,10 +221,14 @@ public class Compiler {
 								String.format("[ERROR]: Constant name can't contain a space (line %d)\n%s\n%s\n", i + 1,
 										line, padLeftSpaces("^", constantName.indexOf(' '))));
 
-					if (constantName.contains("+") || constantName.contains("-"))
-						throw new CompilerException(String.format(
-								"[ERROR]: Constant name can't contain a + or - sign (line %d)\n%s\n%s\n", i + 1, line,
-								padLeftSpaces("^", Math.max(constantName.indexOf('+'), constantName.indexOf('-')))));
+					if (constantName.contains("+") || constantName.contains("-") || constantName.contains("$")
+							|| constantName.contains("*"))
+						throw new CompilerException(String
+								.format("[ERROR]: Constant name can't contain a +, -, $ or * sign (line %d)\n%s\n%s\n",
+										i + 1, line,
+										padLeftSpaces("^", Math.max(
+												Math.max(constantName.indexOf('+'), constantName.indexOf('-')),
+												Math.max(constantName.indexOf('*'), constantName.indexOf('$'))))));
 
 					Constant constant = new Constant(constantName, value);
 					if (constantList.contains(constant))
@@ -235,7 +240,6 @@ public class Compiler {
 								constantName, i + 1));
 
 					constantList.add(constant);
-					toRemove.add(line);
 				}
 			} catch (CompilerException e) {
 				System.err.println(e.getMessage());
@@ -243,21 +247,21 @@ public class Compiler {
 			}
 		}
 
-		linesToCompile.removeAll(toRemove);
 		return hadError;
 	}
 
-	// TODO: check .eq dans les instructions sans espace pour conseiller une
-	// constante (idem pour .mem et .index)
 	private boolean initLabelsAndInstructions() {
 		boolean hadError = false;
 
+		// On définit les instructions et les labels
 		for (int i = 0; i < linesToCompile.size(); i++) {
 			String line = linesToCompile.get(i);
+			if (line.isEmpty())
+				continue;
 
 			try {
 				// On modifie l'adresse d'écriture
-				if (line.startsWith(".org ")) {
+				if (line.toLowerCase().startsWith(".org ")) {
 					try {
 						currentAddress = getNumberFromString(line.substring(5));
 					} catch (NumberFormatException e) {
@@ -318,6 +322,11 @@ public class Compiler {
 
 		String instructionName = split[0].strip();
 		Instruction instruction;
+
+		if (instructionName.equalsIgnoreCase(".eq") || instructionName.equalsIgnoreCase(".mem")
+				|| instructionName.equalsIgnoreCase(".index") || line.contains("="))
+			return;
+
 		if (instructionName.toLowerCase().equals(".db")) {
 			if (split.length == 1) {
 				throw new CompilerException(
@@ -357,20 +366,56 @@ public class Compiler {
 				currentAddress += instruction.getByteNumber();
 			}
 		} else if (instructionName.toLowerCase().equals(".dw")) {
-//			instruction = new Instruction(InstructionSet.DW, AddressingMode.DW);
-			// TODO Faire sur le modèle de db
-		} else if (instructionName.toUpperCase().equals("DB") || instructionName.toUpperCase().equals("DW")) {
-			throw new CompilerException(
-					String.format("[ERROR]: Error in instruction name, add a '.' at the beginning (line %d)\n%s\n%s\n",
-							i + 1, line, padLeftSpaces("^", 0)));
-		} else {
-			// TODO Instructions et mettre les arguments SSI ce n'est pas un jump ou un
-			// branch (Tout ce qui n'est pas un label)
+			if (split.length == 1) {
+				throw new CompilerException(
+						String.format("[ERROR]: Word directive argument cannot be empty (line %d)\n%s\n%s\n", i + 1,
+								line, padLeftSpaces("^", 4)));
+			}
 
+			String[] bytes = instructionLine.substring(4).split(",");
+			int offset = 4;
+			for (String s : bytes) {
+				if (s.strip().length() == 0)
+					throw new CompilerException(
+							String.format("[ERROR]: Word directive argument cannot be empty (line %d)\n%s\n%s\n", i + 1,
+									line, padLeftSpaces("^", offset)));
+
+				instruction = new Instruction(InstructionSet.DW, AddressingMode.DW);
+				try {
+					int value = getNumberFromString(s.strip());
+					if (Integer.toBinaryString(value).length() > 16)
+						throw new CompilerException(String.format(
+								"[ERROR]: Number of bits for word directive is greater than a word (here %d bits) (line %d)\n%s\n%s\n",
+								Integer.toBinaryString(value).length(), i + 1, line, padLeftSpaces("^", offset)));
+
+					instruction.setArgument(value & 0xFF, (value & 0xFF00) >> 8);
+				} catch (NumberFormatException e) {
+					int index;
+					if ((index = constantList.indexOf(new Constant(s.strip(), 0))) != -1) {
+						int value = constantList.get(index).getValue();
+						instruction.setArgument(value & 0xFF, (value & 0xFF00) >> 8);
+					} else {
+						jumpInstructionList.add(instruction);
+						// TODO Exception à retirer quand mis en place
+						throw new CompilerException(String.format(
+								"[ERROR]: Constant not found when reading word directive (line %d)\n%s\n%s\n", i + 1,
+								line, padLeftSpaces("^", offset)));
+					}
+				}
+
+				offset += s.length() + 2;
+				instructionMap.put(currentAddress, instruction);
+				currentAddress += instruction.getByteNumber();
+			}
+		} else if (instructionName.toUpperCase().equals("DB") || instructionName.toUpperCase().equals("DW")) {
+			throw new CompilerException(String
+					.format("[ERROR]: Instruction %s not found (line %d)\nDid you mean %s ?\n", line, i + 1, "." + line));
+		} else {
 			InstructionSet[] instructions = InstructionSet.values();
 			AddressingMode addressingSelected = null;
 			for (InstructionSet ins : instructions) {
 				int lsb = 0, msb = 0;
+				boolean toAdd = false;
 
 				if (ins.toString().equals(instructionName.toUpperCase())) {
 					byte[] opCodes = ins.getOpCodes();
@@ -386,8 +431,65 @@ public class Compiler {
 					} else {
 						String argument = instructionLine.substring(4).strip().replace(" ", "");
 						// On regarde pour les différents modes d'adressage
+
+						// On regarde si c'est un jump ou un branch
+						if (ins == InstructionSet.JMP) {
+							if (argument.contains("(")) {
+								if (argument.endsWith(")")) {
+									addressingSelected = AddressingMode.INDIRECT;
+									try {
+										int value = getNumberFromString(argument.substring(1, argument.length() - 1));
+										lsb = value & 0xFF;
+										msb = (value & 0xFF00) >> 8;
+									} catch (NumberFormatException e) {
+										toAdd = true;
+									}
+
+								} else
+									throw new CompilerException(
+											String.format("[ERROR]: Syntax error for indirect jump (line %d)\n%s\n%s\n",
+													i + 1, line, padLeftSpaces("^", line.length())));
+							} else {
+								addressingSelected = AddressingMode.ABSOLUTE;
+								try {
+									int value = getNumberFromString(argument);
+									lsb = value & 0xFF;
+									msb = (value & 0xFF00) >> 8;
+								} catch (NumberFormatException e) {
+									toAdd = true;
+								}
+							}
+
+						} else if (ins == InstructionSet.JSR) {
+							addressingSelected = AddressingMode.ABSOLUTE;
+							try {
+								int value = getNumberFromString(argument);
+								lsb = value & 0xFF;
+								msb = (value & 0xFF00) >> 8;
+							} catch (NumberFormatException e) {
+								toAdd = true;
+							}
+
+						} else if (ins == InstructionSet.BCC || ins == InstructionSet.BCS || ins == InstructionSet.BEQ
+								|| ins == InstructionSet.BMI || ins == InstructionSet.BNE || ins == InstructionSet.BPL
+								|| ins == InstructionSet.BVC || ins == InstructionSet.BVS) {
+							addressingSelected = AddressingMode.RELATIVE;
+							if (argument.startsWith("*")) {
+								try {
+									lsb = getNumberFromString(argument.substring(1)) - 2;
+									if (Integer.toBinaryString(lsb).length() > 8)
+										throw new CompilerException(String.format(
+												"[ERROR]: Relative value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
+												Integer.toBinaryString(lsb).length(), i + 1));
+								} catch (NumberFormatException e) {
+									CompilerException.callNumberException(i + 1, line, 5);
+								}
+							} else
+								toAdd = true;
+						}
+
 						// Accumulateur
-						if (argument.equalsIgnoreCase("A"))
+						else if (argument.equalsIgnoreCase("A"))
 							if (opCodes[AddressingMode.ACCUMULATOR.ordinal()] != (byte) 0xFF)
 								addressingSelected = AddressingMode.ACCUMULATOR;
 							else
@@ -411,116 +513,203 @@ public class Compiler {
 								CompilerException.callAddressingException(ins, AddressingMode.IMMEDIATE, i + 1);
 						}
 
-						// Zero page et absolu (non constante)
-						else if (argument.startsWith("$")) {
+						// Indirect X et Y
+						else if (argument.startsWith("(")) {
+							// Indirect X
+							if (argument.endsWith(",X)")) {
+								addressingSelected = AddressingMode.INDIRECT_X;
+								String[] splitIndirect = argument.split(",");
+								try {
+									lsb = getNumberFromString(splitIndirect[0].substring(1));
+									if (Integer.toBinaryString(lsb).length() > 8)
+										throw new CompilerException(String.format(
+												"[ERROR]: Relative value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
+												Integer.toBinaryString(lsb).length(), i + 1));
+								} catch (NumberFormatException e) {
+									int index;
+									if ((index = constantList
+											.indexOf(new Constant(splitIndirect[0].substring(1), 0))) != -1) {
+										lsb = constantList.get(index).getValue();
+										if (Integer.toBinaryString(lsb).length() > 8)
+											throw new CompilerException(String.format(
+													"[ERROR]: Relative value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
+													Integer.toBinaryString(lsb).length(), i + 1));
+									} else
+										CompilerException.callNumberException(i + 1, line, 5);
+								}
+							}
+
+							// Indirect Y
+							else if (argument.endsWith("),Y")) {
+								addressingSelected = AddressingMode.INDIRECT_Y;
+								String[] splitIndirect = argument.split("\\)");
+								try {
+									lsb = getNumberFromString(splitIndirect[0].substring(1));
+									if (Integer.toBinaryString(lsb).length() > 8)
+										throw new CompilerException(String.format(
+												"[ERROR]: Relative value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
+												Integer.toBinaryString(lsb).length(), i + 1));
+								} catch (NumberFormatException e) {
+									int index;
+									if ((index = constantList
+											.indexOf(new Constant(splitIndirect[0].substring(1), 0))) != -1) {
+										lsb = constantList.get(index).getValue();
+										if (Integer.toBinaryString(lsb).length() > 8)
+											throw new CompilerException(String.format(
+													"[ERROR]: Relative value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
+													Integer.toBinaryString(lsb).length(), i + 1));
+									} else
+										CompilerException.callNumberException(i + 1, line, 5);
+								}
+							} else
+								throw new CompilerException(String.format(
+										"[ERROR]: Syntax error for indirect X or Y addressing mode (line %d)\n",
+										i + 1));
+						}
+
+						// Zero page et absolu
+						else {
 							String[] args = argument.split(",");
 							try {
 								int value = getNumberFromString(args[0]);
-
-								// Zero page
-								if (Integer.toBinaryString(value).length() <= 8) {
-									if (args.length == 1) {
-										if (opCodes[AddressingMode.ZEROPAGE.ordinal()] != -1) {
-											addressingSelected = AddressingMode.ZEROPAGE;
-											lsb = value;
-										} else
-											CompilerException.callAddressingException(ins, AddressingMode.ZEROPAGE,
-													i + 1);
-
-									} else if (args.length == 2) {
-										// Zero page X
-										if (args[1].equalsIgnoreCase("X")) {
-											if (opCodes[AddressingMode.ZEROPAGE_X.ordinal()] != -1) {
-												addressingSelected = AddressingMode.ZEROPAGE_X;
-												lsb = value;
-											} else
-												CompilerException.callAddressingException(ins,
-														AddressingMode.ZEROPAGE_X, i + 1);
-
-											// Zero page Y
-										} else if (args[1].equalsIgnoreCase("Y")) {
-											if (opCodes[AddressingMode.ZEROPAGE_Y.ordinal()] != -1) {
-												addressingSelected = AddressingMode.ZEROPAGE_Y;
-												lsb = value;
-											} else
-												CompilerException.callAddressingException(ins,
-														AddressingMode.ZEROPAGE_Y, i + 1);
-
-										} else
-											throw new CompilerException(String.format(
-													"[ERROR]: Syntax error for instruction %s, expected X or Y (line %d)\n%s\n%s\n",
-													ins.toString(), i + 1, line,
-													padLeftSpaces("^", line.indexOf(',') + 1)));
-									} else
-										throw new CompilerException(String.format(
-												"[ERROR]: Syntax error for instruction %s (line %d)\n%s\n%s\n",
-												ins.toString(), i + 1, line,
-												padLeftSpaces("^", line.indexOf(",", line.indexOf(",") + 1))));
-								}
-
-								// Absolu
-								else if (Integer.toBinaryString(value).length() <= 16) {
-									if (args.length == 1) {
-										if (opCodes[AddressingMode.ABSOLUTE.ordinal()] != -1) {
-											addressingSelected = AddressingMode.ABSOLUTE;
-											lsb = value & 0xFF;
-											msb = (value & 0xFF00) >> 8;
-										} else
-											CompilerException.callAddressingException(ins, AddressingMode.ZEROPAGE,
-													i + 1);
-
-									} else if (args.length == 2) {
-										// Absolu X
-										if (args[1].equalsIgnoreCase("X")) {
-											if (opCodes[AddressingMode.ABSOLUTE_X.ordinal()] != -1) {
-												addressingSelected = AddressingMode.ABSOLUTE_X;
-												lsb = value & 0xFF;
-												msb = (value & 0xFF00) >> 8;
-											} else
-												CompilerException.callAddressingException(ins,
-														AddressingMode.ABSOLUTE_X, i + 1);
-
-											// Absolu Y
-										} else if (args[1].equalsIgnoreCase("Y")) {
-											if (opCodes[AddressingMode.ABSOLUTE_Y.ordinal()] != -1) {
-												addressingSelected = AddressingMode.ABSOLUTE_Y;
-												lsb = value & 0xFF;
-												msb = (value & 0xFF00) >> 8;
-											} else
-												CompilerException.callAddressingException(ins,
-														AddressingMode.ABSOLUTE_Y, i + 1);
-
-										} else
-											throw new CompilerException(String.format(
-													"[ERROR]: Syntax error for instruction %s, expected X or Y (line %d)\n%s\n%s\n",
-													ins.toString(), i + 1, line,
-													padLeftSpaces("^", line.indexOf(',') + 1)));
-									} else
-										throw new CompilerException(String.format(
-												"[ERROR]: Syntax error for instruction %s (line %d)\n%s\n%s\n",
-												ins.toString(), i + 1, line,
-												padLeftSpaces("^", line.indexOf(",", line.indexOf(",") + 1))));
-								} else
-									throw new CompilerException(String.format(
-											"[ERROR]: Number for zero page or absolute addressing must be lesser or equal than 16 bits (here %d) (line %d)\n%s\n%s\n",
-											Integer.toBinaryString(value).length(), i + 1, line,
-											padLeftSpaces("^", line.indexOf('$'))));
+								Instruction in = readZPAbsoluteInstruction(ins, value, args, opCodes, line, i);
+								addressingSelected = in.getAddressingMode();
+								lsb = in.getLsb();
+								msb = in.getMsb();
 
 							} catch (NumberFormatException e) {
-								CompilerException.callNumberException(i + 1, line, 4);
+								int index;
+								if ((index = constantList.indexOf(new Constant(args[0], 0))) != -1) {
+									int value = constantList.get(index).getValue();
+									Instruction in = readZPAbsoluteInstruction(ins, value, args, opCodes, line, i);
+									addressingSelected = in.getAddressingMode();
+									lsb = in.getLsb();
+									msb = in.getMsb();
+								} else
+									CompilerException.callNumberException(i + 1, line, 4);
 							}
 
-						} else
-							return;
+						}
 					}
 
 					instruction = new Instruction(ins, addressingSelected);
 					instruction.setArgument(lsb, msb);
+					if (toAdd)
+						jumpInstructionList.add(instruction);
+
 					instructionMap.put(currentAddress, instruction);
 					currentAddress += instruction.getByteNumber();
+
+					return;
 				}
-			} // TODO: Si pas trouvé -> erreur
+			}
+
+			String err = String.format("[Error]: Instruction %s not found (line %d)\n", instructionName, i + 1);
+
+			if (line.toLowerCase().startsWith(".eq"))
+				err += String.format("Did you mean %s ?\n", line.substring(0, 3) + " " + line.substring(3));
+
+			else if (line.toLowerCase().startsWith(".mem"))
+				err += String.format("Did you mean %s ?\n", line.substring(0, 4) + " " + line.substring(4));
+
+			else if (line.toLowerCase().startsWith(".index"))
+				err += String.format("Did you mean %s ?\n", line.substring(0, 7) + " " + line.substring(7));
+
+			else if (line.toLowerCase().startsWith(".org"))
+				err += String.format("Did you mean %s ?\n", line.substring(0, 4) + " " + line.substring(4));
+
+			throw new CompilerException(err);
 		}
+	}
+
+	private Instruction readZPAbsoluteInstruction(InstructionSet ins, int value, String[] args, byte[] opCodes,
+			String line, int i) throws CompilerException {
+
+		Instruction instruction;
+		AddressingMode addressingSelected = null;
+		int lsb = 0, msb = 0;
+
+		// Zero page
+		if (Integer.toBinaryString(value).length() <= 8) {
+			if (args.length == 1) {
+				if (opCodes[AddressingMode.ZEROPAGE.ordinal()] != -1) {
+					addressingSelected = AddressingMode.ZEROPAGE;
+					lsb = value;
+				} else
+					CompilerException.callAddressingException(ins, AddressingMode.ZEROPAGE, i + 1);
+
+			} else if (args.length == 2) {
+				// Zero page X
+				if (args[1].equalsIgnoreCase("X")) {
+					if (opCodes[AddressingMode.ZEROPAGE_X.ordinal()] != -1) {
+						addressingSelected = AddressingMode.ZEROPAGE_X;
+						lsb = value;
+					} else
+						CompilerException.callAddressingException(ins, AddressingMode.ZEROPAGE_X, i + 1);
+
+					// Zero page Y
+				} else if (args[1].equalsIgnoreCase("Y")) {
+					if (opCodes[AddressingMode.ZEROPAGE_Y.ordinal()] != -1) {
+						addressingSelected = AddressingMode.ZEROPAGE_Y;
+						lsb = value;
+					} else
+						CompilerException.callAddressingException(ins, AddressingMode.ZEROPAGE_Y, i + 1);
+
+				} else
+					throw new CompilerException(String.format(
+							"[ERROR]: Syntax error for instruction %s, expected X or Y (line %d)\n%s\n%s\n",
+							ins.toString(), i + 1, line, padLeftSpaces("^", line.indexOf(',') + 1)));
+			} else
+				throw new CompilerException(
+						String.format("[ERROR]: Syntax error for instruction %s (line %d)\n%s\n%s\n", ins.toString(),
+								i + 1, line, padLeftSpaces("^", line.indexOf(",", line.indexOf(",") + 1))));
+		}
+
+		// Absolu
+		else if (Integer.toBinaryString(value).length() <= 16) {
+			if (args.length == 1) {
+				if (opCodes[AddressingMode.ABSOLUTE.ordinal()] != -1) {
+					addressingSelected = AddressingMode.ABSOLUTE;
+					lsb = value & 0xFF;
+					msb = (value & 0xFF00) >> 8;
+				} else
+					CompilerException.callAddressingException(ins, AddressingMode.ZEROPAGE, i + 1);
+
+			} else if (args.length == 2) {
+				// Absolu X
+				if (args[1].equalsIgnoreCase("X")) {
+					if (opCodes[AddressingMode.ABSOLUTE_X.ordinal()] != -1) {
+						addressingSelected = AddressingMode.ABSOLUTE_X;
+						lsb = value & 0xFF;
+						msb = (value & 0xFF00) >> 8;
+					} else
+						CompilerException.callAddressingException(ins, AddressingMode.ABSOLUTE_X, i + 1);
+
+					// Absolu Y
+				} else if (args[1].equalsIgnoreCase("Y")) {
+					if (opCodes[AddressingMode.ABSOLUTE_Y.ordinal()] != -1) {
+						addressingSelected = AddressingMode.ABSOLUTE_Y;
+						lsb = value & 0xFF;
+						msb = (value & 0xFF00) >> 8;
+					} else
+						CompilerException.callAddressingException(ins, AddressingMode.ABSOLUTE_Y, i + 1);
+
+				} else
+					throw new CompilerException(String.format(
+							"[ERROR]: Syntax error for instruction %s, expected X or Y (line %d)\n%s\n%s\n",
+							ins.toString(), i + 1, line, padLeftSpaces("^", line.indexOf(',') + 1)));
+			} else
+				throw new CompilerException(
+						String.format("[ERROR]: Syntax error for instruction %s (line %d)\n%s\n%s\n", ins.toString(),
+								i + 1, line, padLeftSpaces("^", line.indexOf(",", line.indexOf(",") + 1))));
+		} else
+			throw new CompilerException(String.format(
+					"[ERROR]: Number for zero page or absolute addressing must be lesser or equal than 16 bits (here %d) (line %d)\n%s\n%s\n",
+					Integer.toBinaryString(value).length(), i + 1, line, padLeftSpaces("^", line.indexOf('$'))));
+
+		instruction = new Instruction(ins, addressingSelected);
+		instruction.setArgument(lsb, msb);
+		return instruction;
 	}
 
 	private int getNumberFromString(String strNumber) {
@@ -571,7 +760,6 @@ public class Compiler {
 
 	public static void main(String[] args) {
 		Compiler compiler = new Compiler(new File("test.nesasm"));
-		System.out.println(compiler.getLines());
 		try {
 			compiler.compile();
 		} catch (CompilerException e) {

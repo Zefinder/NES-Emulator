@@ -146,6 +146,10 @@ public class Instruction {
 	public int getLsb() {
 		return this.lsb;
 	}
+	
+	public int getMsb() {
+		return this.msb;
+	}
 
 	public int getAdress() {
 		int tmpLsb = (lsb < 0 ? lsb + 256 : lsb);
@@ -231,6 +235,7 @@ public class Instruction {
 
 		case DW:
 			suffix = String.format("$%02X%02X", (byte) msb, (byte) lsb);
+			break;
 
 		default:
 			suffix = "";
@@ -332,7 +337,7 @@ public class Instruction {
 			break;
 
 		case DW:
-			byteNumber = 1;
+			byteNumber = 2;
 			break;
 
 		default:
