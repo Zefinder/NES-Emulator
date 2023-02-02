@@ -1,4 +1,4 @@
-package nes.listener;
+package listener;
 
 public interface BusListener {
 

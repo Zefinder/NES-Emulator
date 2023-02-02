@@ -1,4 +1,4 @@
-package nes.components.ppu.rendering;
+package components.ppu.rendering;
 
 import java.awt.Color;
 

@@ -1,8 +1,8 @@
-package nes.components.ppu.bus;
+package components.ppu.bus;
 
-import nes.components.Bus;
-import nes.exceptions.AddressException;
-import nes.listener.BusListener;
+import components.Bus;
+import exceptions.AddressException;
+import listener.BusListener;
 
 public class PPUBus extends Bus implements BusListener {
 

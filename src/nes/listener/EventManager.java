@@ -1,9 +1,9 @@
-package nes.listener;
+package listener;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import nes.components.ppu.rendering.NesColors;
+import components.ppu.rendering.NesColors;
 
 public class EventManager {
 

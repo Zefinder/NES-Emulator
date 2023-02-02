@@ -1,4 +1,4 @@
-package tests;
+package frame;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -15,15 +15,15 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import nes.components.NES;
-import nes.components.cpu.CPU;
-import nes.components.cpu.register.CPURegisters;
-import nes.components.ppu.PPU;
-import nes.exceptions.AddressException;
-import nes.exceptions.InstructionException;
-import nes.exceptions.MapperException;
-import nes.exceptions.NotNesFileException;
-import nes.instructions.Instruction;
+import components.NES;
+import components.cpu.CPU;
+import components.cpu.register.CPURegisters;
+import components.ppu.PPU;
+import exceptions.AddressException;
+import exceptions.InstructionException;
+import exceptions.MapperException;
+import exceptions.NotNesFileException;
+import instructions.Instruction;
 
 public class CPURegisterFrame extends JFrame implements KeyListener {
 

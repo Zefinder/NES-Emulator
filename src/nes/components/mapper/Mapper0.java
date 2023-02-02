@@ -1,10 +1,10 @@
-package nes.components.mapper;
+package components.mapper;
 
 import java.util.Map;
 
-import nes.components.Bus;
-import nes.exceptions.AddressException;
-import nes.instructions.Instruction;
+import components.Bus;
+import exceptions.AddressException;
+import instructions.Instruction;
 
 public class Mapper0 extends Mapper {
 

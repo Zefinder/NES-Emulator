@@ -1,4 +1,4 @@
-package nes.instructions;
+package instructions;
 
 public class Instruction {
 
@@ -6,7 +6,7 @@ public class Instruction {
 
 	public enum AddressingMode {
 		IMPLICIT, ACCUMULATOR, IMMEDIATE, ZEROPAGE, ZEROPAGE_X, ZEROPAGE_Y, RELATIVE, ABSOLUTE, ABSOLUTE_X, ABSOLUTE_Y,
-		INDIRECT, INDIRECT_X, INDIRECT_Y, NMI;
+		INDIRECT, INDIRECT_X, INDIRECT_Y, NMI, DB, DW;
 	}
 
 	public enum InstructionSet {
@@ -99,7 +99,9 @@ public class Instruction {
 				NOCOD }),
 		TYA(new byte[] { (byte) 0x98, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
 				NOCOD }),
-		NMI(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD });
+		NMI(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
+		DB(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
+		DW(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD });
 
 		private byte[] opCodes;
 
@@ -175,20 +177,19 @@ public class Instruction {
 			break;
 
 		case IMMEDIATE:
-			n = (lsb >= 0 ? lsb : lsb + 256);
-			suffix = String.format("#%d", n);
+			suffix = String.format("#$%02X", (byte) lsb);
 			break;
 
 		case ZEROPAGE:
-			suffix = String.format("$%02x", (byte) lsb);
+			suffix = String.format("$%02X", (byte) lsb);
 			break;
 
 		case ZEROPAGE_X:
-			suffix = String.format("$%02x, X", (byte) lsb);
+			suffix = String.format("$%02X, X", (byte) lsb);
 			break;
 
 		case ZEROPAGE_Y:
-			suffix = String.format("$%02x, Y", (byte) lsb);
+			suffix = String.format("$%02X, Y", (byte) lsb);
 			break;
 
 		case RELATIVE:
@@ -201,33 +202,43 @@ public class Instruction {
 			break;
 
 		case ABSOLUTE:
-			suffix = String.format("$%02x%02x", (byte) msb, (byte) lsb);
+			suffix = String.format("$%02X%02X", (byte) msb, (byte) lsb);
 			break;
 
 		case ABSOLUTE_X:
-			suffix = String.format("$%02x%02x, X", (byte) msb, (byte) lsb);
+			suffix = String.format("$%02X%02X, X", (byte) msb, (byte) lsb);
 			break;
 
 		case ABSOLUTE_Y:
-			suffix = String.format("$%02x%02x, Y", (byte) msb, (byte) lsb);
+			suffix = String.format("$%02X%02X, Y", (byte) msb, (byte) lsb);
 			break;
 
 		case INDIRECT:
-			suffix = String.format("($%02x%02x)", (byte) msb, (byte) lsb);
+			suffix = String.format("($%02X%02X)", (byte) msb, (byte) lsb);
 			break;
 
 		case INDIRECT_X:
-			suffix = String.format("($%02x, X)", (byte) lsb);
+			suffix = String.format("($%02X, X)", (byte) lsb);
 			break;
 
 		case INDIRECT_Y:
-			suffix = String.format("($%02x), Y", (byte) lsb);
+			suffix = String.format("($%02X), Y", (byte) lsb);
 			break;
+
+		case DB:
+			suffix = String.format("$%02X", (byte) lsb);
+			break;
+
+		case DW:
+			suffix = String.format("$%02X%02X", (byte) msb, (byte) lsb);
 
 		default:
 			suffix = "";
 			break;
 		}
+
+		if (suffix.isEmpty())
+			return this.instruction.toString();
 
 		return this.instruction.toString() + " " + suffix;
 	}
@@ -315,7 +326,15 @@ public class Instruction {
 		case NMI:
 			byteNumber = 0;
 			break;
-			
+
+		case DB:
+			byteNumber = 1;
+			break;
+
+		case DW:
+			byteNumber = 1;
+			break;
+
 		default:
 			byteNumber = 1;
 			break;

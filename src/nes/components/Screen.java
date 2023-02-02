@@ -1,4 +1,4 @@
-package nes.components;
+package components;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -10,9 +10,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import nes.components.ppu.rendering.NesColors;
-import nes.listener.EventManager;
-import nes.listener.PPURenderListener;
+import components.ppu.rendering.NesColors;
+import listener.EventManager;
+import listener.PPURenderListener;
 
 public class Screen extends JFrame implements PPURenderListener, Runnable {
 

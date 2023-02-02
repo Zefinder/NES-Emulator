@@ -1,20 +1,20 @@
-package tests;
+package unit;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import nes.components.Bus;
-import nes.components.cpu.bus.CPUBus;
-import nes.components.cpu.register.CPURegisters;
-import nes.exceptions.AddressException;
-import nes.instructions.Instruction;
-import nes.instructions.Instruction.AddressingMode;
-import nes.instructions.Instruction.InstructionSet;
-import nes.instructions.InstructionReader;
+import components.Bus;
+import components.cpu.bus.CPUBus;
+import components.cpu.register.CPURegisters;
+import exceptions.AddressException;
+import instructions.Instruction;
+import instructions.Instruction.AddressingMode;
+import instructions.Instruction.InstructionSet;
+import instructions.InstructionReader;
 
 class InstructionsTest {
 

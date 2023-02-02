@@ -1,4 +1,4 @@
-package tests;
+package frame;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -27,21 +27,21 @@ import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableModel;
 
-import nes.components.NES;
-import nes.components.cpu.CPU;
-import nes.components.cpu.register.CPURegisters;
-import nes.components.ppu.PPU;
-import nes.components.ppu.register.PPURegisters;
-import nes.components.ppu.rendering.NesColors;
-import nes.components.ppu.rendering.OAM;
-import nes.components.ppu.rendering.Tile;
-import nes.exceptions.AddressException;
-import nes.exceptions.InstructionException;
-import nes.exceptions.MapperException;
-import nes.exceptions.NotNesFileException;
-import nes.instructions.Instruction;
-import nes.listener.BusListener;
-import nes.listener.EventManager;
+import components.NES;
+import components.cpu.CPU;
+import components.cpu.register.CPURegisters;
+import components.ppu.PPU;
+import components.ppu.register.PPURegisters;
+import components.ppu.rendering.NesColors;
+import components.ppu.rendering.OAM;
+import components.ppu.rendering.Tile;
+import exceptions.AddressException;
+import exceptions.InstructionException;
+import exceptions.MapperException;
+import exceptions.NotNesFileException;
+import instructions.Instruction;
+import listener.BusListener;
+import listener.EventManager;
 
 public class FullRegisterFrame extends JFrame implements KeyListener, BusListener {
 

@@ -1,6 +1,6 @@
-package nes.components.ppu.register;
+package components.ppu.register;
 
-import nes.components.ppu.rendering.Tile;
+import components.ppu.rendering.Tile;
 
 public class PPUBackgroundRegisters {
 

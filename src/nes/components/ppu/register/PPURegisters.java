@@ -1,8 +1,8 @@
-package nes.components.ppu.register;
+package components.ppu.register;
 
-import nes.components.ppu.rendering.OAM;
-import nes.listener.EventManager;
-import nes.listener.RegisterListener;
+import components.ppu.rendering.OAM;
+import listener.EventManager;
+import listener.RegisterListener;
 
 public class PPURegisters implements RegisterListener {
 

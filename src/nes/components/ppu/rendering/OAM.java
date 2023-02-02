@@ -1,6 +1,6 @@
-package nes.components.ppu.rendering;
+package components.ppu.rendering;
 
-import nes.components.ppu.register.PPURegisters;
+import components.ppu.register.PPURegisters;
 
 public class OAM implements Cloneable {
 

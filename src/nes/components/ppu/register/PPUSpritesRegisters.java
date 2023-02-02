@@ -1,6 +1,6 @@
-package nes.components.ppu.register;
+package components.ppu.register;
 
-import nes.components.ppu.rendering.OAM;
+import components.ppu.rendering.OAM;
 
 public class PPUSpritesRegisters {
 

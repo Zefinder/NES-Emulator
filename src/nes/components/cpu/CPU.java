@@ -1,19 +1,19 @@
-package nes.components.cpu;
+package components.cpu;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import nes.components.Bus;
-import nes.components.Component;
-import nes.components.cpu.bus.CPUBus;
-import nes.components.cpu.register.CPURegisters;
-import nes.components.mapper.Mapper;
-import nes.exceptions.AddressException;
-import nes.instructions.Instruction;
-import nes.instructions.Instruction.AddressingMode;
-import nes.instructions.Instruction.InstructionSet;
-import nes.instructions.InstructionReader;
+import components.Bus;
+import components.Component;
+import components.cpu.bus.CPUBus;
+import components.cpu.register.CPURegisters;
+import components.mapper.Mapper;
+import exceptions.AddressException;
+import instructions.Instruction;
+import instructions.Instruction.AddressingMode;
+import instructions.Instruction.InstructionSet;
+import instructions.InstructionReader;
 
 public class CPU implements Component, Runnable {
 

@@ -1,12 +1,12 @@
-package nes.components;
+package components;
 
 import java.io.IOException;
 
-import nes.components.mapper.Mapper;
-import nes.exceptions.AddressException;
-import nes.exceptions.InstructionException;
-import nes.exceptions.MapperException;
-import nes.exceptions.NotNesFileException;
+import components.mapper.Mapper;
+import exceptions.AddressException;
+import exceptions.InstructionException;
+import exceptions.MapperException;
+import exceptions.NotNesFileException;
 
 public interface Component {
 

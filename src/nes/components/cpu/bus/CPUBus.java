@@ -1,9 +1,9 @@
-package nes.components.cpu.bus;
+package components.cpu.bus;
 
-import nes.components.Bus;
-import nes.exceptions.AddressException;
-import nes.listener.EventManager;
-import nes.listener.RegisterListener;
+import components.Bus;
+import exceptions.AddressException;
+import listener.EventManager;
+import listener.RegisterListener;
 
 public class CPUBus extends Bus implements RegisterListener {
 

@@ -1,4 +1,4 @@
-package nes.exceptions;
+package exceptions;
 
 public class MapperException extends Exception {
 

@@ -1,8 +1,8 @@
-package nes.instructions;
+package instructions;
 
-import nes.components.Bus;
-import nes.components.cpu.register.CPURegisters;
-import nes.exceptions.AddressException;
+import components.Bus;
+import components.cpu.register.CPURegisters;
+import exceptions.AddressException;
 
 public class InstructionReader {
 
@@ -1798,10 +1798,6 @@ public class InstructionReader {
 		else
 			registres.setSp(registres.getSp() - 1);
 
-//		System.out.println("On va à l'adresse : " + String.format("0x%04x", address));
-//		System.out.println("Adresse de retour : " + String.format("0x%02x%02x", pch, pcl));
-		// Ensuite, pc prend la valeur pointée -3 (pour compenser le +3 à la fin de
-		// l'instruction)
 		registres.setPc(address - 3);
 
 	}

@@ -1,4 +1,4 @@
-package nes.components.ppu.register;
+package components.ppu.register;
 
 public class PPUExternalRegisters {
 	

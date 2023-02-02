@@ -1,4 +1,4 @@
-package nes.components;
+package components;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,16 +7,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import nes.components.cpu.CPU;
-import nes.components.mapper.Mapper;
-import nes.components.mapper.Mapper0;
-import nes.components.ppu.PPU;
-import nes.decompil.Desassembler;
-import nes.exceptions.AddressException;
-import nes.exceptions.InstructionException;
-import nes.exceptions.MapperException;
-import nes.exceptions.NotNesFileException;
-import nes.instructions.Instruction;
+import components.cpu.CPU;
+import components.mapper.Mapper;
+import components.mapper.Mapper0;
+import components.ppu.PPU;
+import decompile.Desassembler;
+import exceptions.AddressException;
+import exceptions.InstructionException;
+import exceptions.MapperException;
+import exceptions.NotNesFileException;
+import instructions.Instruction;
 
 public class NES implements Component {
 
@@ -46,8 +46,6 @@ public class NES implements Component {
 			throws AddressException, IOException, InstructionException, NotNesFileException, MapperException {
 
 		Desassembler des = new Desassembler(romFile);
-
-		des.disassembleHeaderFlags();
 		setRomSpecs(des.getPrgChunksNumber(), des.getChrChunksNumber(), des.getMapper());
 
 		System.out.println("Mapper to use: " + mapperNumber);

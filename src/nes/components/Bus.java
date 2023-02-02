@@ -1,7 +1,7 @@
-package nes.components;
+package components;
 
-import nes.exceptions.AddressException;
-import nes.listener.EventManager;
+import exceptions.AddressException;
+import listener.EventManager;
 
 public abstract class Bus {
 

@@ -1,12 +1,12 @@
-package nes.components.ppu;
+package components.ppu;
 
-import nes.components.Bus;
-import nes.components.Component;
-import nes.components.mapper.Mapper;
-import nes.components.ppu.bus.PPUBus;
-import nes.components.ppu.register.PPURegisters;
-import nes.components.ppu.rendering.PPURender;
-import nes.exceptions.AddressException;
+import components.Bus;
+import components.Component;
+import components.mapper.Mapper;
+import components.ppu.bus.PPUBus;
+import components.ppu.register.PPURegisters;
+import components.ppu.rendering.PPURender;
+import exceptions.AddressException;
 
 public class PPU implements Component, Runnable {
 

@@ -1,7 +1,7 @@
-package nes.components.cpu.register;
+package components.cpu.register;
 
-import nes.listener.EventManager;
-import nes.listener.RegisterListener;
+import listener.EventManager;
+import listener.RegisterListener;
 
 public class CPURegisters implements RegisterListener {
 

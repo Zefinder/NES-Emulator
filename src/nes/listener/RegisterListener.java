@@ -1,4 +1,4 @@
-package nes.listener;
+package listener;
 
 /**
  * Listener used to tell the {@link CPU} and the {@link PPU} that something

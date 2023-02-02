@@ -1,9 +1,9 @@
-package nes.components.ppu.rendering;
+package components.ppu.rendering;
 
-import nes.components.Bus;
-import nes.components.ppu.register.PPURegisters;
-import nes.exceptions.AddressException;
-import nes.listener.EventManager;
+import components.Bus;
+import components.ppu.register.PPURegisters;
+import exceptions.AddressException;
+import listener.EventManager;
 
 public class PPURender {
 
