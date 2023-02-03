@@ -197,7 +197,7 @@ public class Instruction {
 			break;
 
 		case RELATIVE:
-			int lol = lsb;
+			int lol = (byte) lsb;
 			n = lol + 2;
 			if (n > 0)
 				suffix = String.format("*+%d", n);

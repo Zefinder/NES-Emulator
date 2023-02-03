@@ -18,11 +18,13 @@ public class Compiler {
 
 	private int currentAddress;
 	private int registerSize, memorySize;
+	private int fillValue;
 
 	private List<String> linesToCompile;
 	private List<Constant> constantList;
 	private List<Label> labelList;
 	private List<Instruction> jumpInstructionList;
+	private List<String> jumpLineList;
 
 	private Map<Integer, Instruction> instructionMap;
 
@@ -31,11 +33,13 @@ public class Compiler {
 		linesToCompile = new ArrayList<>();
 		labelList = new ArrayList<>();
 		jumpInstructionList = new ArrayList<>();
+		jumpLineList = new ArrayList<>();
 
 		instructionMap = new LinkedHashMap<>();
 
 		registerSize = 0;
 		memorySize = 0;
+		fillValue = 0;
 
 		try {
 			BufferedReader reader = new BufferedReader(new FileReader(toCompile));
@@ -79,6 +83,9 @@ public class Compiler {
 		}
 	}
 
+	// TODO: Ajouter les modificateurs de nombres (< (Low), > (High))
+	// TODO: Ajouter les calculs in-line pour les constantes (+ et -)
+	// TODO: Ajouter la lecture de constantes pour l'affectation de constantes
 	public void compile() throws CompilerException {
 		boolean error = readCompilationDirectives();
 		if (error)
@@ -269,6 +276,13 @@ public class Compiler {
 					}
 
 					// On vérifie s'il y a un label
+				} else if (line.toLowerCase().startsWith(".fillvalue ")) {
+					try {
+						fillValue = getNumberFromString(line.substring(11));
+					} catch (NumberFormatException e) {
+						CompilerException.callNumberException(i + 1, line, 11);
+					}
+
 				} else if (line.contains(":")) {
 					String[] splited = line.split(":");
 					readLabel(splited[0].strip(), line, i);
@@ -288,6 +302,40 @@ public class Compiler {
 			}
 		}
 
+		// On ajoute les labels maintenant qu'on est sûrs qu'ils sont tous définis !
+		for (int i = 0; i < jumpInstructionList.size(); i++) {
+			Instruction instruction = jumpInstructionList.get(i);
+			String instructionLine = jumpLineList.get(i);
+			Label label = new Label(instructionLine.substring(4), 0);
+			int index, address;
+
+			if ((index = labelList.indexOf(label)) != -1) {
+				address = labelList.get(index).getAddress();
+				if (instruction.getAddressingMode() == AddressingMode.RELATIVE) {
+					int instructionAddress = instruction.getAdress();
+					int branchAddress = address - instructionAddress;
+					branchAddress = branchAddress < 0 ? branchAddress + 256 : branchAddress;
+					if (Integer.toBinaryString(branchAddress).length() <= 8) {
+						instruction.setArgument(branchAddress - 2, 0);
+					} else
+						try {
+							throw new CompilerException(String.format(
+									"[ERROR]: Relative value must have a bit number lesser or equal than 8 (here %d) (line %d)\n%s\n",
+									Integer.toBinaryString(branchAddress).length(),
+									new ArrayList<>(instructionMap.keySet()).indexOf(instructionAddress) + 1,
+									instructionLine));
+						} catch (CompilerException e) {
+							System.err.println(e.getMessage());
+							hadError = true;
+						}
+				} else
+					instruction.setArgument(address & 0xFF, (address & 0xFF00) >> 8);
+			} else {
+				errorMessage(instructionLine, i + 1, 4);
+				hadError = true;
+			}
+
+		}
 		return hadError;
 	}
 
@@ -300,10 +348,11 @@ public class Compiler {
 			throw new CompilerException(String.format("[ERROR]: Label name can't contain a space (line %d)\n%s\n%s\n",
 					i + 1, line, padLeftSpaces("^", labelName.indexOf(' '))));
 
-		if (labelName.contains("+") || labelName.contains("-"))
+		if (labelName.contains("+") || labelName.contains("-") || labelName.contains("$") || labelName.contains("*"))
 			throw new CompilerException(
-					String.format("[ERROR]: Label name can't contain a + or - sign (line %d)\n%s\n%s\n", i + 1, line,
-							padLeftSpaces("^", Math.max(labelName.indexOf('+'), labelName.indexOf('-')))));
+					String.format("[ERROR]: Label name can't contain a +, -, $ or * sign (line %d)\n%s\n%s\n", i + 1,
+							line, padLeftSpaces("^", Math.max(Math.max(labelName.indexOf('+'), labelName.indexOf('-')),
+									Math.max(labelName.indexOf('*'), labelName.indexOf('$'))))));
 
 		if (!Charset.forName("US-ASCII").newEncoder().canEncode(labelName))
 			System.out.println(String.format(
@@ -324,7 +373,8 @@ public class Compiler {
 		Instruction instruction;
 
 		if (instructionName.equalsIgnoreCase(".eq") || instructionName.equalsIgnoreCase(".mem")
-				|| instructionName.equalsIgnoreCase(".index") || line.contains("="))
+				|| instructionName.equalsIgnoreCase(".index") || instructionName.equalsIgnoreCase(".fillValue")
+				|| line.contains("="))
 			return;
 
 		if (instructionName.toLowerCase().equals(".db")) {
@@ -340,7 +390,7 @@ public class Compiler {
 				if (s.strip().length() == 0)
 					throw new CompilerException(
 							String.format("[ERROR]: Byte directive argument cannot be empty (line %d)\n%s\n%s\n", i + 1,
-									line, padLeftSpaces("^", offset)));
+									instructionLine, padLeftSpaces("^", offset)));
 
 				instruction = new Instruction(InstructionSet.DB, AddressingMode.DB);
 				try {
@@ -348,7 +398,8 @@ public class Compiler {
 					if (Integer.toBinaryString(value).length() > 8)
 						throw new CompilerException(String.format(
 								"[ERROR]: Number of bits for byte directive is greater than a byte (here %d bits). Try to use \".dw\" for 16 bits numbers (line %d)\n%s\n%s\n",
-								Integer.toBinaryString(value).length(), i + 1, line, padLeftSpaces("^", offset)));
+								Integer.toBinaryString(value).length(), i + 1, instructionLine,
+								padLeftSpaces("^", offset)));
 
 					instruction.setArgument(value, 0);
 				} catch (NumberFormatException e) {
@@ -358,7 +409,7 @@ public class Compiler {
 					else
 						throw new CompilerException(String.format(
 								"[ERROR]: Constant not found when reading byte directive (line %d)\n%s\n%s\n", i + 1,
-								line, padLeftSpaces("^", offset)));
+								instructionLine, padLeftSpaces("^", offset)));
 				}
 
 				offset += s.length() + 1;
@@ -369,7 +420,7 @@ public class Compiler {
 			if (split.length == 1) {
 				throw new CompilerException(
 						String.format("[ERROR]: Word directive argument cannot be empty (line %d)\n%s\n%s\n", i + 1,
-								line, padLeftSpaces("^", 4)));
+								instructionLine, padLeftSpaces("^", 4)));
 			}
 
 			String[] bytes = instructionLine.substring(4).split(",");
@@ -378,7 +429,7 @@ public class Compiler {
 				if (s.strip().length() == 0)
 					throw new CompilerException(
 							String.format("[ERROR]: Word directive argument cannot be empty (line %d)\n%s\n%s\n", i + 1,
-									line, padLeftSpaces("^", offset)));
+									instructionLine, padLeftSpaces("^", offset)));
 
 				instruction = new Instruction(InstructionSet.DW, AddressingMode.DW);
 				try {
@@ -386,7 +437,8 @@ public class Compiler {
 					if (Integer.toBinaryString(value).length() > 16)
 						throw new CompilerException(String.format(
 								"[ERROR]: Number of bits for word directive is greater than a word (here %d bits) (line %d)\n%s\n%s\n",
-								Integer.toBinaryString(value).length(), i + 1, line, padLeftSpaces("^", offset)));
+								Integer.toBinaryString(value).length(), i + 1, instructionLine,
+								padLeftSpaces("^", offset)));
 
 					instruction.setArgument(value & 0xFF, (value & 0xFF00) >> 8);
 				} catch (NumberFormatException e) {
@@ -396,10 +448,7 @@ public class Compiler {
 						instruction.setArgument(value & 0xFF, (value & 0xFF00) >> 8);
 					} else {
 						jumpInstructionList.add(instruction);
-						// TODO Exception à retirer quand mis en place
-						throw new CompilerException(String.format(
-								"[ERROR]: Constant not found when reading word directive (line %d)\n%s\n%s\n", i + 1,
-								line, padLeftSpaces("^", offset)));
+						jumpLineList.add(instructionLine);
 					}
 				}
 
@@ -407,9 +456,28 @@ public class Compiler {
 				instructionMap.put(currentAddress, instruction);
 				currentAddress += instruction.getByteNumber();
 			}
+		} else if (instructionName.toLowerCase().equals(".align")) {
+			try {
+				int modulo = getNumberFromString(instructionLine.substring(7));
+				if (Integer.toBinaryString(modulo).length() <= 8) {
+					while (currentAddress % modulo != 0) {
+						instruction = new Instruction(InstructionSet.DB, AddressingMode.DB);
+						instruction.setArgument(fillValue, 0);
+						instructionMap.put(currentAddress, instruction);
+						currentAddress += 1;
+					}
+				} else
+					throw new CompilerException(String.format(
+							"[ERROR]: Align value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
+							Integer.toBinaryString(modulo).length(), i + 1));
+
+			} catch (NumberFormatException e) {
+				CompilerException.callNumberException(i + 1, instructionLine, 7);
+			}
 		} else if (instructionName.toUpperCase().equals("DB") || instructionName.toUpperCase().equals("DW")) {
-			throw new CompilerException(String
-					.format("[ERROR]: Instruction %s not found (line %d)\nDid you mean %s ?\n", line, i + 1, "." + line));
+			throw new CompilerException(
+					String.format("[ERROR]: Instruction %s not found (line %d)\nDid you mean %s ?\n", instructionLine,
+							i + 1, "." + instructionLine));
 		} else {
 			InstructionSet[] instructions = InstructionSet.values();
 			AddressingMode addressingSelected = null;
@@ -442,13 +510,20 @@ public class Compiler {
 										lsb = value & 0xFF;
 										msb = (value & 0xFF00) >> 8;
 									} catch (NumberFormatException e) {
-										toAdd = true;
+										int index;
+										if ((index = constantList.indexOf(
+												new Constant(argument.substring(1, argument.length() - 1), 0))) != -1) {
+											int value = constantList.get(index).getValue();
+											lsb = value & 0xFF;
+											msb = (value & 0xFF00) >> 8;
+										} else
+											CompilerException.callNumberException(i + 1, instructionLine, 5);
 									}
 
 								} else
-									throw new CompilerException(
-											String.format("[ERROR]: Syntax error for indirect jump (line %d)\n%s\n%s\n",
-													i + 1, line, padLeftSpaces("^", line.length())));
+									throw new CompilerException(String.format(
+											"[ERROR]: Syntax error for indirect jump (line %d)\n%s\n%s\n", i + 1,
+											instructionLine, padLeftSpaces("^", instructionLine.length())));
 							} else {
 								addressingSelected = AddressingMode.ABSOLUTE;
 								try {
@@ -482,10 +557,13 @@ public class Compiler {
 												"[ERROR]: Relative value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
 												Integer.toBinaryString(lsb).length(), i + 1));
 								} catch (NumberFormatException e) {
-									CompilerException.callNumberException(i + 1, line, 5);
+									CompilerException.callNumberException(i + 1, instructionLine, 5);
 								}
-							} else
+							} else {
+								lsb = currentAddress & 0xFF;
+								msb = (currentAddress & 0xFF00) >> 8;
 								toAdd = true;
+							}
 						}
 
 						// Accumulateur
@@ -507,7 +585,15 @@ public class Compiler {
 												Integer.toBinaryString(lsb).length(), registerSize, i + 1));
 
 								} catch (NumberFormatException e) {
-									CompilerException.callNumberException(i + 1, line, 4);
+									int index;
+									if ((index = constantList.indexOf(new Constant(argument.substring(1), 0))) != -1) {
+										lsb = constantList.get(index).getValue();
+										if (Integer.toBinaryString(lsb).length() > 8)
+											throw new CompilerException(String.format(
+													"[ERROR]: Immediate value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
+													Integer.toBinaryString(lsb).length(), i + 1));
+									} else
+										CompilerException.callNumberException(i + 1, instructionLine, 4);
 								}
 							} else
 								CompilerException.callAddressingException(ins, AddressingMode.IMMEDIATE, i + 1);
@@ -523,7 +609,7 @@ public class Compiler {
 									lsb = getNumberFromString(splitIndirect[0].substring(1));
 									if (Integer.toBinaryString(lsb).length() > 8)
 										throw new CompilerException(String.format(
-												"[ERROR]: Relative value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
+												"[ERROR]: Indirect value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
 												Integer.toBinaryString(lsb).length(), i + 1));
 								} catch (NumberFormatException e) {
 									int index;
@@ -532,10 +618,10 @@ public class Compiler {
 										lsb = constantList.get(index).getValue();
 										if (Integer.toBinaryString(lsb).length() > 8)
 											throw new CompilerException(String.format(
-													"[ERROR]: Relative value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
+													"[ERROR]: Indirect value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
 													Integer.toBinaryString(lsb).length(), i + 1));
 									} else
-										CompilerException.callNumberException(i + 1, line, 5);
+										CompilerException.callNumberException(i + 1, instructionLine, 5);
 								}
 							}
 
@@ -547,7 +633,7 @@ public class Compiler {
 									lsb = getNumberFromString(splitIndirect[0].substring(1));
 									if (Integer.toBinaryString(lsb).length() > 8)
 										throw new CompilerException(String.format(
-												"[ERROR]: Relative value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
+												"[ERROR]: Indirect value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
 												Integer.toBinaryString(lsb).length(), i + 1));
 								} catch (NumberFormatException e) {
 									int index;
@@ -556,10 +642,10 @@ public class Compiler {
 										lsb = constantList.get(index).getValue();
 										if (Integer.toBinaryString(lsb).length() > 8)
 											throw new CompilerException(String.format(
-													"[ERROR]: Relative value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
+													"[ERROR]: Indirect value must have a bit number lesser or equal than 8 (here %d) (line %d)\n",
 													Integer.toBinaryString(lsb).length(), i + 1));
 									} else
-										CompilerException.callNumberException(i + 1, line, 5);
+										CompilerException.callNumberException(i + 1, instructionLine, 5);
 								}
 							} else
 								throw new CompilerException(String.format(
@@ -572,7 +658,8 @@ public class Compiler {
 							String[] args = argument.split(",");
 							try {
 								int value = getNumberFromString(args[0]);
-								Instruction in = readZPAbsoluteInstruction(ins, value, args, opCodes, line, i);
+								Instruction in = readZPAbsoluteInstruction(ins, value, args, opCodes, instructionLine,
+										i);
 								addressingSelected = in.getAddressingMode();
 								lsb = in.getLsb();
 								msb = in.getMsb();
@@ -581,12 +668,13 @@ public class Compiler {
 								int index;
 								if ((index = constantList.indexOf(new Constant(args[0], 0))) != -1) {
 									int value = constantList.get(index).getValue();
-									Instruction in = readZPAbsoluteInstruction(ins, value, args, opCodes, line, i);
+									Instruction in = readZPAbsoluteInstruction(ins, value, args, opCodes,
+											instructionLine, i);
 									addressingSelected = in.getAddressingMode();
 									lsb = in.getLsb();
 									msb = in.getMsb();
 								} else
-									CompilerException.callNumberException(i + 1, line, 4);
+									CompilerException.callNumberException(i + 1, instructionLine, 4);
 							}
 
 						}
@@ -594,8 +682,10 @@ public class Compiler {
 
 					instruction = new Instruction(ins, addressingSelected);
 					instruction.setArgument(lsb, msb);
-					if (toAdd)
+					if (toAdd) {
 						jumpInstructionList.add(instruction);
+						jumpLineList.add(instructionLine);
+					}
 
 					instructionMap.put(currentAddress, instruction);
 					currentAddress += instruction.getByteNumber();
@@ -607,18 +697,30 @@ public class Compiler {
 			String err = String.format("[Error]: Instruction %s not found (line %d)\n", instructionName, i + 1);
 
 			if (line.toLowerCase().startsWith(".eq"))
-				err += String.format("Did you mean %s ?\n", line.substring(0, 3) + " " + line.substring(3));
+				err += String.format("Did you mean %s ?\n",
+						instructionLine.substring(0, 3) + " " + instructionLine.substring(3));
 
 			else if (line.toLowerCase().startsWith(".mem"))
-				err += String.format("Did you mean %s ?\n", line.substring(0, 4) + " " + line.substring(4));
+				err += String.format("Did you mean %s ?\n",
+						instructionLine.substring(0, 4) + " " + instructionLine.substring(4));
 
 			else if (line.toLowerCase().startsWith(".index"))
-				err += String.format("Did you mean %s ?\n", line.substring(0, 7) + " " + line.substring(7));
+				err += String.format("Did you mean %s ?\n",
+						instructionLine.substring(0, 7) + " " + instructionLine.substring(7));
 
 			else if (line.toLowerCase().startsWith(".org"))
-				err += String.format("Did you mean %s ?\n", line.substring(0, 4) + " " + line.substring(4));
+				err += String.format("Did you mean %s ?\n",
+						instructionLine.substring(0, 4) + " " + instructionLine.substring(4));
+
+			else if (line.toLowerCase().startsWith(".fillvalue"))
+				err += String.format("Did you mean %s ?\n",
+						instructionLine.substring(0, 10) + " " + instructionLine.substring(10));
 
 			throw new CompilerException(err);
+		}
+
+		if (currentAddress > 0x10000) {
+			throw new CompilerException(String.format("[ERROR]: Address beyond bus' capacity! (line %d)\n", i + 1));
 		}
 	}
 
@@ -730,6 +832,16 @@ public class Compiler {
 		}
 
 		return result;
+	}
+
+	private void errorMessage(String instructionLine, int i, int offset) {
+		try {
+			throw new CompilerException(String.format(
+					"[ERROR]: Constant not found when reading directive or instruction (line %d)\n%s\n%s\n", i + 1,
+					instructionLine, padLeftSpaces("^", offset)));
+		} catch (CompilerException e) {
+			System.err.println(e.getMessage());
+		}
 	}
 
 	private List<String> getLines() {
