@@ -1,0 +1,58 @@
+.db i
+.db $u
+.db %2
+.db $100
+4 .db
+.db 4, , 4
+.db 4,
+.db4
+.db 
+db 4
+.dw i
+.dw $u
+.dw %2
+.dw $10000
+4 .dw
+.dw 4, ,4
+.dw 4,
+.dw4
+.dw
+dw 4
+.org i
+.org $u
+.org %2
+.org $10000
+4 .org
+.org4
+.org 
+org 4
+.mem i
+.mem $u
+.mem %2
+4 .mem
+.mem4
+.mem
+mem 4
+.index i
+.index $u
+.index %2
+4 .index
+.index4
+.index
+index 4
+.align i
+.align $u
+.align %2
+.align $100
+4 .align
+.align4
+.align
+align 4
+.fillvalue i
+.fillvalue $u
+.fillvalue %2
+.fillvalue $100
+4 .fillvalue
+.fillvalue4
+.fillvalue 
+fillvalue 4 

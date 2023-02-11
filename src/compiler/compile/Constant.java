@@ -14,6 +14,10 @@ public class Constant {
 	public boolean hasBeenUsed() {
 		return used;
 	}
+	
+	public String getName() {
+		return name;
+	}
 
 	public int getValue() {
 		used = true;

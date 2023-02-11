@@ -1,0 +1,62 @@
+0Label: lda #4
+1Label: lda #4
+2Label: lda #4
+3Label: lda #4
+4Label: lda #4
+5Label: lda #4
+6Label: lda #4
+7Label: lda #4
+8Label: lda #4
+9Label: lda #4
+La+bel: lda #4
+La-bel: lda #4
+La$bel: lda #4
+La%bel: lda #4
+La*bel: lda #4
+La#bel: lda #4
+La.bel: lda #4
+La bel: lda #4
+La<bel: lda #4
+La>bel: lda #4
+La^bel: lda #4
+La:bel: lda #4
+La^bel: lda #4
+La)bel: lda #4
+La(bel: lda #4
+La[bel: lda #4
+La]bel: lda #4
+La{bel: lda #4
+La}bel: lda #4
+La=bel: lda #4
+Label lda #4 
+0Label:
+1Label:
+2Label:
+3Label:
+4Label: 
+5Label: 
+6Label: 
+7Label: 
+8Label: 
+9Label: 
+La+bel: 
+La-bel: 
+La$bel: 
+La%bel: 
+La*bel: 
+La#bel: 
+La.bel: 
+La bel: 
+La<bel: 
+La>bel: 
+La^bel: 
+La:bel: 
+La^bel: 
+La)bel: 
+La(bel: 
+La[bel: 
+La]bel: 
+La{bel: 
+La}bel: 
+La=bel: 
+Label  

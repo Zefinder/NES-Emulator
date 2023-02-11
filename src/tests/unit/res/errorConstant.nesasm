@@ -1,0 +1,104 @@
+Test = A
+Test = $u 
+Test = %2
+0Test = 4
+1Test = 4
+2Test = 4
+3Test = 4
+4Test = 4
+5Test = 4
+6Test = 4
+7Test = 4
+8Test = 4
+9Test = 4
+Te+st = 4
+Te-st = 4
+Te<st = 4
+Te>st = 4
+Te$st = 4
+Te*st = 4
+Te^st = 4
+Te%st = 4
+Te#st = 4
+Te:st = 4
+Te.st = 4
+Te=st = 4
+Te(st = 4
+Te)st = 4
+Te[st = 4
+Te]st = 4
+Te{st = 4
+Te}st = 4
+Te st = 4
+Test = 44 6
+Test = s = 5
+Test =
+= 5
+=
+= Test 5
+= 5 Test
+5 = Test
+Test 5 =
+5 Test =
+Test 4
+= = 4
+.eq = 4
+.db = 4
+.dw = 4
+.mem = 4
+.align = 4
+.fillvalue = 4
+.index = 4
+.eq Test A
+.eq Test $u
+.eq Test %2
+.eq 0Test 4
+.eq 1Test 4
+.eq 2Test 4
+.eq 3Test 4
+.eq 4Test 4
+.eq 5Test 4
+.eq 6Test 4
+.eq 7Test 4
+.eq 8Test 4
+.eq 9Test 4
+.eq Te+st 4
+.eq Te-st 4
+.eq Te<st 4
+.eq Te>st 4
+.eq Te$st 4
+.eq Te*st 4
+.eq Te^st 4
+.eq Te%st 4
+.eq Te#st 4
+.eq Te:st 4
+.eq Te.st 4
+.eq Te=st 4
+.eq Te(st 4
+.eq Te)st 4
+.eq Te[st 4
+.eq Te]st 4
+.eq Te{st 4
+.eq Te}st 4
+.eq Te st 4
+.eq Test .eq 4
+.eq Test 4 6
+.eq Test
+.eq 4
+.eq
+.eq 4 Test
+Test .eq 4
+4 .eq Test
+Test 4 .eq
+4 Test .eq
+.eqTest 4
+.eq Test4
+eq Test 4 
+.eq .eq 4
+.eq .db 4
+.eq .dw 4
+.eq .mem 4
+.eq .align 4
+.eq .fillvalue 4
+.eq .index 4
+.eq = 4

@@ -108,6 +108,10 @@ public class Instruction {
 		private InstructionSet(byte[] opCodes) {
 			this.opCodes = opCodes;
 		}
+		
+		public byte getOpCode(int index) {
+			return opCodes[index];
+		}
 
 		public byte[] getOpCodes() {
 			return this.opCodes;
