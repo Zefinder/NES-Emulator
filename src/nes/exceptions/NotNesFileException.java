@@ -1,4 +1,5 @@
-package nes.exceptions;
+package exceptions;
+
 
 public class NotNesFileException extends Exception {
 

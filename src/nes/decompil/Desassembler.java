@@ -1,4 +1,4 @@
-package nes.decompil;
+package decompil;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -9,9 +9,9 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import instructions.InstructionSet;
 import nes.exceptions.InstructionException;
 import nes.exceptions.NotNesFileException;
-import nes.instructions.Instruction;
 
 public class Desassembler {
 
@@ -26,7 +26,7 @@ public class Desassembler {
 
 	private byte[] allBytes;
 
-	private Map<Integer, Instruction> instructionMap;
+	private Map<Integer, InstructionSet> instructionMap;
 
 	public Desassembler(File nesFile) throws IOException, NotNesFileException {
 		instructionMap = new LinkedHashMap<>();
@@ -44,7 +44,7 @@ public class Desassembler {
 		byte byteRead;
 		for (int i = 0x10; i < allBytes.length; i++) {
 			byteRead = allBytes[i];
-			Instruction instruction = new Instruction(byteRead);
+			InstructionSet instruction = new InstructionSet(byteRead);
 			int byteNumber = instruction.getByteNumber();
 
 			if (byteNumber == 2) {
@@ -73,12 +73,12 @@ public class Desassembler {
 	}
 
 	public void showInstructions() {
-		for (Instruction instruction : instructionMap.values()) {
+		for (InstructionSet instruction : instructionMap.values()) {
 			System.out.println(instruction);
 		}
 	}
 
-	public Map<Integer, Instruction> getInstructionList() {
+	public Map<Integer, InstructionSet> getInstructionList() {
 		return instructionMap;
 	}
 
@@ -148,7 +148,7 @@ public class Desassembler {
 			e.printStackTrace();
 		}
 
-		Instruction i = new Instruction((byte) 0x6D);
+		InstructionSet i = new InstructionSet((byte) 0x6D);
 		i.setArgument((byte) 0x02, (byte) 0x20);
 		System.out.println(String.format("$%04x", i.getAdress()));
 	}
