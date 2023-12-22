@@ -18,7 +18,7 @@ import exceptions.MapperException;
 import exceptions.NotNesFileException;
 import instructions.Instruction;
 
-public class NES implements Component {
+public class NES implements NESComponent {
 
 	private final File romFile;
 
@@ -28,12 +28,12 @@ public class NES implements Component {
 	private int counter, cpuCounter;
 
 	private Mapper mapper;
-	private Component cpu, ppu;
+	private NESComponent cpu, ppu;
 
 	// A retirer après les tests
 	private Map<Integer, Instruction> instructionMap;
 
-	public NES(Component cpu, Component ppu, File romFile) {
+	public NES(NESComponent cpu, NESComponent ppu, File romFile) {
 		counter = 3;
 		cpuCounter = 0;
 		this.cpu = cpu;
@@ -132,7 +132,7 @@ public class NES implements Component {
 		return mapper;
 	}
 
-	public Component getCPU() {
+	public NESComponent getCPU() {
 		return cpu;
 	}
 

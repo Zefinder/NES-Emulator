@@ -15,6 +15,10 @@ public class Label {
 	public int getAddress() {
 		return address;
 	}
+	
+	public String getName() {
+		return name;
+	}
 
 	@Override
 	public boolean equals(Object obj) {

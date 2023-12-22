@@ -29,6 +29,7 @@ Te[st = 4
 Te]st = 4
 Te{st = 4
 Te}st = 4
+Te'st = 4
 Te st = 4
 Test = 44 6
 Test = s = 5
@@ -80,6 +81,7 @@ Test 4
 .eq Te]st 4
 .eq Te{st 4
 .eq Te}st 4
+.eq Te'st 4
 .eq Te st 4
 .eq Test .eq 4
 .eq Test 4 6

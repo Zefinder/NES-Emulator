@@ -1162,6 +1162,7 @@ public class InstructionReader {
 		return new int[] { operand2, address };
 	}
 
+	// FIXME FAIRE EN SORTE QUE APPELLE BUS SSI NECESSAIRE
 	private void getByteFromInstruction(Instruction processing, byte A, byte X, byte Y, int pc)
 			throws AddressException {
 		int lsb, msb;

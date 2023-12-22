@@ -68,7 +68,7 @@ public class Compiler {
 					if (line.contains("-;")) {
 						ignore = false;
 						String[] splitedLine = line.split("-;");
-						if (splitedLine.length == 1)
+						if (splitedLine.length == 1 || splitedLine.length == 0)
 							line = "";
 						else
 							line = line.split("-;")[1];
@@ -186,7 +186,7 @@ public class Compiler {
 								String.format("[ERROR]: Syntax error for constant definition (line %d)\n%s\n%s\n",
 										i + 1, line, padLeftSpaces("^", line.indexOf("=", line.indexOf("=") + 1))));
 
-					Constant constant = getConstant(split[0].strip(), split[1].strip(), i + 1, line);
+					Constant constant = getConstant(split[0].strip(), split[1].strip().replace(" ", ""), i + 1, line);
 					if (constant == null)
 						continue;
 
@@ -281,7 +281,7 @@ public class Compiler {
 					String.format("[ERROR]: Label name can't be empty (line %d)\n%s\n^\n", i + 1, line));
 
 		Pattern spacePattern = Pattern.compile("[.*\\s.*]", Pattern.CASE_INSENSITIVE);
-		Pattern specialPattern = Pattern.compile("[.*[\\+|[-]|$|#|%|<|>|^|:|\\(|\\)|\\[|\\]|{|}].*]");
+		Pattern specialPattern = Pattern.compile("[.*[\\+|[-]|$|#|%|<|>|^|:|\\(|\\)|\\[|\\]|{|}|'].*]");
 		Pattern numberPattern = Pattern.compile("^[0-9].*");
 
 		if (spacePattern.matcher(labelName).find())
@@ -290,7 +290,7 @@ public class Compiler {
 
 		if (specialPattern.matcher(labelName).find())
 			throw new CompilerException(String.format(
-					"[ERROR]: Label name contain any of the following characters: +, -, *, $, #, %%, <, >, ^, :, (, ), [, ], {, } (line %d)\n%s\n",
+					"[ERROR]: Label name contain any of the following characters: +, -, *, $, #, %%, <, >, ^, :, (, ), [, ], {, }, ' (line %d)\n%s\n",
 					i + 1, line));
 
 		if (numberPattern.matcher(labelName).find())
@@ -827,7 +827,7 @@ public class Compiler {
 			String line = postLineConstantList.get(i);
 			if (line.contains("=")) {
 				String[] split = line.split("=");
-				Constant constant = getConstant(split[0].strip(), split[1].strip(), i + 1, line);
+				Constant constant = getConstant(split[0].strip(), split[1].strip().replace(" ", ""), i + 1, line);
 				if (constant == null)
 					throw new CompilerException(
 							String.format("[ERROR]: Constant or label not found (line %d)\n%s\n", i + 1, line));
@@ -906,7 +906,7 @@ public class Compiler {
 			throws CompilerException {
 
 		Pattern spacePattern = Pattern.compile("[.*\\s.*]", Pattern.CASE_INSENSITIVE);
-		Pattern specialPattern = Pattern.compile("[.*[\\+|[-]|$|#|%|<|>|^|:|\\(|\\)|\\[|\\]|{|}].*]");
+		Pattern specialPattern = Pattern.compile("[.*[\\+|[-]|$|#|%|<|>|^|:|\\(|\\)|\\[|\\]|{|}|'].*]");
 		Pattern numberPattern = Pattern.compile("^[0-9].*");
 
 		if (spacePattern.matcher(number).find())
@@ -936,7 +936,7 @@ public class Compiler {
 
 		if (specialPattern.matcher(constantName).find())
 			throw new CompilerException(String.format(
-					"[ERROR]: Constant name can't contain any of the following characters: +, -, *, $, #, %%, <, >, ^, :, (, ), [, ], {, } (line %d)\n%s\n",
+					"[ERROR]: Constant name can't contain any of the following characters: +, -, *, $, #, %%, <, >, ^, :, (, ), [, ], {, }, ' (line %d)\n%s\n",
 					lineNumber, line));
 
 		if (numberPattern.matcher(constantName).find())
@@ -959,7 +959,8 @@ public class Compiler {
 		int result = 0;
 		boolean low = false, high = false, third = false, negative = false;
 
-		strNumber = strNumber.strip().replace(" ", "").replace("-", "+-");
+		if (!strNumber.startsWith("'"))
+			strNumber = strNumber.strip().replace(" ", "").replace("-", "+-");
 
 		if (strNumber.startsWith("+")) {
 			strNumber = strNumber.substring(1);
@@ -991,24 +992,29 @@ public class Compiler {
 				strNumber = strNumber.substring(1);
 			}
 
-			switch (strNumber.charAt(0)) {
-			case '$':
-				result += Integer.parseInt(strNumber, 1, strNumber.length(), 16);
-				break;
+			if (strNumber.startsWith("'") && strNumber.endsWith("'") && strNumber.length() == 3) {
+				result += strNumber.charAt(1);
 
-			case '%':
-				result += Integer.parseInt(strNumber, 1, strNumber.length(), 2);
-				break;
+			} else {
+				switch (strNumber.charAt(0)) {
+				case '$':
+					result += Integer.parseInt(strNumber, 1, strNumber.length(), 16);
+					break;
 
-			default:
-				int index;
-				if ((index = constantList.indexOf(new Constant(strNumber, 0))) != -1) {
-					result += constantList.get(index).getValue();
-				} else if ((index = labelList.indexOf(new Label(strNumber, 0))) != -1) {
-					result += labelList.get(index).getAddress();
-				} else
-					result += Integer.valueOf(strNumber);
-				break;
+				case '%':
+					result += Integer.parseInt(strNumber, 1, strNumber.length(), 2);
+					break;
+
+				default:
+					int index;
+					if ((index = constantList.indexOf(new Constant(strNumber, 0))) != -1) {
+						result += constantList.get(index).getValue();
+					} else if ((index = labelList.indexOf(new Label(strNumber, 0))) != -1) {
+						result += labelList.get(index).getAddress();
+					} else
+						result += Integer.valueOf(strNumber);
+					break;
+				}
 			}
 
 			if (low)
@@ -1079,18 +1085,18 @@ public class Compiler {
 	}
 
 	public static void main(String[] args) {
-		Compiler compiler = new Compiler(new File("Test.nesasm"));
+		Compiler compiler = new Compiler(new File("console.nesasm"));
 		try {
-			compiler.compile(new File("./Test.nes"));
+			compiler.compile(new File("./console.nes"));
 		} catch (CompilerException e) {
 			System.err.println(e.getMessage());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.out.println(compiler.getLines());
-		System.out.println(compiler.getConstantList());
-		System.out.println(compiler.getLabelList());
-		System.out.println(compiler.getInstructionMap());
+//		System.out.println(compiler.getLines());
+//		System.out.println(compiler.getConstantList());
+//		System.out.println(compiler.getLabelList());
+//		System.out.println(compiler.getInstructionMap());
 		System.out.println("Compilation terminée !");
 	}
 

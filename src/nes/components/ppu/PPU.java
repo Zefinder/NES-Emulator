@@ -1,14 +1,14 @@
 package components.ppu;
 
 import components.Bus;
-import components.Component;
+import components.NESComponent;
 import components.mapper.Mapper;
 import components.ppu.bus.PPUBus;
 import components.ppu.register.PPURegisters;
 import components.ppu.rendering.PPURender;
 import exceptions.AddressException;
 
-public class PPU implements Component, Runnable {
+public class PPU implements NESComponent, Runnable {
 
 	private Bus bus;
 	private PPURegisters registres;

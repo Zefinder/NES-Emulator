@@ -8,7 +8,7 @@ import exceptions.InstructionException;
 import exceptions.MapperException;
 import exceptions.NotNesFileException;
 
-public interface Component {
+public interface NESComponent {
 
 	public void start()
 			throws AddressException, IOException, InstructionException, NotNesFileException, MapperException;

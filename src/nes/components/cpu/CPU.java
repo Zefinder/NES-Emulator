@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import components.Bus;
-import components.Component;
+import components.NESComponent;
 import components.cpu.bus.CPUBus;
 import components.cpu.register.CPURegisters;
 import components.mapper.Mapper;
@@ -15,7 +15,7 @@ import instructions.Instruction.AddressingMode;
 import instructions.Instruction.InstructionSet;
 import instructions.InstructionReader;
 
-public class CPU implements Component, Runnable {
+public class CPU implements NESComponent, Runnable {
 
 	// Registres CPU
 	private CPURegisters registres;
@@ -35,8 +35,12 @@ public class CPU implements Component, Runnable {
 	private Thread cpuThread;
 
 	public CPU() {
+		this(new CPUBus(0x10000));
+	}
+
+	public CPU(Bus bus) {
 		registres = new CPURegisters();
-		bus = new CPUBus(0x10000);
+		this.bus = bus;
 		instructionReader = new InstructionReader(bus);
 
 		instructionList = new ArrayList<>();
@@ -55,6 +59,8 @@ public class CPU implements Component, Runnable {
 		registres.setX((byte) 0);
 		registres.setY((byte) 0);
 		registres.setSp(0x1FD);
+		
+		instruction = getInstruction();
 
 		bus.setByteToMemory(0x4017, (byte) 0x00);
 		bus.setByteToMemory(0x4015, (byte) 0x00);
@@ -83,16 +89,7 @@ public class CPU implements Component, Runnable {
 
 	@Override
 	public void tick() throws AddressException {
-
-		if (waitingCycles <= 0) {
-			while (!readyForNext) {
-				// Si pas prêt, alors on fait rien
-			}
-			readyForNext = false;
-
-		} else {
-			--waitingCycles;
-		}
+		readyForNext = false;
 	}
 
 	@Override
@@ -105,29 +102,34 @@ public class CPU implements Component, Runnable {
 		return registres;
 	}
 
+//	private Instruction getInstruction() throws AddressException {
+//		// FIXME On ne peut pas faire comme ça !
+//		// Désassembler les instructions jusqu'à un jump.
+//		// Refaire jusqu'au prochain jump
+//		int pc = registres.getPc();
+//		byte byteRead = bus.getByteFromMemory(pc);
+//		Instruction instruction = new Instruction(byteRead);
+//		int byteNumber = instruction.getByteNumber();
+//		byte lsb = bus.getByteFromMemory(pc + 1), msb = bus.getByteFromMemory(pc + 2);
+//
+//		switch (byteNumber) {
+//		case 2:
+//			instruction.setArgument(lsb, 0);
+//			break;
+//
+//		case 3:
+//			instruction.setArgument(lsb, msb);
+//			break;
+//
+//		default:
+//			break;
+//		}
+//		return instruction;
+//	}
+
 	private Instruction getInstruction() throws AddressException {
-		// FIXME On ne peut pas faire comme ça !
-		// Désassembler les instructions jusqu'à un jump.
-		// Refaire jusqu'au prochain jump
 		int pc = registres.getPc();
-		byte byteRead = bus.getByteFromMemory(pc);
-		Instruction instruction = new Instruction(byteRead);
-		int byteNumber = instruction.getByteNumber();
-		byte lsb = bus.getByteFromMemory(pc + 1), msb = bus.getByteFromMemory(pc + 2);
-
-		switch (byteNumber) {
-		case 2:
-			instruction.setArgument(lsb, 0);
-			break;
-
-		case 3:
-			instruction.setArgument(lsb, msb);
-			break;
-
-		default:
-			break;
-		}
-		return instruction;
+		return instructionMap.get(pc);
 	}
 
 	/* A supprimer après les tests */
@@ -137,7 +139,7 @@ public class CPU implements Component, Runnable {
 
 	@Override
 	public void run() {
-		
+
 		while (true)
 			try {
 				if (!readyForNext) {
@@ -145,7 +147,7 @@ public class CPU implements Component, Runnable {
 						waitingCycles--;
 						if (instruction == null)
 							instruction = getInstruction();
-						
+
 						readyForNext = true;
 
 					} else {
@@ -167,8 +169,10 @@ public class CPU implements Component, Runnable {
 						--waitingCycles;
 						registres.setPc(registres.getPc() + instruction.getByteNumber());
 
-						instructionList.add(instruction);
-						pcList.add(registres.getPc());
+//						instructionList.add(instruction);
+//						pcList.add(registres.getPc());
+						
+						instruction = null;
 						readyForNext = true;
 					}
 				}

@@ -28,6 +28,7 @@ La]bel: lda #4
 La{bel: lda #4
 La}bel: lda #4
 La=bel: lda #4
+La'bel: lda #4
 Label lda #4 
 0Label:
 1Label:
