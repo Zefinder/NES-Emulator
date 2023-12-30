@@ -10,7 +10,7 @@ public class InstructionInfo {
 
 		// Ordre : Implicit, Accumulator, Immediate, ZP, ZPX, ZPY, Relative, Abs, AbsX,
 		// AbsY, Indir, IndirX, IndirY
-		ADC(new byte[] { NOCOD, NOCOD, 0x69, 0x65, 0x75, NOCOD, NOCOD, 0x6D, 0x7D, 0x79, NOCOD, 0x61, 0x71 }),
+//		ADC(new byte[] { NOCOD, NOCOD, 0x69, 0x65, 0x75, NOCOD, NOCOD, 0x6D, 0x7D, 0x79, NOCOD, 0x61, 0x71 }),
 		AND(new byte[] { NOCOD, NOCOD, 0x29, 0x25, 0x35, NOCOD, NOCOD, 0x2D, 0x3D, 0x39, NOCOD, 0x21, 0x31 }),
 		ASL(new byte[] { NOCOD, 0x0A, NOCOD, 0x06, 0x16, NOCOD, NOCOD, 0x0E, 0x1E, NOCOD, NOCOD, NOCOD, NOCOD }),
 		BCC(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, (byte) 0x90, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
@@ -110,7 +110,7 @@ public class InstructionInfo {
 	}
 
 	private static final InstructionInfo instance = new InstructionInfo();
-	private static final HashMap<Integer, Instruction> INSTRUCTION_MAP = new HashMap<Integer, Instruction>();
+	private static final HashMap<Integer, Instruction> instructionMap = new HashMap<Integer, Instruction>();
 
 //	private InstructionSet instruction;
 //	private AddressingMode addressingMode;
@@ -118,11 +118,20 @@ public class InstructionInfo {
 
 	private InstructionInfo() {
 		// Init of the instruction map
+		instructionMap.put(0x69, new ADCInstruction(AddressingMode.IMMEDIATE));
+		instructionMap.put(0x65, new ADCInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0x75, new ADCInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0x6D, new ADCInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0x7D, new ADCInstruction(AddressingMode.ABSOLUTE_X));
+		instructionMap.put(0x79, new ADCInstruction(AddressingMode.ABSOLUTE_Y));
+		instructionMap.put(0x61, new ADCInstruction(AddressingMode.INDIRECT_X));
+		instructionMap.put(0x71, new ADCInstruction(AddressingMode.INDIRECT_Y));
+		
 	}
 	
-//	public static InstructionInfo getInstance() {
-//		return instance;
-//	}
+	public static InstructionInfo getInstance() {
+		return instance;
+	}
 //
 //	public InstructionSet getInstruction() {
 //		return this.instruction;

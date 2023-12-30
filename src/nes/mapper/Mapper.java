@@ -11,6 +11,10 @@ public abstract class Mapper {
 	public Mapper() {
 
 	}
+	
+	public abstract int readCpuBus(int address);
+	
+	public abstract int writeCpuBus(int address);
 
 	protected CpuBus getCpuBus() {
 		return cpuBus;
