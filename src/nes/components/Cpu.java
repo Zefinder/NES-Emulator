@@ -23,6 +23,10 @@ public class Cpu {
 		return mapper.readCpuBus(address + 1) << 8 | mapper.readCpuBus(address);
 	}
 	
+	public void storeMemory(int address, int value) {
+		mapper.writeCpuBus(address, value);
+	}
+	
 	public static Cpu getInstance() {
 		return instance;
 	}

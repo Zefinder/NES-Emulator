@@ -2,6 +2,8 @@ package instructions;
 
 import java.util.HashMap;
 
+import instructions.alu.ADCInstruction;
+
 public class InstructionInfo {
 
 	private static final byte NOCOD = (byte) 0xFF;

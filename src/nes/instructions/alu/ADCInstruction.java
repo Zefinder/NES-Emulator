@@ -1,6 +1,7 @@
-package instructions;
+package instructions.alu;
 
 import exceptions.InstructionNotSupportedException;
+import instructions.AddressingMode;
 
 public class ADCInstruction extends AluInstruction {
 
@@ -21,7 +22,7 @@ public class ADCInstruction extends AluInstruction {
 		cpu.cpuInfo.A = result & 0xFF;
 		
 		// Flags update
-		updateFlags(result);
+		updateFlags(result, true);
 		
 		// Gym for V
 		updateV((result & 0x80) == 0, (operand1 & 0x80) == 0, (operand2 & 0x80) == 0, operand1 > operand2);
@@ -61,7 +62,7 @@ public class ADCInstruction extends AluInstruction {
 	}
 	
 	@Override
-	public Instruction newInstruction(int constant) {
+	public AluInstruction newInstruction(int constant) {
 		return new ADCInstruction(getMode(), constant);
 	}
 

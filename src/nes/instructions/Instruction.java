@@ -10,6 +10,11 @@ public abstract class Instruction {
 	protected int pageCrossed = 0;
 	private final int constant;
 
+	/**
+	 * Address stored when fetching operand to use in {@link #storeMemory(int)}
+	 */
+	private int address;
+
 	public Instruction(AddressingMode mode) {
 		this.mode = mode;
 		this.constant = -1;
@@ -91,6 +96,7 @@ public abstract class Instruction {
 		// The first operand will always be the accumulator or nothing
 		switch (mode) {
 		case IMMEDIATE:
+		case ACCUMULATOR:
 		case ZEROPAGE:
 		case ZEROPAGE_X:
 		case ABSOLUTE:
@@ -118,12 +124,14 @@ public abstract class Instruction {
 	 */
 	protected int fetchOperand2() throws InstructionNotSupportedException {
 		if (constant == -1) {
-			throw new InstructionNotSupportedException("Cannot fetch second operand: no constant!");
+			return -1;
 		}
 
 		int operand;
+		// TODO Remove fetchAddress to do everything here
 		switch (mode) {
 		case IMMEDIATE:
+		case RELATIVE:
 			operand = constant & 0xFF;
 			break;
 
@@ -181,7 +189,6 @@ public abstract class Instruction {
 			throw new InstructionNotSupportedException("Cannot fetch address: no constant!");
 		}
 
-		int address;
 		switch (mode) {
 		case RELATIVE:
 			int rel = constant & 0xFF;
@@ -200,8 +207,15 @@ public abstract class Instruction {
 			throw new InstructionNotSupportedException("Cannot fetch address: addressing mode is wrong!");
 		}
 
-		// TODO
 		return address;
 	}
 
+	/**
+	 * Stores the result in memory exactly where the 2nd operand have been taken.
+	 * 
+	 * @param value the value to store
+	 */
+	protected void storeMemory(int value) {
+		cpu.storeMemory(address, value);
+	}
 }
