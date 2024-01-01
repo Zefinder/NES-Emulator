@@ -4,25 +4,26 @@ import java.util.function.BooleanSupplier;
 
 import instructions.AddressingMode;
 
-public class BCCInstruction extends BranchInstruction {
+public class BEQInstruction extends BranchInstruction {
 
-	private static final BooleanSupplier branchCondition = () -> cpu.cpuInfo.C == 0;
-
-	public BCCInstruction(AddressingMode mode) {
+	private static final BooleanSupplier branchCondition = () -> cpu.cpuInfo.Z == 1;
+	
+	public BEQInstruction(AddressingMode mode) {
 		super(mode, branchCondition);
 	}
 
-	public BCCInstruction(AddressingMode mode, int constant) {
+	public BEQInstruction(AddressingMode mode, int constant) {
 		super(mode, branchCondition, constant);
 	}
 
 	@Override
 	public String getName() {
-		return "BCC";
+		return "BEQ";
 	}
-
+	
 	@Override
 	public BranchInstruction newInstruction(int constant) {
-		return new BCCInstruction(getMode(), constant);
+		return new BEQInstruction(getMode(), constant);
 	}
+
 }

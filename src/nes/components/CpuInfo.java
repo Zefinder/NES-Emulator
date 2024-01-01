@@ -1,7 +1,7 @@
 package components;
 
 public class CpuInfo {
-	
+
 	// TODO Remove because useless
 	public static final int C_MASK = 0b00000001;
 	public static final int Z_MASK = 0b00000010;
@@ -10,14 +10,14 @@ public class CpuInfo {
 	public static final int B_MASK = 0b00110000;
 	public static final int V_MASK = 0b01000000;
 	public static final int N_MASK = 0b10000000;
-	
+
 	/* Registers */
 	public int A;
 	public int X;
 	public int Y;
 	public int SP;
 	public int PC;
-	
+
 	/* Flags */
 	public int C;
 	public int Z;
@@ -26,14 +26,14 @@ public class CpuInfo {
 	public int B;
 	public int V;
 	public int N;
-	
+
 	public CpuInfo() {
 		this.A = 0;
 		this.X = 0;
 		this.Y = 0;
 		this.SP = 0;
 		this.PC = 0;
-		
+
 		this.C = 0;
 		this.Z = 0;
 		this.I = 0;
@@ -42,5 +42,9 @@ public class CpuInfo {
 		this.V = 0;
 		this.N = 0;
 	}
-	
+
+	public int getP() {
+		return N << 7 | V << 6 | B << 5 | D << 3 | I << 2 | Z << 1 | C;
+	}
+
 }

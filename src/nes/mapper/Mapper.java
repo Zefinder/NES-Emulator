@@ -5,23 +5,14 @@ import components.PpuBus;
 
 public abstract class Mapper {
 
-	private CpuBus cpuBus;
-	private PpuBus ppuBus;
-	
+	protected static final CpuBus cpuBus = new CpuBus();
+	protected static final PpuBus ppuBus = new PpuBus();
+
 	public Mapper() {
+	}
 
-	}
-	
-	public abstract int readCpuBus(int address);
-	
-	public abstract int writeCpuBus(int address, int value);
+	public abstract int[] readCpuBus(int address);
 
-	protected CpuBus getCpuBus() {
-		return cpuBus;
-	}
-	
-	protected PpuBus getPpuBus() {
-		return ppuBus;
-	}
-	
+	public abstract void writeCpuBus(int address, int value);
+
 }

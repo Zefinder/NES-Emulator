@@ -1,7 +1,8 @@
 package nes.instructions;
 
-import static instructions.AddressingMode.IMMEDIATE;
 import static instructions.AddressingMode.ACCUMULATOR;
+import static instructions.AddressingMode.IMMEDIATE;
+import static instructions.AddressingMode.IMPLICIT;
 import static instructions.AddressingMode.RELATIVE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -15,6 +16,7 @@ import java.util.function.Function;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import components.Cpu;
@@ -25,7 +27,18 @@ import instructions.alu.ANDInstruction;
 import instructions.alu.ASLInstruction;
 import instructions.alu.AluInstruction;
 import instructions.branch.BCCInstruction;
+import instructions.branch.BCSInstruction;
+import instructions.branch.BEQInstruction;
+import instructions.branch.BMIInstruction;
+import instructions.branch.BNEInstruction;
+import instructions.branch.BPLInstruction;
+import instructions.branch.BVCInstruction;
+import instructions.branch.BVSInstruction;
 import instructions.branch.BranchInstruction;
+import instructions.flags.CLCInstruction;
+import instructions.flags.CLDInstruction;
+import instructions.flags.CLIInstruction;
+import instructions.flags.CLVInstruction;
 
 @FunctionalInterface
 interface TriFunction<T, U, V, R> {
@@ -228,6 +241,13 @@ class TestInstructions {
 		Collection<DynamicTest> ASL() {
 			return getTestsAluInstructionAccumulator(new ASLInstruction(ACCUMULATOR), a -> a << 1);
 		}
+		
+		// TODO Need to implement test with zero page (LDA, STA, BIT)
+		@TestFactory
+		Collection<DynamicTest> BIT() {
+			return new ArrayList<DynamicTest>();
+//			return getTestsAluInstructionAccumulator(new BITInstruction(ACCUMULATOR), a -> a << 1);
+		}
 	}
 
 	@Nested
@@ -312,6 +332,125 @@ class TestInstructions {
 			return getTestsBranchInstruction(new BCCInstruction(RELATIVE), cpuInfo -> cpuInfo.C = 0,
 					cpuInfo -> cpuInfo.C = 1);
 		}
+		
+		@TestFactory
+		Collection<DynamicTest> BCS() {
+			return getTestsBranchInstruction(new BCSInstruction(RELATIVE), cpuInfo -> cpuInfo.C = 1,
+					cpuInfo -> cpuInfo.C = 0);
+		}
 
+		@TestFactory
+		Collection<DynamicTest> BNE() {
+			return getTestsBranchInstruction(new BNEInstruction(RELATIVE), cpuInfo -> cpuInfo.Z = 0,
+					cpuInfo -> cpuInfo.Z = 1);
+		}
+		
+		@TestFactory
+		Collection<DynamicTest> BEQ() {
+			return getTestsBranchInstruction(new BEQInstruction(RELATIVE), cpuInfo -> cpuInfo.Z = 1,
+					cpuInfo -> cpuInfo.Z = 0);
+		}
+		
+		@TestFactory
+		Collection<DynamicTest> BPL() {
+			return getTestsBranchInstruction(new BPLInstruction(RELATIVE), cpuInfo -> cpuInfo.N = 0,
+					cpuInfo -> cpuInfo.N = 1);
+		}
+		
+		@TestFactory
+		Collection<DynamicTest> BMI() {
+			return getTestsBranchInstruction(new BMIInstruction(RELATIVE), cpuInfo -> cpuInfo.N = 1,
+					cpuInfo -> cpuInfo.N = 0);
+		}
+		
+		@TestFactory
+		Collection<DynamicTest> BVC() {
+			return getTestsBranchInstruction(new BVCInstruction(RELATIVE), cpuInfo -> cpuInfo.V = 0,
+					cpuInfo -> cpuInfo.V = 1);
+		}
+		
+		@TestFactory
+		Collection<DynamicTest> BVS() {
+			return getTestsBranchInstruction(new BVSInstruction(RELATIVE), cpuInfo -> cpuInfo.V = 1,
+					cpuInfo -> cpuInfo.V = 0);
+		}
+	}
+	
+	@Nested
+	class TestFlagInstructions {
+		
+		@Test
+		void CLC() {
+			// Set C to 1
+			cpu.cpuInfo.C = 1;
+			
+			// Execute CLC
+			CLCInstruction instruction = new CLCInstruction(IMPLICIT);
+			try {
+				instruction.execute();
+			} catch (InstructionNotSupportedException e) {
+				e.printStackTrace();
+			}
+			
+			// Test
+			assertEquals(0, cpu.cpuInfo.C, "C must be 0");
+		}
+		
+		@Test
+		void CLD() {
+			// Set D to 1
+			cpu.cpuInfo.D = 1;
+			
+			// Execute CLD
+			CLDInstruction instruction = new CLDInstruction(IMPLICIT);
+			try {
+				instruction.execute();
+			} catch (InstructionNotSupportedException e) {
+				e.printStackTrace();
+			}
+			
+			// Test
+			assertEquals(0, cpu.cpuInfo.D, "D must be 0");
+		}
+		
+		@Test
+		void CLI() {
+			// Set I to 1
+			cpu.cpuInfo.I = 1;
+			
+			// Execute CLI
+			CLIInstruction instruction = new CLIInstruction(IMPLICIT);
+			try {
+				instruction.execute();
+			} catch (InstructionNotSupportedException e) {
+				e.printStackTrace();
+			}
+			
+			// Test
+			assertEquals(0, cpu.cpuInfo.I, "I must be 0");
+		}
+		
+		@Test
+		void CLV() {
+			// Set V to 1
+			cpu.cpuInfo.V = 1;
+			
+			// Execute CLV
+			CLVInstruction instruction = new CLVInstruction(IMPLICIT);
+			try {
+				instruction.execute();
+			} catch (InstructionNotSupportedException e) {
+				e.printStackTrace();
+			}
+			
+			// Test
+			assertEquals(0, cpu.cpuInfo.V, "V must be 0");
+		}
+		
+	}
+	
+	@Test
+	void BRK() {
+		// TODO Need to implement with memory
 	}
 }

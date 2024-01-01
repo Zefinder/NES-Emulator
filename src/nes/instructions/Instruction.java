@@ -209,6 +209,16 @@ public abstract class Instruction {
 
 		return address;
 	}
+	
+	/**
+	 * Fetch address in memory at the given address
+	 * 
+	 * @param address the address to look at in the bus
+	 * @return an address in memory
+	 */
+	protected int fetchAddress(int address) {
+		return cpu.fetchAddress(address);
+	}
 
 	/**
 	 * Stores the result in memory exactly where the 2nd operand have been taken.

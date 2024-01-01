@@ -32,4 +32,15 @@ public abstract class Bus {
 
 		return new int[] { busContent[address], busContent[address + 1] };
 	}
+
+	/**
+	 * Writes the value in the bus at the specified address
+	 * 
+	 * @param address the address to write to
+	 * @param value   the value to write
+	 */
+	public void writeToBus(int address, int value) {
+		// TODO Verify before that value is a byte
+		busContent[address] = value;
+	}
 }
