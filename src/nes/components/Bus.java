@@ -34,13 +34,16 @@ public abstract class Bus {
 	}
 
 	/**
-	 * Writes the value in the bus at the specified address
+	 * Writes the values in the bus at the specified address
 	 * 
 	 * @param address the address to write to
-	 * @param value   the value to write
+	 * @param values   the values to write
 	 */
-	public void writeToBus(int address, int value) {
+	public void writeToBus(int address, int... values) {
 		// TODO Verify before that value is a byte
-		busContent[address] = value;
+		for (int value : values) {
+			busContent[address & (busSize - 1)] = value;
+			address++;
+		}
 	}
 }

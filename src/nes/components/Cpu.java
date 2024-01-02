@@ -5,6 +5,10 @@ import mapper.Mapper;
 public class Cpu {
 
 	private static final Cpu instance = new Cpu();
+	
+	public static final int RESET_VECTOR = 0xFFFA;
+	public static final int NMI_VECTOR = 0xFFFC;
+	public static final int BREAK_VECTOR = 0xFFFE;
 
 	/* Mapper */
 	private Mapper mapper;
@@ -46,15 +50,15 @@ public class Cpu {
 	}
 
 	/**
-	 * Stores a value in memory
+	 * Stores values in memory
 	 * 
 	 * @param address the address to store the value in the memory
-	 * @param value   the value to store
+	 * @param values   the values to store
 	 */
-	public void storeMemory(int address, int value) {
-		mapper.writeCpuBus(address, value);
+	public void storeMemory(int address, int... values) {
+		mapper.writeCpuBus(address, values);
 	}
-
+	
 	/**
 	 * Pushes the value into the stack
 	 * 

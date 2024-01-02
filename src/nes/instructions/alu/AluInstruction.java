@@ -30,13 +30,16 @@ public abstract class AluInstruction extends Instruction {
 		int operand2 = fetchOperand2();
 		execute(operand1, operand2);
 	}
-	
+
 	@Override
 	public abstract AluInstruction newInstruction(int constant);
-	
+
 	protected void updateFlags(int result, boolean updateC) {
-		cpu.cpuInfo.C = result > 255 ? 1 : 0;
+		if (updateC) {
+			cpu.cpuInfo.C = result > 255 ? 1 : 0;
+		}
+
 		cpu.cpuInfo.Z = (result & 0xFF) == 0 ? 1 : 0;
-		cpu.cpuInfo.N = (result & 0x80) >> 7;
+		cpu.cpuInfo.N = (result & 0x80) != 0 || result < 0 ? 1 : 0;
 	}
 }

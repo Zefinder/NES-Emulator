@@ -13,6 +13,6 @@ public abstract class Mapper {
 
 	public abstract int[] readCpuBus(int address);
 
-	public abstract void writeCpuBus(int address, int value);
+	public abstract void writeCpuBus(int address, int... values);
 
 }

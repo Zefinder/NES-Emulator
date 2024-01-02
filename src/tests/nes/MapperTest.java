@@ -1,4 +1,4 @@
-package nes.cpu;
+package nes;
 
 import mapper.Mapper;
 
@@ -13,8 +13,8 @@ public class MapperTest extends Mapper {
 	}
 
 	@Override
-	public void writeCpuBus(int address, int value) {
-		cpuBus.writeToBus(address, value);
+	public void writeCpuBus(int address, int... values) {
+		cpuBus.writeToBus(address, values);
 	}
 
 }
