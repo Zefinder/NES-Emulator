@@ -113,6 +113,7 @@ class TestInstructions {
 		}
 
 		// TODO Add tests with carry
+		// TODO Add tests for ALU instructions (like ASL) that directly modify memory
 		/**
 		 * Used by instructions like ADC
 		 */

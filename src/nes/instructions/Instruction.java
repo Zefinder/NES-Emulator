@@ -13,7 +13,7 @@ public abstract class Instruction {
 	/**
 	 * Address stored when fetching operand to use in {@link #storeMemory(int)}
 	 */
-	private int address;
+	private int address = -1;
 
 	public Instruction(AddressingMode mode) {
 		this.mode = mode;
@@ -128,7 +128,6 @@ public abstract class Instruction {
 		}
 
 		int operand;
-		// TODO Remove fetchAddress to do everything here
 		switch (mode) {
 		case IMMEDIATE:
 		case RELATIVE:
@@ -136,38 +135,45 @@ public abstract class Instruction {
 			break;
 
 		case ZEROPAGE:
-			operand = cpu.fetchMemory(constant & 0xFF);
+			address = constant & 0xFF;
+			operand = cpu.fetchMemory(address);
 			break;
 
 		case ZEROPAGE_X:
-			operand = cpu.fetchMemory((constant + cpu.cpuInfo.X) & 0xFF);
+			address = (constant + cpu.cpuInfo.X) & 0xFF;
+			operand = cpu.fetchMemory(address);
 			break;
 
 		case ZEROPAGE_Y:
-			operand = cpu.fetchMemory((constant + cpu.cpuInfo.Y) & 0xFF);
+			address = (constant + cpu.cpuInfo.Y) & 0xFF;
+			operand = cpu.fetchMemory(address);
 			break;
 
 		case ABSOLUTE:
-			operand = cpu.fetchMemory(constant & 0xFFFF);
+			address = constant & 0xFFFF;
+			operand = cpu.fetchMemory(address);
 			break;
 
 		case ABSOLUTE_X:
-			operand = cpu.fetchMemory((constant + cpu.cpuInfo.X) & 0xFFFF);
+			address = (constant + cpu.cpuInfo.X) & 0xFFFF;
+			operand = cpu.fetchMemory(address);
 			pageCrossed = (constant & 0xFF) + cpu.cpuInfo.X > 0xFF ? 1 : 0;
 			break;
 
 		case ABSOLUTE_Y:
-			operand = cpu.fetchMemory((constant + cpu.cpuInfo.Y) & 0xFFFF);
+			address = (constant + cpu.cpuInfo.Y) & 0xFFFF;
+			operand = cpu.fetchMemory(address);
 			pageCrossed = (constant & 0xFF) + cpu.cpuInfo.Y > 0xFF ? 1 : 0;
 			break;
 
 		case INDIRECT_X:
-			operand = cpu.fetchMemory(cpu.fetchAddress((constant + cpu.cpuInfo.X) & 0xFFFF));
+			address = cpu.fetchAddress((constant + cpu.cpuInfo.X) & 0xFFFF);
+			operand = cpu.fetchMemory(address);
 			break;
 
 		case INDIRECT_Y:
-			int address = cpu.fetchAddress(constant & 0xFFFF);
-			operand = cpu.fetchMemory((address + cpu.cpuInfo.Y) & 0xFFFF);
+			address = (cpu.fetchAddress(constant & 0xFFFF) + cpu.cpuInfo.Y) & 0xFFFF;
+			operand = cpu.fetchMemory(address);
 			pageCrossed = (constant & 0xFF) + cpu.cpuInfo.Y > 0xFF ? 1 : 0;
 			break;
 
@@ -178,38 +184,6 @@ public abstract class Instruction {
 		return operand;
 	}
 
-	/**
-	 * Fetches the address for the instruction
-	 * 
-	 * @return the address
-	 * @throws InstructionNotSupportedException if constant is not set
-	 */
-	protected int fetchAddress() throws InstructionNotSupportedException {
-		if (constant == -1) {
-			throw new InstructionNotSupportedException("Cannot fetch address: no constant!");
-		}
-
-		switch (mode) {
-		case RELATIVE:
-			int rel = constant & 0xFF;
-			address = cpu.cpuInfo.PC + (rel > 127 ? rel - 256 : rel);
-			break;
-
-		case ABSOLUTE:
-			address = constant & 0xFFFF;
-			break;
-
-		case INDIRECT:
-			address = cpu.fetchAddress(constant & 0xFF);
-			break;
-
-		default:
-			throw new InstructionNotSupportedException("Cannot fetch address: addressing mode is wrong!");
-		}
-
-		return address;
-	}
-	
 	/**
 	 * Fetch address in memory at the given address
 	 * 
