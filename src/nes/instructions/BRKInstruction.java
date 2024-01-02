@@ -3,8 +3,6 @@ package instructions;
 import exceptions.InstructionNotSupportedException;
 
 public class BRKInstruction extends Instruction {
-	
-	// TODO Do instruction
 
 	public BRKInstruction(AddressingMode mode) {
 		super(mode);

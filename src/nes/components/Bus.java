@@ -40,9 +40,8 @@ public abstract class Bus {
 	 * @param values   the values to write
 	 */
 	public void writeToBus(int address, int... values) {
-		// TODO Verify before that value is a byte
 		for (int value : values) {
-			busContent[address & (busSize - 1)] = value;
+			busContent[address & (busSize - 1)] = value & 0xFF;
 			address++;
 		}
 	}

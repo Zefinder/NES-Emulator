@@ -84,38 +84,8 @@ public abstract class Instruction {
 	}
 
 	/**
-	 * Fetches the first operand for the instruction
-	 * 
-	 * @return the value of the first operand
-	 * @throws InstructionNotSupportedException if the addressing mode does not
-	 *                                          correspond to something that can be
-	 *                                          fetched
-	 */
-	protected int fetchOperand1() throws InstructionNotSupportedException {
-		int operand;
-		// The first operand will always be the accumulator or nothing
-		switch (mode) {
-		case IMMEDIATE:
-		case ACCUMULATOR:
-		case ZEROPAGE:
-		case ZEROPAGE_X:
-		case ABSOLUTE:
-		case ABSOLUTE_X:
-		case ABSOLUTE_Y:
-		case INDIRECT_X:
-		case INDIRECT_Y:
-			operand = cpu.cpuInfo.A;
-			break;
-
-		default:
-			throw new InstructionNotSupportedException("Cannot fetch first operand: addressing mode is wrong!");
-		}
-
-		return operand;
-	}
-
-	/**
-	 * Fetches the second operand for the instruction
+	 * Fetches the second operand for the instruction since the first one is always
+	 * the accumulator.
 	 * 
 	 * @return the value of the second operand
 	 * @throws InstructionNotSupportedException if the addressing mode does not

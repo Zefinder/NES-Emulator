@@ -25,10 +25,8 @@ public abstract class AluInstruction extends Instruction {
 
 	@Override
 	public void execute() throws InstructionNotSupportedException {
-		// TODO First operand always A
-		int operand1 = fetchOperand1();
 		int operand2 = fetchOperand2();
-		execute(operand1, operand2);
+		execute(cpu.cpuInfo.A, operand2);
 	}
 
 	@Override

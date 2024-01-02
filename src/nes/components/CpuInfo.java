@@ -2,15 +2,6 @@ package components;
 
 public class CpuInfo {
 
-	// TODO Remove because useless
-	public static final int C_MASK = 0b00000001;
-	public static final int Z_MASK = 0b00000010;
-	public static final int I_MASK = 0b00000100;
-	public static final int D_MASK = 0b00001000;
-	public static final int B_MASK = 0b00110000;
-	public static final int V_MASK = 0b01000000;
-	public static final int N_MASK = 0b10000000;
-
 	/* Registers */
 	public int A;
 	public int X;
