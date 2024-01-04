@@ -30,6 +30,7 @@ import components.Cpu;
 import components.CpuInfo;
 import exceptions.InstructionNotSupportedException;
 import instructions.BRKInstruction;
+import instructions.Instruction;
 import instructions.alu.ADCInstruction;
 import instructions.alu.ANDInstruction;
 import instructions.alu.ASLInstruction;
@@ -45,6 +46,11 @@ import instructions.alu.EORInstruction;
 import instructions.alu.INCInstruction;
 import instructions.alu.INXInstruction;
 import instructions.alu.INYInstruction;
+import instructions.alu.LDAInstruction;
+import instructions.alu.LDXInstruction;
+import instructions.alu.LDYInstruction;
+import instructions.alu.LSRInstruction;
+import instructions.alu.ORAInstruction;
 import instructions.branch.BCCInstruction;
 import instructions.branch.BCSInstruction;
 import instructions.branch.BEQInstruction;
@@ -60,6 +66,10 @@ import instructions.flags.CLIInstruction;
 import instructions.flags.CLVInstruction;
 import instructions.jump.JMPInstruction;
 import instructions.jump.JSRInstruction;
+import instructions.stack.PHAInstruction;
+import instructions.stack.PHPInstruction;
+import instructions.stack.PLAInstruction;
+import instructions.stack.PLPInstruction;
 import nes.MapperTest;
 
 @FunctionalInterface
@@ -178,7 +188,7 @@ class TestInstructions {
 		 * Used by instructions like AND
 		 */
 		private Collection<DynamicTest> getTestsAluInstructionLogic(AluInstruction instruction,
-				BiFunction<Integer, Integer, Integer> function) {
+				BiFunction<Integer, Integer, Integer> logicFunction) {
 			List<DynamicTest> tests = new ArrayList<DynamicTest>();
 
 			for (int operand1 = 0; operand1 <= 0xFF; operand1++) {
@@ -193,7 +203,7 @@ class TestInstructions {
 						e.printStackTrace();
 					}
 
-					int rawValue = function.apply(operand1, operand2);
+					int rawValue = logicFunction.apply(operand1, operand2);
 					int expectedValue = rawValue & 0xFF;
 					int expectedZ = expectedValue == 0 ? 1 : 0;
 					int expectedN = expectedValue >= 0x80 ? 1 : 0;
@@ -217,7 +227,7 @@ class TestInstructions {
 		 * Used by instructions like ASL
 		 */
 		private Collection<DynamicTest> getTestsAluInstructionAccumulator(AluInstruction instruction,
-				Function<Integer, Integer> function) {
+				IntFunction<Integer> function, IntFunction<Integer> carryEvaluation) {
 			List<DynamicTest> tests = new ArrayList<DynamicTest>();
 
 			for (int operand1 = 0; operand1 <= 0xFF; operand1++) {
@@ -232,7 +242,7 @@ class TestInstructions {
 
 				int rawValue = function.apply(operand1);
 				int expectedValue = rawValue & 0xFF;
-				int expectedC = rawValue > 0xFF ? 1 : 0;
+				int expectedC = carryEvaluation.apply(operand1);
 				int expectedZ = expectedValue == 0 ? 1 : 0;
 				int expectedN = expectedValue >= 0x80 ? 1 : 0;
 
@@ -257,7 +267,7 @@ class TestInstructions {
 		 * Used by CMP, CPX and CPY
 		 */
 		private Collection<DynamicTest> getTestsAluInstructionCompare(AluInstruction instruction,
-				Consumer<Integer> valueUpdate) {
+				IntConsumer valueUpdate) {
 			List<DynamicTest> tests = new ArrayList<DynamicTest>();
 
 			for (int operand1 = 0; operand1 <= 0xFF; operand1++) {
@@ -367,6 +377,41 @@ class TestInstructions {
 			return tests;
 		}
 
+		/**
+		 * Used by instructions like AND
+		 */
+		private Collection<DynamicTest> getTestsAluInstructionLoad(AluInstruction instruction,
+				IntSupplier registerValue) {
+			List<DynamicTest> tests = new ArrayList<DynamicTest>();
+
+			for (int value = 0; value <= 0xFF; value++) {
+				resetCpu();
+				instruction = instruction.newInstruction(value);
+
+				try {
+					instruction.execute();
+				} catch (InstructionNotSupportedException e) {
+					e.printStackTrace();
+				}
+
+				int expectedValue = value;
+				int expectedZ = value == 0 ? 1 : 0;
+				int expectedN = value >= 0x80 ? 1 : 0;
+
+				int gotValue = registerValue.getAsInt();
+				int gotZ = cpu.cpuInfo.Z;
+				int gotN = cpu.cpuInfo.N;
+
+				tests.add(DynamicTest.dynamicTest(String.format("0x%X", value), () -> {
+					assertEquals(expectedValue, gotValue, "Value given by the CPU is wrong");
+					assertEquals(expectedZ, gotZ, "Zero flag wrong");
+					assertEquals(expectedN, gotN, "Negative flag wrong");
+				}));
+			}
+
+			return tests;
+		}
+
 		@TestFactory
 		Collection<DynamicTest> ADC() {
 			return getTestsAluInstructionOverflow(new ADCInstruction(IMMEDIATE), (a, b) -> a + b,
@@ -403,7 +448,8 @@ class TestInstructions {
 
 		@TestFactory
 		Collection<DynamicTest> ASL() {
-			return getTestsAluInstructionAccumulator(new ASLInstruction(ACCUMULATOR), a -> a << 1);
+			return getTestsAluInstructionAccumulator(new ASLInstruction(ACCUMULATOR), a -> a << 1,
+					a -> a << 1 > 0xFF ? 1 : 0);
 		}
 
 		@TestFactory
@@ -501,6 +547,31 @@ class TestInstructions {
 		Collection<DynamicTest> INY() {
 			return getTestsAluInstructionRegisterDecInc(new INYInstruction(IMPLICIT), value -> cpu.cpuInfo.Y = value,
 					value -> value + 1, () -> cpu.cpuInfo.Y);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> LDA() {
+			return getTestsAluInstructionLoad(new LDAInstruction(IMMEDIATE), () -> cpu.cpuInfo.A);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> LDX() {
+			return getTestsAluInstructionLoad(new LDXInstruction(IMMEDIATE), () -> cpu.cpuInfo.X);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> LDY() {
+			return getTestsAluInstructionLoad(new LDYInstruction(IMMEDIATE), () -> cpu.cpuInfo.Y);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> LSR() {
+			return getTestsAluInstructionAccumulator(new LSRInstruction(ACCUMULATOR), a -> a >> 1, a -> a & 1);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> ORA() {
+			return getTestsAluInstructionLogic(new ORAInstruction(IMMEDIATE), (a, b) -> a | b);
 		}
 	}
 
@@ -750,7 +821,8 @@ class TestInstructions {
 			}
 
 			// Test what is in stack
-			assertEquals(PC_BEFORE, cpu.fetchAddress(0x100 | SP_BEFORE - 1), "Old PC should be in first stack position");
+			assertEquals(PC_BEFORE, cpu.fetchAddress(0x100 | SP_BEFORE - 1),
+					"Old PC should be in first stack position");
 			assertEquals(P_BEFORE, cpu.fetchMemory(0x100 | SP_BEFORE - 2),
 					"Old flags should be in second stack position");
 
@@ -814,7 +886,7 @@ class TestInstructions {
 				int gotAddress = cpu.cpuInfo.PC;
 				int gotSP = cpu.cpuInfo.SP;
 				int gotReturn = cpu.pop() | cpu.pop() << 8;
-				
+
 				tests.add(DynamicTest.dynamicTest(String.format("0x%04X", address), () -> {
 					assertEquals(expectedAddress, gotAddress, "CPU should have jumped");
 					assertEquals(expectedSP, gotSP, "SP should have been decreased by 2");
@@ -823,6 +895,119 @@ class TestInstructions {
 			}
 
 			return tests;
+		}
+	}
+
+	@Nested
+	class TestStackInstructions {
+
+		private void resetCpu() {
+			// Reset stack
+			for (int address = 0x100; address <= 0x1FF; address++) {
+				cpu.storeMemory(address, 0);
+			}
+
+			// Registers at 0
+			cpu.cpuInfo.A = 0;
+			cpu.cpuInfo.X = 0;
+			cpu.cpuInfo.Y = 0;
+			cpu.cpuInfo.SP = 0xFD;
+			cpu.cpuInfo.PC = 0;
+
+			// Flags at 0
+			cpu.cpuInfo.C = 0;
+			cpu.cpuInfo.Z = 0;
+			cpu.cpuInfo.I = 0;
+			cpu.cpuInfo.D = 0;
+			cpu.cpuInfo.B = 0;
+			cpu.cpuInfo.V = 0;
+			cpu.cpuInfo.N = 0;
+		}
+
+		private Collection<DynamicTest> getTestsStackPush(Instruction instruction, IntConsumer registerUpdate) {
+			List<DynamicTest> tests = new ArrayList<DynamicTest>();
+
+			for (int value = 0; value <= 0xFF; value++) {
+				// Reset CPU registers and flags
+				resetCpu();
+
+				// Update register
+				registerUpdate.accept(value);
+
+				// Execute instruction
+				try {
+					instruction.execute();
+				} catch (InstructionNotSupportedException e) {
+					e.printStackTrace();
+				}
+
+				// Test values
+				int expectedValue = value;
+				int gotValue = cpu.fetchMemory(0x1FD);
+
+				tests.add(DynamicTest.dynamicTest(String.format("0x%X", value),
+						() -> assertEquals(expectedValue, gotValue, "Value given by the CPU is wrong")));
+			}
+
+			return tests;
+		}
+
+		private Collection<DynamicTest> getTestsStackPop(Instruction instruction, IntSupplier registerValue,
+				IntFunction<Integer> flagZUpdate) {
+			List<DynamicTest> tests = new ArrayList<DynamicTest>();
+
+			for (int value = 0; value <= 0xFF; value++) {
+				// Reset CPU registers and flags
+				resetCpu();
+
+				// Push value
+				cpu.push(value);
+
+				// Execute instruction
+				try {
+					instruction.execute();
+				} catch (InstructionNotSupportedException e) {
+					e.printStackTrace();
+				}
+
+				// Test values
+				int expectedValue = value;
+				int expectedZ = flagZUpdate.apply(value);
+				int expectedN = value >= 0x80 ? 1 : 0;
+
+				int gotValue = registerValue.getAsInt();
+				int gotZ = cpu.cpuInfo.Z;
+				int gotN = cpu.cpuInfo.N;
+
+				tests.add(DynamicTest.dynamicTest(String.format("0x%X", value), () -> {
+					assertEquals(expectedValue, gotValue, "Register value wrong");
+					assertEquals(expectedZ, gotZ, "Zero flag wrong");
+					assertEquals(expectedN, gotN, "Negative flag wrong");
+				}));
+			}
+
+			return tests;
+		}
+
+		@TestFactory
+		Collection<DynamicTest> PHA() {
+			return getTestsStackPush(new PHAInstruction(IMPLICIT), value -> cpu.cpuInfo.A = value);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> PHP() {
+			return getTestsStackPush(new PHPInstruction(IMPLICIT), value -> cpu.cpuInfo.setP(value));
+		}
+
+		@TestFactory
+		Collection<DynamicTest> PLA() {
+			return getTestsStackPop(new PLAInstruction(IMPLICIT), () -> cpu.cpuInfo.A, value -> value == 0 ? 1 : 0);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> PLP() {
+			return getTestsStackPop(new PLPInstruction(IMPLICIT), () -> cpu.cpuInfo.getP(),
+					value -> (value >> 1) & 0b1);
 		}
 	}
 }

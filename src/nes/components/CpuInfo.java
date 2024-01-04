@@ -35,7 +35,17 @@ public class CpuInfo {
 	}
 
 	public int getP() {
-		return N << 7 | V << 6 | B << 5 | D << 3 | I << 2 | Z << 1 | C;
+		return N << 7 | V << 6 | B << 4 | D << 3 | I << 2 | Z << 1 | C;
+	}
+
+	public void setP(int P) {
+		C = P & 0b1;
+		Z = (P >> 1) & 0b1;
+		I = (P >> 2) & 0b1;
+		D = (P >> 3) & 0b1;
+		B = (P >> 4) & 0b11;
+		V = (P >> 6) & 0b1;
+		N = (P >> 7) & 0b1;
 	}
 
 }

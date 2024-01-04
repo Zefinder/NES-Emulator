@@ -3,53 +3,51 @@ package instructions.alu;
 import exceptions.InstructionNotSupportedException;
 import instructions.AddressingMode;
 
-public class ASLInstruction extends AluInstruction {
+public class ORAInstruction extends AluInstruction {
 
-	public ASLInstruction(AddressingMode mode) {
+	public ORAInstruction(AddressingMode mode) {
 		super(mode);
 	}
 
-	public ASLInstruction(AddressingMode mode, int constant) {
+	public ORAInstruction(AddressingMode mode, int constant) {
 		super(mode, constant);
 	}
 
 	@Override
 	protected void execute(int operand1, int operand2) {
-		// If ACCUMULATOR then use operand1 and store in A
-		// If not use operand2 and store in memory
-		// A/M = A/M << 1
-		int result;
-		if (getMode() == AddressingMode.ACCUMULATOR) {
-			result = operand1 << 1;
-			
-			// Register A update
-			cpu.cpuInfo.A = result & 0xFF;
-		} else {
-			result = operand2 << 1;
-			
-			// Memory update
-			storeMemory(result & 0xFF);
-		}
-		
+		// A = A | M
+		int result = operand1 | operand2;
+
+		// Register A update
+		// No need & 0xFF since ORA has no overflow
+		cpu.cpuInfo.A = result;
+
 		// Flags update
-		updateFlags(result, true);
+		updateFlags(result, false);
 	}
 
 	@Override
 	public int getCycle() throws InstructionNotSupportedException {
 		switch (getMode()) {
-		case ACCUMULATOR:
+		case IMMEDIATE:
 			return 2;			
 		
 		case ZEROPAGE:
-			return 5;
+			return 3;
 		
 		case ZEROPAGE_X:
 		case ABSOLUTE:		
-			return 6;
+			return 4;
 		
 		case ABSOLUTE_X:
-			return 7;
+		case ABSOLUTE_Y:
+			return 4 + pageCrossed;
+		
+		case INDIRECT_X:
+			return 6;
+			
+		case INDIRECT_Y:
+			return 5 + pageCrossed;
 
 		default:
 			throw new InstructionNotSupportedException("Cannot get cycles: addressing mode is wrong!");
@@ -58,11 +56,11 @@ public class ASLInstruction extends AluInstruction {
 
 	@Override
 	public String getName() {
-		return "ASL";
+		return "ORA";
 	}
 
 	@Override
 	public AluInstruction newInstruction(int constant) {
-		return new ASLInstruction(getMode(), constant);
+		return new ORAInstruction(getMode(), constant);
 	}
 }
