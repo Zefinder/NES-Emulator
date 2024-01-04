@@ -155,6 +155,32 @@ public abstract class Instruction {
 	}
 
 	/**
+	 * Fetches the address for jump instructions
+	 * 
+	 * @return the address where to jump
+	 * @throws InstructionNotSupportedException if the addressing mode does not
+	 *                                          correspond to something that can be
+	 *                                          fetched
+	 */
+	protected int fetchJumpAddress() throws InstructionNotSupportedException {
+		int retAddress;
+		switch (mode) {
+		case ABSOLUTE:
+			retAddress = constant & 0xFFFF;
+			break;
+
+		case INDIRECT:
+			retAddress = cpu.fetchAddress(constant & 0xFFFF);
+			break;
+
+		default:
+			throw new InstructionNotSupportedException("Cannot fetch address: addressing mode is wrong!");
+		}
+
+		return retAddress;
+	}
+
+	/**
 	 * Fetch address in memory at the given address
 	 * 
 	 * @param address the address to look at in the bus

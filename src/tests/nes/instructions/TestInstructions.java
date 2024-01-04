@@ -1,6 +1,7 @@
 package nes.instructions;
 
 import static components.Cpu.BREAK_VECTOR;
+import static instructions.AddressingMode.ABSOLUTE;
 import static instructions.AddressingMode.ACCUMULATOR;
 import static instructions.AddressingMode.IMMEDIATE;
 import static instructions.AddressingMode.IMPLICIT;
@@ -15,6 +16,9 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntConsumer;
+import java.util.function.IntFunction;
+import java.util.function.IntSupplier;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
@@ -34,6 +38,13 @@ import instructions.alu.BITInstruction;
 import instructions.alu.CMPInstruction;
 import instructions.alu.CPXInstruction;
 import instructions.alu.CPYInstruction;
+import instructions.alu.DECInstruction;
+import instructions.alu.DEXInstruction;
+import instructions.alu.DEYInstruction;
+import instructions.alu.EORInstruction;
+import instructions.alu.INCInstruction;
+import instructions.alu.INXInstruction;
+import instructions.alu.INYInstruction;
 import instructions.branch.BCCInstruction;
 import instructions.branch.BCSInstruction;
 import instructions.branch.BEQInstruction;
@@ -47,6 +58,8 @@ import instructions.flags.CLCInstruction;
 import instructions.flags.CLDInstruction;
 import instructions.flags.CLIInstruction;
 import instructions.flags.CLVInstruction;
+import instructions.jump.JMPInstruction;
+import instructions.jump.JSRInstruction;
 import nes.MapperTest;
 
 @FunctionalInterface
@@ -112,7 +125,7 @@ class TestInstructions {
 			cpu.cpuInfo.N = 0;
 		}
 
-		// TODO Add tests with carry
+		// TODO Add tests with carry (for those who modifies it and those who do not)
 		// TODO Add tests for ALU instructions (like ASL) that directly modify memory
 		/**
 		 * Used by instructions like ADC
@@ -280,6 +293,80 @@ class TestInstructions {
 			return tests;
 		}
 
+		private Collection<DynamicTest> getTestsAluInstructionMemoryDecInc(AluInstruction instruction,
+				IntFunction<Integer> function) {
+			int zeroPageAddress = 0x10;
+			// Reset a spot in zero page for test (0x10)
+			cpu.storeMemory(zeroPageAddress, 0);
+
+			List<DynamicTest> tests = new ArrayList<DynamicTest>();
+			for (int value = 0; value <= 0xFF; value++) {
+				resetCpu();
+				cpu.storeMemory(zeroPageAddress, value);
+
+				// Execute instruction
+				instruction = instruction.newInstruction(zeroPageAddress);
+				try {
+					instruction.execute();
+				} catch (InstructionNotSupportedException e) {
+					e.printStackTrace();
+				}
+
+				// Test flags
+				int expectedResult = function.apply(value) & 0xFF;
+				int expectedZ = expectedResult == 0 ? 1 : 0;
+				int expectedN = (expectedResult >= 0x80) || (expectedResult < 0) ? 1 : 0;
+
+				int gotResult = cpu.fetchMemory(zeroPageAddress);
+				int gotZ = cpu.cpuInfo.Z;
+				int gotN = cpu.cpuInfo.N;
+
+				tests.add(DynamicTest.dynamicTest(String.format("0x%X", value), () -> {
+					assertEquals(expectedResult, gotResult, "Results should be the same");
+					assertEquals(expectedZ, gotZ, "Zero flag wrong");
+					assertEquals(expectedN, gotN, "Negative flag wrong");
+				}));
+			}
+
+			return tests;
+		}
+
+		private Collection<DynamicTest> getTestsAluInstructionRegisterDecInc(AluInstruction instruction,
+				IntConsumer registerUpdate, IntFunction<Integer> function, IntSupplier registerSupplier) {
+			List<DynamicTest> tests = new ArrayList<DynamicTest>();
+
+			for (int value = 0; value <= 0xFF; value++) {
+				resetCpu();
+
+				// Update regiser
+				registerUpdate.accept(value);
+
+				// Execute instruction (implicit so no new)
+				try {
+					instruction.execute();
+				} catch (InstructionNotSupportedException e) {
+					e.printStackTrace();
+				}
+
+				// Test flags
+				int expectedResult = (function.apply(value)) & 0xFF;
+				int expectedZ = expectedResult == 0 ? 1 : 0;
+				int expectedN = (expectedResult >= 0x80) || (expectedResult < 0) ? 1 : 0;
+
+				int gotResult = registerSupplier.getAsInt();
+				int gotZ = cpu.cpuInfo.Z;
+				int gotN = cpu.cpuInfo.N;
+
+				tests.add(DynamicTest.dynamicTest(String.format("0x%X", value), () -> {
+					assertEquals(expectedResult, gotResult, "Results should be the same");
+					assertEquals(expectedZ, gotZ, "Zero flag wrong");
+					assertEquals(expectedN, gotN, "Negative flag wrong");
+				}));
+			}
+
+			return tests;
+		}
+
 		@TestFactory
 		Collection<DynamicTest> ADC() {
 			return getTestsAluInstructionOverflow(new ADCInstruction(IMMEDIATE), (a, b) -> a + b,
@@ -377,6 +464,44 @@ class TestInstructions {
 			return getTestsAluInstructionCompare(new CPYInstruction(IMMEDIATE), value -> cpu.cpuInfo.Y = value);
 		}
 
+		@TestFactory
+		Collection<DynamicTest> DEC() {
+			return getTestsAluInstructionMemoryDecInc(new DECInstruction(ZEROPAGE), value -> value - 1);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> DEX() {
+			return getTestsAluInstructionRegisterDecInc(new DEXInstruction(IMPLICIT), value -> cpu.cpuInfo.X = value,
+					value -> value - 1, () -> cpu.cpuInfo.X);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> DEY() {
+			return getTestsAluInstructionRegisterDecInc(new DEYInstruction(IMPLICIT), value -> cpu.cpuInfo.Y = value,
+					value -> value - 1, () -> cpu.cpuInfo.Y);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> EOR() {
+			return getTestsAluInstructionLogic(new EORInstruction(IMMEDIATE), (a, b) -> a ^ b);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> INC() {
+			return getTestsAluInstructionMemoryDecInc(new INCInstruction(ZEROPAGE), value -> value + 1);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> INX() {
+			return getTestsAluInstructionRegisterDecInc(new INXInstruction(IMPLICIT), value -> cpu.cpuInfo.X = value,
+					value -> value + 1, () -> cpu.cpuInfo.X);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> INY() {
+			return getTestsAluInstructionRegisterDecInc(new INYInstruction(IMPLICIT), value -> cpu.cpuInfo.Y = value,
+					value -> value + 1, () -> cpu.cpuInfo.Y);
+		}
 	}
 
 	@Nested
@@ -585,7 +710,7 @@ class TestInstructions {
 		private static final int PC_BEFORE = 0xBEEF;
 		private static final int P_BEFORE = 0x42;
 		private static final int SP_BEFORE = 0xFD;
-		private static final int SP_AFTER = (SP_BEFORE - 2) & 0xFF;
+		private static final int SP_AFTER = (SP_BEFORE - 3) & 0xFF;
 
 		private void prepareCpu(int vectorAddress) {
 			// Reset stack
@@ -625,15 +750,79 @@ class TestInstructions {
 			}
 
 			// Test what is in stack
-			assertEquals(PC_BEFORE, cpu.fetchAddress(0x100 | SP_BEFORE), "Old PC should be in first stack position");
-			assertEquals(P_BEFORE, cpu.fetchMemory(0x100 | SP_BEFORE - 1),
+			assertEquals(PC_BEFORE, cpu.fetchAddress(0x100 | SP_BEFORE - 1), "Old PC should be in first stack position");
+			assertEquals(P_BEFORE, cpu.fetchMemory(0x100 | SP_BEFORE - 2),
 					"Old flags should be in second stack position");
 
 			// Test values now
-			assertEquals(SP_AFTER, cpu.cpuInfo.SP, "SP should have been decreased by 2");
+			assertEquals(SP_AFTER, cpu.cpuInfo.SP, "SP should have been decreased by 3");
 			assertEquals(0xDEAD, cpu.cpuInfo.PC, "PC shouls have been updated");
 			assertEquals(1, cpu.cpuInfo.B, "Break flag should be 1");
 		}
+	}
 
+	@Nested
+	class TestJumpInstructions {
+
+		@TestFactory
+		Collection<DynamicTest> JMP() {
+			List<DynamicTest> tests = new ArrayList<DynamicTest>();
+
+			for (int address = 0; address < 0xFFFF; address++) {
+				// PC to 0
+				cpu.cpuInfo.PC = 0;
+
+				// Create and execute instruction
+				JMPInstruction instruction = new JMPInstruction(ABSOLUTE, address);
+				try {
+					instruction.execute();
+				} catch (InstructionNotSupportedException e) {
+					e.printStackTrace();
+				}
+
+				int expectedAddress = address;
+				int gotAddress = cpu.cpuInfo.PC;
+				tests.add(DynamicTest.dynamicTest(String.format("0x%04X", address),
+						() -> assertEquals(expectedAddress, gotAddress, "CPU should have jumped")));
+			}
+
+			return tests;
+		}
+
+		@TestFactory
+		Collection<DynamicTest> JSR() {
+			List<DynamicTest> tests = new ArrayList<DynamicTest>();
+
+			for (int address = 0; address < 0xFFFF; address++) {
+				// PC to 0
+				cpu.cpuInfo.PC = 0;
+				// SP to 0xFD
+				cpu.cpuInfo.SP = 0xFD;
+
+				// Create and execute instruction
+				JSRInstruction instruction = new JSRInstruction(ABSOLUTE, address);
+				try {
+					instruction.execute();
+				} catch (InstructionNotSupportedException e) {
+					e.printStackTrace();
+				}
+
+				int expectedAddress = address;
+				int expectedSP = 0xFB;
+				int expectedReturn = 0xFFFF;
+
+				int gotAddress = cpu.cpuInfo.PC;
+				int gotSP = cpu.cpuInfo.SP;
+				int gotReturn = cpu.pop() | cpu.pop() << 8;
+				
+				tests.add(DynamicTest.dynamicTest(String.format("0x%04X", address), () -> {
+					assertEquals(expectedAddress, gotAddress, "CPU should have jumped");
+					assertEquals(expectedSP, gotSP, "SP should have been decreased by 2");
+					assertEquals(expectedReturn, gotReturn, "Return address should be 0xFFFF");
+				}));
+			}
+
+			return tests;
+		}
 	}
 }

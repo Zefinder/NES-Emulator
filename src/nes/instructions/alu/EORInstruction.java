@@ -3,23 +3,23 @@ package instructions.alu;
 import exceptions.InstructionNotSupportedException;
 import instructions.AddressingMode;
 
-public class ANDInstruction extends AluInstruction {
+public class EORInstruction extends AluInstruction{
 
-	public ANDInstruction(AddressingMode mode) {
+	public EORInstruction(AddressingMode mode) {
 		super(mode);
 	}
 
-	public ANDInstruction(AddressingMode mode, int constant) {
+	public EORInstruction(AddressingMode mode, int constant) {
 		super(mode, constant);
 	}
 
 	@Override
 	protected void execute(int operand1, int operand2) {
-		// A = A & M
-		int result = operand1 & operand2;
+		// A = A ^ M
+		int result = operand1 ^ operand2;
 
 		// Register A update
-		// No need & 0xFF since AND has no overflow
+		// No need & 0xFF since EOR has no overflow
 		cpu.cpuInfo.A = result;
 
 		// Flags update
@@ -56,11 +56,11 @@ public class ANDInstruction extends AluInstruction {
 
 	@Override
 	public String getName() {
-		return "AND";
+		return "EOR";
 	}
 
 	@Override
 	public AluInstruction newInstruction(int constant) {
-		return new ANDInstruction(getMode(), constant);
+		return new EORInstruction(getMode(), constant);
 	}
 }

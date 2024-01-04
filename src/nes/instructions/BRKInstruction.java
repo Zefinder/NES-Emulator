@@ -15,7 +15,9 @@ public class BRKInstruction extends Instruction {
 	@Override
 	public void execute() throws InstructionNotSupportedException {		
 		// Push PC
-		cpu.push(cpu.cpuInfo.PC);
+		int address = cpu.cpuInfo.PC;
+		cpu.push((address & 0xFF00) >> 8); // MSB
+		cpu.push(address & 0xFF); // LSB
 		
 		// Push	flags
 		cpu.push(cpu.cpuInfo.getP());

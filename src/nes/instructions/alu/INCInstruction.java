@@ -3,51 +3,40 @@ package instructions.alu;
 import exceptions.InstructionNotSupportedException;
 import instructions.AddressingMode;
 
-public class ANDInstruction extends AluInstruction {
+public class INCInstruction extends AluInstruction {
 
-	public ANDInstruction(AddressingMode mode) {
+	public INCInstruction(AddressingMode mode) {
 		super(mode);
 	}
 
-	public ANDInstruction(AddressingMode mode, int constant) {
+	public INCInstruction(AddressingMode mode, int constant) {
 		super(mode, constant);
 	}
 
 	@Override
 	protected void execute(int operand1, int operand2) {
-		// A = A & M
-		int result = operand1 & operand2;
+		// M = M + 1
+		int result = operand2 + 1;
 
-		// Register A update
-		// No need & 0xFF since AND has no overflow
-		cpu.cpuInfo.A = result;
+		// Update memory
+		storeMemory(result & 0xFF);
 
-		// Flags update
+		// Update flags
 		updateFlags(result, false);
 	}
 
 	@Override
 	public int getCycle() throws InstructionNotSupportedException {
 		switch (getMode()) {
-		case IMMEDIATE:
-			return 2;
-
 		case ZEROPAGE:
-			return 3;
+			return 5;
 
 		case ZEROPAGE_X:
 		case ABSOLUTE:
-			return 4;
-
-		case ABSOLUTE_X:
-		case ABSOLUTE_Y:
-			return 4 + pageCrossed;
-
-		case INDIRECT_X:
 			return 6;
 
-		case INDIRECT_Y:
-			return 5 + pageCrossed;
+		case ABSOLUTE_X:
+			return 7;
 
 		default:
 			throw new InstructionNotSupportedException("Cannot get cycles: addressing mode is wrong!");
@@ -56,11 +45,11 @@ public class ANDInstruction extends AluInstruction {
 
 	@Override
 	public String getName() {
-		return "AND";
+		return "INC";
 	}
 
 	@Override
 	public AluInstruction newInstruction(int constant) {
-		return new ANDInstruction(getMode(), constant);
+		return new INCInstruction(getMode(), constant);
 	}
 }
