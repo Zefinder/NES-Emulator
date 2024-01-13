@@ -72,7 +72,7 @@ public abstract class Instruction {
 	 * @param constant the constant that the instruction will use
 	 * @return a new instance of the instruction with a constant
 	 */
-	protected abstract Instruction newInstruction(int constant);
+	public abstract Instruction newInstruction(int constant);
 
 	/**
 	 * Gets the addressing mode of the instruction
@@ -84,8 +84,56 @@ public abstract class Instruction {
 	}
 
 	/**
+	 * Updates the address according to the value in the constant to store in memory
+	 * WITHOUT accessing to the memory and provoke PPU read when we only want to
+	 * write (for example)
+	 */
+	protected void updateMemoryAddress() {
+		if (constant == -1) {
+			return;
+		}
+
+		switch (mode) {
+		case ZEROPAGE:
+			address = constant & 0xFF;
+			break;
+
+		case ZEROPAGE_X:
+			address = (constant + cpu.cpuInfo.X) & 0xFF;
+			break;
+
+		case ZEROPAGE_Y:
+			address = (constant + cpu.cpuInfo.Y) & 0xFF;
+			break;
+
+		case ABSOLUTE:
+			address = constant & 0xFFFF;
+			break;
+
+		case ABSOLUTE_X:
+			address = (constant + cpu.cpuInfo.X) & 0xFFFF;
+			break;
+
+		case ABSOLUTE_Y:
+			address = (constant + cpu.cpuInfo.Y) & 0xFFFF;
+			break;
+
+		case INDIRECT_X:
+			address = cpu.fetchAddress((constant + cpu.cpuInfo.X) & 0xFFFF);
+			break;
+
+		case INDIRECT_Y:
+			address = (cpu.fetchAddress(constant & 0xFFFF) + cpu.cpuInfo.Y) & 0xFFFF;
+			break;
+			
+		default:
+			break;
+		}
+	}
+
+	/**
 	 * Fetches the second operand for the instruction since the first one is always
-	 * the accumulator.
+	 * the accumulator. It also sets the memory address to store in memory
 	 * 
 	 * @return the value of the second operand
 	 * @throws InstructionNotSupportedException if the addressing mode does not
@@ -96,6 +144,8 @@ public abstract class Instruction {
 		if (constant == -1) {
 			return -1;
 		}
+		
+		updateMemoryAddress();
 
 		int operand;
 		switch (mode) {
@@ -105,44 +155,36 @@ public abstract class Instruction {
 			break;
 
 		case ZEROPAGE:
-			address = constant & 0xFF;
 			operand = cpu.fetchMemory(address);
 			break;
 
 		case ZEROPAGE_X:
-			address = (constant + cpu.cpuInfo.X) & 0xFF;
 			operand = cpu.fetchMemory(address);
 			break;
 
 		case ZEROPAGE_Y:
-			address = (constant + cpu.cpuInfo.Y) & 0xFF;
 			operand = cpu.fetchMemory(address);
 			break;
 
 		case ABSOLUTE:
-			address = constant & 0xFFFF;
 			operand = cpu.fetchMemory(address);
 			break;
 
 		case ABSOLUTE_X:
-			address = (constant + cpu.cpuInfo.X) & 0xFFFF;
 			operand = cpu.fetchMemory(address);
 			pageCrossed = (constant & 0xFF) + cpu.cpuInfo.X > 0xFF ? 1 : 0;
 			break;
 
 		case ABSOLUTE_Y:
-			address = (constant + cpu.cpuInfo.Y) & 0xFFFF;
 			operand = cpu.fetchMemory(address);
 			pageCrossed = (constant & 0xFF) + cpu.cpuInfo.Y > 0xFF ? 1 : 0;
 			break;
 
 		case INDIRECT_X:
-			address = cpu.fetchAddress((constant + cpu.cpuInfo.X) & 0xFFFF);
 			operand = cpu.fetchMemory(address);
 			break;
 
 		case INDIRECT_Y:
-			address = (cpu.fetchAddress(constant & 0xFFFF) + cpu.cpuInfo.Y) & 0xFFFF;
 			operand = cpu.fetchMemory(address);
 			pageCrossed = (constant & 0xFF) + cpu.cpuInfo.Y > 0xFF ? 1 : 0;
 			break;

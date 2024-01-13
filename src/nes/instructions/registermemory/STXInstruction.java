@@ -1,29 +1,37 @@
-package instructions.stack;
+package instructions.registermemory;
 
 import exceptions.InstructionNotSupportedException;
 import instructions.AddressingMode;
 import instructions.Instruction;
 
-public class PLPInstruction extends Instruction {
+public class STXInstruction extends Instruction {
 
-	public PLPInstruction(AddressingMode mode) {
+	public STXInstruction(AddressingMode mode) {
 		super(mode);
 	}
 
-	public PLPInstruction(AddressingMode mode, int constant) {
+	public STXInstruction(AddressingMode mode, int constant) {
 		super(mode, constant);
 	}
 
 	@Override
 	public void execute() throws InstructionNotSupportedException {
-		// Pop value and update flags
-		cpu.cpuInfo.setP(cpu.pop());		
+		// M = X
+		// Set address to write
+		updateMemoryAddress();
+		
+		// Set in memory
+		storeMemory(cpu.cpuInfo.X);
 	}
 
 	@Override
 	public int getCycle() throws InstructionNotSupportedException {
 		switch (getMode()) {
-		case IMPLICIT:
+		case ZEROPAGE:
+			return 3;
+
+		case ZEROPAGE_Y:
+		case ABSOLUTE:
 			return 4;
 
 		default:
@@ -33,11 +41,11 @@ public class PLPInstruction extends Instruction {
 
 	@Override
 	public String getName() {
-		return "PLP";
+		return "STX";
 	}
 
 	@Override
 	public Instruction newInstruction(int constant) {
-		return new PLPInstruction(getMode(), constant);
+		return new STXInstruction(getMode(), constant);
 	}
 }

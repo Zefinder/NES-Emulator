@@ -1,7 +1,8 @@
-package instructions.alu;
+package instructions.registermemory;
 
 import exceptions.InstructionNotSupportedException;
 import instructions.AddressingMode;
+import instructions.alu.AluInstruction;
 
 public class LDYInstruction extends AluInstruction {
 

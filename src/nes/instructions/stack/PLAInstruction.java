@@ -44,7 +44,7 @@ public class PLAInstruction extends Instruction {
 	}
 
 	@Override
-	protected Instruction newInstruction(int constant) {
+	public Instruction newInstruction(int constant) {
 		return new PLAInstruction(getMode(), constant);
 	}
 }

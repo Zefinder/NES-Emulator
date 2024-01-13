@@ -3,32 +3,33 @@ package instructions.alu;
 import exceptions.InstructionNotSupportedException;
 import instructions.AddressingMode;
 
-public class ADCInstruction extends AluInstruction {
+public class SBCInstruction extends AluInstruction {
+	// TODO A Faire
 
-	public ADCInstruction(AddressingMode mode) {
+	public SBCInstruction(AddressingMode mode) {
 		super(mode);
 	}
 
-	public ADCInstruction(AddressingMode mode, int constant) {
+	public SBCInstruction(AddressingMode mode, int constant) {
 		super(mode, constant);
 	}
 
 	@Override
 	protected void execute(int operand1, int operand2) {
-		// A = A + M + C
-		int result = operand1 + operand2 + cpu.cpuInfo.C;
+		// A = A - M - (1 - C)
+		int result = operand1 - operand2 - (1 - cpu.cpuInfo.C);
 
 		// Register A update
 		cpu.cpuInfo.A = result & 0xFF;
 
 		// Flags update
 		updateFlags(result, true);
-
+		
+		// C re-update (SBC is always 1 - C)
+		cpu.cpuInfo.C = 1 - cpu.cpuInfo.C;
+		
 		// Gym for V
-		int signed1 = operand1 >= 0x80 ? operand1 - 256 : operand1;
-		int signed2 = operand2 >= 0x80 ? operand2 - 256 : operand2;
-		updateV((result & 0x80) == 0, (operand1 & 0x80) == 0, (operand2 & 0x80) == 0,
-				Math.abs(signed1) > Math.abs(signed2), signed1 == -signed2);
+		updateV((result & 0x80) == 0, (operand1 & 0x80) == 0, (operand2 & 0x80) == 0, operand1 > operand2);
 	}
 
 	@Override
@@ -61,24 +62,19 @@ public class ADCInstruction extends AluInstruction {
 
 	@Override
 	public String getName() {
-		return "ADC";
+		return "SBC";
 	}
 
 	@Override
 	public AluInstruction newInstruction(int constant) {
-		return new ADCInstruction(getMode(), constant);
+		return new SBCInstruction(getMode(), constant);
 	}
 
-	private void updateV(boolean positiveResult, boolean positive1, boolean positive2, boolean greater,
-			boolean opposite) {
+	private void updateV(boolean positiveResult, boolean positive1, boolean positive2, boolean greater) {
 		// If result is positive, then positive1 and greater or positive2 and lower
 		// If result is negative, then negative1 and greater or negative2 and lower
 		// If not the case then there is an overflow somewhere...
-		if (opposite) {
-			cpu.cpuInfo.V = 0;
-		} else {
-			cpu.cpuInfo.V = positiveResult ? (positive1 && greater) || (positive2 && !greater) ? 0 : 1
-					: (!positive1 && greater) || (!positive2 && !greater) ? 0 : 1;
-		}
+		cpu.cpuInfo.V = positiveResult ? (positive1 && greater) || (positive2 && !greater) ? 0 : 1
+				: (!positive1 && greater) || (!positive2 && !greater) ? 0 : 1;
 	}
 }

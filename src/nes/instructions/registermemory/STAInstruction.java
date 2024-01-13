@@ -1,33 +1,32 @@
-package instructions.alu;
+package instructions.registermemory;
 
 import exceptions.InstructionNotSupportedException;
 import instructions.AddressingMode;
+import instructions.Instruction;
 
-public class LDAInstruction extends AluInstruction {
+public class STAInstruction extends Instruction {
 
-	public LDAInstruction(AddressingMode mode) {
+	public STAInstruction(AddressingMode mode) {
 		super(mode);
 	}
 
-	public LDAInstruction(AddressingMode mode, int constant) {
+	public STAInstruction(AddressingMode mode, int constant) {
 		super(mode, constant);
 	}
 
 	@Override
-	protected void execute(int operand1, int operand2) {
-		// A = M
-		cpu.cpuInfo.A = operand2;
+	public void execute() throws InstructionNotSupportedException {
+		// M = A
+		// Set address to write
+		updateMemoryAddress();
 		
-		// Flags update
-		updateFlags(operand2, false);
+		// Set in memory
+		storeMemory(cpu.cpuInfo.A);
 	}
 
 	@Override
 	public int getCycle() throws InstructionNotSupportedException {
 		switch (getMode()) {
-		case IMMEDIATE:
-			return 2;
-
 		case ZEROPAGE:
 			return 3;
 
@@ -37,13 +36,11 @@ public class LDAInstruction extends AluInstruction {
 
 		case ABSOLUTE_X:
 		case ABSOLUTE_Y:
-			return 4 + pageCrossed;
+			return 5;
 
 		case INDIRECT_X:
-			return 6;
-
 		case INDIRECT_Y:
-			return 5 + pageCrossed;
+			return 6;
 
 		default:
 			throw new InstructionNotSupportedException("Cannot get cycles: addressing mode is wrong!");
@@ -52,11 +49,11 @@ public class LDAInstruction extends AluInstruction {
 
 	@Override
 	public String getName() {
-		return "LDA";
+		return "STA";
 	}
 
 	@Override
-	public AluInstruction newInstruction(int constant) {
-		return new LDAInstruction(getMode(), constant);
+	public Instruction newInstruction(int constant) {
+		return new STAInstruction(getMode(), constant);
 	}
 }

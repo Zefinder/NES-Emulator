@@ -1,6 +1,8 @@
-package instructions;
+package instructions.jump;
 
 import exceptions.InstructionNotSupportedException;
+import instructions.AddressingMode;
+import instructions.Instruction;
 
 public class BRKInstruction extends Instruction {
 
@@ -46,7 +48,7 @@ public class BRKInstruction extends Instruction {
 	}
 
 	@Override
-	protected Instruction newInstruction(int constant) {
+	public Instruction newInstruction(int constant) {
 		return null;
 	}
 
