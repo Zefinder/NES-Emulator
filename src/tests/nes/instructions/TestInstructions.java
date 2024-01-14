@@ -71,6 +71,13 @@ import instructions.jump.JMPInstruction;
 import instructions.jump.JSRInstruction;
 import instructions.jump.RTIInstruction;
 import instructions.jump.RTSInstruction;
+import instructions.register.TAXInstruction;
+import instructions.register.TAYInstruction;
+import instructions.register.TSXInstruction;
+import instructions.register.TXAInstruction;
+import instructions.register.TXSInstruction;
+import instructions.register.TYAInstruction;
+import instructions.register.TransferInstruction;
 import instructions.registermemory.LDAInstruction;
 import instructions.registermemory.LDXInstruction;
 import instructions.registermemory.LDYInstruction;
@@ -1066,7 +1073,7 @@ class TestInstructions {
 			for (int value = 0; value <= 0xFF; value++) {
 				// Reset CPU
 				resetCpu();
-				
+
 				// Reset zeropage address 0x10
 				cpu.storeMemory(0x10, 0);
 
@@ -1234,6 +1241,113 @@ class TestInstructions {
 		Collection<DynamicTest> PLP() {
 			return getTestsStackPop(new PLPInstruction(IMPLICIT), () -> cpu.cpuInfo.getP(),
 					value -> (value >> 1) & 0b1);
+		}
+	}
+
+	@Nested
+	class TestTransferInstructions {
+
+		private void resetCpu() {
+			// Registers at 0
+			cpu.cpuInfo.A = 0;
+			cpu.cpuInfo.X = 0;
+			cpu.cpuInfo.Y = 0;
+			cpu.cpuInfo.SP = 0;
+		}
+
+		private Collection<DynamicTest> getTestsTransferInstructions(TransferInstruction instruction,
+				IntConsumer registerUpdate, IntSupplier registerValue) {
+			List<DynamicTest> tests = new ArrayList<DynamicTest>();
+
+			for (int value = 0; value <= 0xFF; value++) {
+				// Reset CPU
+				resetCpu();
+
+				// Update register
+				registerUpdate.accept(value);
+
+				// Execute instruction
+				try {
+					instruction.execute();
+				} catch (InstructionNotSupportedException e) {
+					e.printStackTrace();
+				}
+
+				int expectedValue = value;
+				int expectedZ = value == 0 ? 1 : 0;
+				int expectedN = value >= 0x80 ? 1 : 0;
+
+				int gotValue = registerValue.getAsInt();
+				int gotZ = cpu.cpuInfo.Z;
+				int gotN = cpu.cpuInfo.N;
+
+				tests.add(DynamicTest.dynamicTest(String.format("0x%X", value), () -> {
+					assertEquals(expectedValue, gotValue, "Value given by the CPU is wrong");
+					assertEquals(expectedZ, gotZ, "Zero flag wrong");
+					assertEquals(expectedN, gotN, "Negative flag wrong");
+				}));
+			}
+
+			return tests;
+		}
+
+		@TestFactory
+		Collection<DynamicTest> TAX() {
+			return getTestsTransferInstructions(new TAXInstruction(IMPLICIT), value -> cpu.cpuInfo.A = value,
+					() -> cpu.cpuInfo.X);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> TAY() {
+			return getTestsTransferInstructions(new TAYInstruction(IMPLICIT), value -> cpu.cpuInfo.A = value,
+					() -> cpu.cpuInfo.Y);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> TSX() {
+			return getTestsTransferInstructions(new TSXInstruction(IMPLICIT), value -> cpu.cpuInfo.SP = value,
+					() -> cpu.cpuInfo.X);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> TXA() {
+			return getTestsTransferInstructions(new TXAInstruction(IMPLICIT), value -> cpu.cpuInfo.X = value,
+					() -> cpu.cpuInfo.A);
+		}
+
+		@TestFactory
+		Collection<DynamicTest> TXS() {
+			List<DynamicTest> tests = new ArrayList<DynamicTest>();
+			Instruction instruction = new TXSInstruction(IMPLICIT);
+
+			for (int value = 0; value <= 0xFF; value++) {
+				// Reset CPU
+				resetCpu();
+
+				// Update register
+				cpu.cpuInfo.X = value;
+
+				// Execute instruction
+				try {
+					instruction.execute();
+				} catch (InstructionNotSupportedException e) {
+					e.printStackTrace();
+				}
+
+				int expectedValue = value;
+				int gotValue = cpu.cpuInfo.SP;
+
+				tests.add(DynamicTest.dynamicTest(String.format("0x%X", value),
+						() -> assertEquals(expectedValue, gotValue, "Value given by the CPU is wrong")));
+			}
+
+			return tests;
+		}
+
+		@TestFactory
+		Collection<DynamicTest> TYA() {
+			return getTestsTransferInstructions(new TYAInstruction(IMPLICIT), value -> cpu.cpuInfo.Y = value,
+					() -> cpu.cpuInfo.A);
 		}
 	}
 }
