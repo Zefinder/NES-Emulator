@@ -23,6 +23,7 @@ public abstract class Instruction {
 	protected Instruction(AddressingMode mode, int constant) {
 		this.mode = mode;
 		this.constant = constant;
+		updateMemoryAddress();
 	}
 
 	/**
@@ -112,10 +113,12 @@ public abstract class Instruction {
 
 		case ABSOLUTE_X:
 			address = (constant + cpu.cpuInfo.X) & 0xFFFF;
+			pageCrossed = (constant & 0xFF) + cpu.cpuInfo.X > 0xFF ? 1 : 0;
 			break;
 
 		case ABSOLUTE_Y:
 			address = (constant + cpu.cpuInfo.Y) & 0xFFFF;
+			pageCrossed = (constant & 0xFF) + cpu.cpuInfo.Y > 0xFF ? 1 : 0;
 			break;
 
 		case INDIRECT_X:
@@ -123,9 +126,11 @@ public abstract class Instruction {
 			break;
 
 		case INDIRECT_Y:
-			address = (cpu.fetchAddress(constant & 0xFFFF) + cpu.cpuInfo.Y) & 0xFFFF;
+			int tmpAddress = cpu.fetchAddress(constant & 0xFFFF);
+			address = (tmpAddress + cpu.cpuInfo.Y) & 0xFFFF;
+			pageCrossed = (tmpAddress & 0xFF) + cpu.cpuInfo.Y > 0xFF ? 1 : 0;
 			break;
-			
+
 		default:
 			break;
 		}
@@ -144,8 +149,6 @@ public abstract class Instruction {
 		if (constant == -1) {
 			return -1;
 		}
-		
-		updateMemoryAddress();
 
 		int operand;
 		switch (mode) {
@@ -172,12 +175,10 @@ public abstract class Instruction {
 
 		case ABSOLUTE_X:
 			operand = cpu.fetchMemory(address);
-			pageCrossed = (constant & 0xFF) + cpu.cpuInfo.X > 0xFF ? 1 : 0;
 			break;
 
 		case ABSOLUTE_Y:
 			operand = cpu.fetchMemory(address);
-			pageCrossed = (constant & 0xFF) + cpu.cpuInfo.Y > 0xFF ? 1 : 0;
 			break;
 
 		case INDIRECT_X:
@@ -186,7 +187,6 @@ public abstract class Instruction {
 
 		case INDIRECT_Y:
 			operand = cpu.fetchMemory(address);
-			pageCrossed = (constant & 0xFF) + cpu.cpuInfo.Y > 0xFF ? 1 : 0;
 			break;
 
 		default:

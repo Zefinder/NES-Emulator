@@ -10,7 +10,7 @@ public abstract class BranchInstruction extends Instruction {
 	
 	protected int branchSucceed = 0;
 	protected int newPage = 0;
-	
+	 
 	private final BooleanSupplier branchCondition;
 
 	public BranchInstruction(AddressingMode mode, BooleanSupplier branchCondition) {
