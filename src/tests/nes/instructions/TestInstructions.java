@@ -21,10 +21,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.IntConsumer;
 import java.util.function.IntFunction;
 import java.util.function.IntSupplier;
@@ -105,14 +103,13 @@ import instructions.stack.PLPInstruction;
 import nes.MapperTest;
 
 @FunctionalInterface
-interface TriFunction<T, U, V, R> {
+interface TriIntFunction<T, U, V> {
+	int apply(T t, U u, V v);
+}
 
-	R apply(T t, U u, V v);
-
-	default <K> TriFunction<T, U, V, K> andThen(Function<? super R, ? extends K> after) {
-		Objects.requireNonNull(after);
-		return (T t, U u, V v) -> after.apply(apply(t, u, v));
-	}
+@FunctionalInterface
+interface TesserIntFunction<T, U, V, W> {
+	int apply(T t, U u, V v, W w);
 }
 
 class TestInstructions {
@@ -167,14 +164,13 @@ class TestInstructions {
 			cpu.cpuInfo.N = 0;
 		}
 
-		// TODO Add tests with carry (for those who modifies it and those who do not)
 		// TODO Add tests for ALU instructions (like ASL) that directly modify memory
 		/**
 		 * Used by instructions like ADC
 		 */
 		private Collection<DynamicTest> getTestsAluInstructionOverflow(AluInstruction instruction,
-				BiFunction<Integer, Integer, Integer> function,
-				TriFunction<Integer, Integer, Integer, Integer> overflowEvaluation) {
+				TriIntFunction<Integer, Integer, Integer> function,
+				TesserIntFunction<Integer, Integer, Integer, Integer> overflowEvaluation) {
 			List<DynamicTest> tests = new ArrayList<DynamicTest>();
 
 			for (int operand1 = 0; operand1 <= 0xFF; operand1++) {
@@ -190,12 +186,12 @@ class TestInstructions {
 						e.printStackTrace();
 					}
 
-					int rawValue = function.apply(operand1, operand2);
+					int rawValue = function.apply(operand1, operand2, 0);
 					int expectedValue = rawValue & 0xFF;
 					int expectedC = rawValue > 0xFF ? 1 : 0;
 					int expectedZ = expectedValue == 0 ? 1 : 0;
 					int expectedN = expectedValue >= 0x80 ? 1 : 0;
-					int expectedV = overflowEvaluation.apply(expectedValue, operand1, operand2);
+					int expectedV = overflowEvaluation.apply(expectedValue, expectedValue, operand1, operand2);
 
 					int gotValue = cpu.cpuInfo.A;
 					int gotC = cpu.cpuInfo.C;
@@ -203,12 +199,44 @@ class TestInstructions {
 					int gotN = cpu.cpuInfo.N;
 					int gotV = cpu.cpuInfo.V;
 
+					// With carry (redo everything)
+					cpu.cpuInfo.C = 1;
+					cpu.cpuInfo.A = operand1;
+					instruction = instruction.newInstruction(operand2);
+					try {
+						instruction.execute();
+					} catch (InstructionNotSupportedException e) {
+						e.printStackTrace();
+					}
+
+					int rawCarryValue = function.apply(operand1, operand2, 1);
+					int expectedCarryValue = rawCarryValue & 0xFF;
+					int expectedCarryC = rawCarryValue > 0xFF ? 1 : 0;
+					int expectedCarryZ = expectedCarryValue == 0 ? 1 : 0;
+					int expectedCarryN = expectedCarryValue >= 0x80 ? 1 : 0;
+					int expectedCarryV = overflowEvaluation.apply(expectedCarryValue, expectedValue, operand1,
+							operand2);
+
+					int gotCarryValue = cpu.cpuInfo.A;
+					int gotCarryC = cpu.cpuInfo.C;
+					int gotCarryZ = cpu.cpuInfo.Z;
+					int gotCarryN = cpu.cpuInfo.N;
+					int gotCarryV = cpu.cpuInfo.V;
+
 					tests.add(DynamicTest.dynamicTest(String.format("0x%X 0x%X", operand1, operand2), () -> {
+						// Without carry
 						assertEquals(expectedValue, gotValue, "Value given by the CPU is wrong");
 						assertEquals(expectedC, gotC, "Carry flag wrong");
 						assertEquals(expectedZ, gotZ, "Zero flag wrong");
 						assertEquals(expectedN, gotN, "Negative flag wrong");
 						assertEquals(expectedV, gotV, "Overflow flag wrong");
+
+						// With carry
+						assertEquals(expectedCarryValue, gotCarryValue, "Value given by the CPU is wrong (carry)");
+						assertEquals(expectedCarryC, gotCarryC, "Carry flag wrong (carry)");
+						assertEquals(expectedCarryZ, gotCarryZ, "Zero flag wrong (carry)");
+						assertEquals(expectedCarryN, gotCarryN, "Negative flag wrong (carry)");
+						assertEquals(expectedCarryV, gotCarryV, "Overflow flag wrong (carry)");
 					}));
 				}
 			}
@@ -412,8 +440,8 @@ class TestInstructions {
 
 		@TestFactory
 		Collection<DynamicTest> ADC() {
-			return getTestsAluInstructionOverflow(new ADCInstruction(IMMEDIATE), (a, b) -> a + b,
-					(expectedValue, operand1, operand2) -> {
+			return getTestsAluInstructionOverflow(new ADCInstruction(IMMEDIATE), (a, b, C) -> a + b + C,
+					(expectedValue, beforeCarry, operand1, operand2) -> {
 						int signed1 = operand1 >= 0x80 ? operand1 - 256 : operand1;
 						int signed2 = operand2 >= 0x80 ? operand2 - 256 : operand2;
 						boolean greater = Math.abs(signed1) > Math.abs(signed2);
@@ -427,17 +455,33 @@ class TestInstructions {
 						boolean zero1 = operand1 == 0;
 						boolean zero2 = operand2 == 0;
 
-						return expectedValue == 0 // If 0 then both zero or they cancel each other out
+						boolean expectedBeforePositive = (beforeCarry & 0xFF) <= 0x7F;
+						boolean expectedValuePositive = (expectedValue & 0xFF) <= 0x7F;
+
+						int V = beforeCarry == 0 // If 0 then both zero or they cancel each other out
 								? (zero1 && zero2) || equal && ((positive1 && negative2) || (negative1 && positive2))
 										? 0
 										: 1
-								: expectedValue >= 0x80 // If negative, biggest negative wins or both negative
+								: !expectedBeforePositive // If negative, biggest negative wins or both negative
 										? (lesser && (negative2 || (negative1 && zero2)))
 												|| (greater && (negative1 || (zero1 && negative2)))
 												|| (equal && negative1 && negative2) ? 0 : 1
 										: (lesser && (positive2 || (positive1 && zero2))) // Same for positive
 												|| (greater && (positive1 || (zero1 && positive2)))
 												|| (equal && positive1 && positive2) ? 0 : 1;
+
+						if (V == 0 && !expectedValue.equals(beforeCarry)) {
+							// If no overflow before and carry is on, then we need to check
+							// Adding a carry (1) to a number can lead to the same sign IF positive
+							// (positive + 1 is positive)
+							// If negative, then if zero given then overflow
+							// If we consider 0 as positive, then it will detect positive -> negative
+							// And negative -> zero (since zero is considered as positive!)
+							// Thus if same sign then no overflow, else overflow
+							V = expectedValuePositive == expectedBeforePositive ? 0 : 1;
+						}
+
+						return V;
 					});
 		}
 
@@ -577,8 +621,8 @@ class TestInstructions {
 			assumeFalse(true);
 
 			// TODO Change V lambda
-			return getTestsAluInstructionOverflow(new SBCInstruction(IMMEDIATE), (a, b) -> a + b,
-					(expectedValue, operand1, operand2) -> {
+			return getTestsAluInstructionOverflow(new SBCInstruction(IMMEDIATE), (a, b, C) -> a - b - (1 - C),
+					(expectedValue, operand1, operand2, C) -> {
 						int signed1 = operand1 >= 0x80 ? operand1 - 256 : operand1;
 						int signed2 = operand2 >= 0x80 ? operand2 - 256 : operand2;
 						boolean greater = Math.abs(signed1) > Math.abs(signed2);
@@ -592,7 +636,7 @@ class TestInstructions {
 						boolean zero1 = operand1 == 0;
 						boolean zero2 = operand2 == 0;
 
-						return expectedValue == 0 // If 0 then both zero or they cancel each other out
+						int V = expectedValue == 0 // If 0 then both zero or they cancel each other out
 								? (zero1 && zero2) || equal && ((positive1 && negative2) || (negative1 && positive2))
 										? 0
 										: 1
@@ -603,6 +647,8 @@ class TestInstructions {
 										: (lesser && (positive2 || (positive1 && zero2))) // Same for positive
 												|| (greater && (positive1 || (zero1 && positive2)))
 												|| (equal && positive1 && positive2) ? 0 : 1;
+
+						return V;
 					});
 		}
 	}
