@@ -29,7 +29,10 @@ public class SBCInstruction extends AluInstruction {
 		cpu.cpuInfo.C = 1 - cpu.cpuInfo.C;
 		
 		// Gym for V
-		updateV((result & 0x80) == 0, (operand1 & 0x80) == 0, (operand2 & 0x80) == 0, operand1 > operand2);
+		int signed1 = operand1 >= 0x80 ? operand1 - 256 : operand1;
+		int signed2 = operand2 >= 0x80 ? operand2 - 256 : operand2;
+		updateV((result & 0x80) == 0, (operand1 & 0x80) == 0, (operand2 & 0x80) == 0,
+				Math.abs(signed1) > Math.abs(signed2), signed1 == -signed2);
 	}
 
 	@Override
@@ -70,11 +73,16 @@ public class SBCInstruction extends AluInstruction {
 		return new SBCInstruction(getMode(), constant);
 	}
 
-	private void updateV(boolean positiveResult, boolean positive1, boolean positive2, boolean greater) {
+	private void updateV(boolean positiveResult, boolean positive1, boolean positive2, boolean greater,
+			boolean opposite) {
 		// If result is positive, then positive1 and greater or positive2 and lower
 		// If result is negative, then negative1 and greater or negative2 and lower
 		// If not the case then there is an overflow somewhere...
-		cpu.cpuInfo.V = positiveResult ? (positive1 && greater) || (positive2 && !greater) ? 0 : 1
-				: (!positive1 && greater) || (!positive2 && !greater) ? 0 : 1;
+		if (opposite) {
+			cpu.cpuInfo.V = 0;
+		} else {
+			cpu.cpuInfo.V = positiveResult ? (positive1 && greater) || (!positive2 && !greater) ? 0 : 1
+					: (!positive1 && greater) || (positive2 && !greater) ? 0 : 1;
+		}
 	}
 }
