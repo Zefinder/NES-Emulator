@@ -76,6 +76,16 @@ public abstract class Instruction {
 	public abstract Instruction newInstruction(int constant);
 
 	/**
+	 * Returns the byte number of the instruction. This calls the getByteNumber
+	 * method from {@link AddressingMode}
+	 * 
+	 * @return the byte number of the instruction
+	 */
+	public int getByteNumber() {
+		return mode.getByteNumber();
+	}
+
+	/**
 	 * Gets the addressing mode of the instruction
 	 * 
 	 * @return the addressing mode
