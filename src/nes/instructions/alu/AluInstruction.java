@@ -4,6 +4,7 @@ import exceptions.InstructionNotSupportedException;
 import instructions.AddressingMode;
 import instructions.Instruction;
 
+// TODO For some ALU instructions (like ADC, SBC, etc...) wouldn't it be more efficient to do an already prepared array? Yes it is! Need to do to optimise time
 public abstract class AluInstruction extends Instruction {
 
 	public AluInstruction(AddressingMode mode) {
