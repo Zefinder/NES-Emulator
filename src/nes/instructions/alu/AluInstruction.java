@@ -41,4 +41,8 @@ public abstract class AluInstruction extends Instruction {
 		cpu.cpuInfo.Z = (result & 0xFF) == 0 ? 1 : 0;
 		cpu.cpuInfo.N = (result & 0x80) != 0 || result < 0 ? 1 : 0;
 	}
+
+	protected void updateV(int operand1, int operand2, int result) {
+		cpu.cpuInfo.V = ((operand1 ^ result) & (operand2 ^ result) & 0x80) == 0 ? 0 : 1;
+	}
 }

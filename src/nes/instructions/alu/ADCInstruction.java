@@ -65,8 +65,4 @@ public class ADCInstruction extends AluInstruction {
 	public AluInstruction newInstruction(int constant) {
 		return new ADCInstruction(getMode(), constant);
 	}
-	
-	protected void updateV(int operand1, int operand2, int result) {
-		cpu.cpuInfo.V = ((operand1 ^ result) & (operand2 ^ result) & 0x80) == 0 ? 0 : 1;
-	}
 }
