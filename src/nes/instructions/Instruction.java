@@ -23,7 +23,6 @@ public abstract class Instruction {
 	protected Instruction(AddressingMode mode, int constant) {
 		this.mode = mode;
 		this.constant = constant;
-		updateMemoryAddress();
 	}
 
 	/**
@@ -160,6 +159,10 @@ public abstract class Instruction {
 			return -1;
 		}
 
+		if (address == -1) {			
+			updateMemoryAddress();
+		}
+		
 		int operand;
 		switch (mode) {
 		case IMMEDIATE:
@@ -248,6 +251,81 @@ public abstract class Instruction {
 	 * @param value the value to store
 	 */
 	protected void storeMemory(int value) {
+		if (address == -1) {			
+			updateMemoryAddress();
+		}
+		
 		cpu.storeMemory(address, value);
+	}
+
+	@Override
+	public String toString() {
+		String suffix;
+		int lsb = constant & 0xFF;
+		int msb = (constant >> 8) & 0xFF;
+
+		switch (mode) {
+		case IMPLICIT:
+			suffix = "";
+			break;
+
+		case ACCUMULATOR:
+			suffix = "A";
+			break;
+
+		case IMMEDIATE:
+			suffix = String.format("#%d ($%02x)", lsb, lsb);
+			break;
+
+		case ZEROPAGE:
+			suffix = String.format("$%02x", lsb);
+			break;
+
+		case ZEROPAGE_X:
+			suffix = String.format("$%02x,X", lsb);
+			break;
+
+		case ZEROPAGE_Y:
+			suffix = String.format("$%02x,Y", lsb);
+			break;
+
+		case RELATIVE:
+			lsb = (lsb >= 0x80 ? lsb - 256 : lsb) + 2;
+			if (lsb > 0)
+				suffix = String.format("*+%d", lsb);
+			else
+				suffix = String.format("*%d", lsb);
+			break;
+
+		case ABSOLUTE:
+			suffix = String.format("$%02x%02x", msb, lsb);
+			break;
+
+		case ABSOLUTE_X:
+			suffix = String.format("$%02x%02x,X", msb, lsb);
+			break;
+
+		case ABSOLUTE_Y:
+			suffix = String.format("$%02x%02x,Y", msb, lsb);
+			break;
+
+		case INDIRECT:
+			suffix = String.format("($%02x%02x)", msb,  lsb);
+			break;
+
+		case INDIRECT_X:
+			suffix = String.format("($%02x,X)",  lsb);
+			break;
+
+		case INDIRECT_Y:
+			suffix = String.format("($%02x,Y)", lsb);
+			break;
+
+		default:
+			suffix = "";
+			break;
+		}
+
+		return getName() + " " + suffix;
 	}
 }
