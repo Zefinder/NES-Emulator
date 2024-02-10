@@ -1,4 +1,4 @@
-package nes;
+package nes.utils;
 
 import mapper.Mapper;
 

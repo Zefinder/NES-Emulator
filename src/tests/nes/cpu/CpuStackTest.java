@@ -7,7 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import components.Cpu;
-import nes.MapperTest;
+import nes.utils.MapperTest;
 
 class CpuStackTest {
 

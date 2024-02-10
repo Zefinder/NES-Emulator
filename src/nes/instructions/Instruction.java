@@ -159,10 +159,10 @@ public abstract class Instruction {
 			return -1;
 		}
 
-		if (address == -1) {			
+		if (address == -1) {
 			updateMemoryAddress();
 		}
-		
+
 		int operand;
 		switch (mode) {
 		case IMMEDIATE:
@@ -251,11 +251,21 @@ public abstract class Instruction {
 	 * @param value the value to store
 	 */
 	protected void storeMemory(int value) {
-		if (address == -1) {			
+		if (address == -1) {
 			updateMemoryAddress();
 		}
-		
+
 		cpu.storeMemory(address, value);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof Instruction)) {
+			return false;
+		}
+
+		Instruction other = (Instruction) obj;
+		return other.mode == this.mode && other.constant == this.constant && other.getName().equals(this.getName());
 	}
 
 	@Override
@@ -274,19 +284,19 @@ public abstract class Instruction {
 			break;
 
 		case IMMEDIATE:
-			suffix = String.format("#%d ($%02x)", lsb, lsb);
+			suffix = String.format("#%d ($%02X)", lsb, lsb);
 			break;
 
 		case ZEROPAGE:
-			suffix = String.format("$%02x", lsb);
+			suffix = String.format("$%02X", lsb);
 			break;
 
 		case ZEROPAGE_X:
-			suffix = String.format("$%02x,X", lsb);
+			suffix = String.format("$%02X,X", lsb);
 			break;
 
 		case ZEROPAGE_Y:
-			suffix = String.format("$%02x,Y", lsb);
+			suffix = String.format("$%02X,Y", lsb);
 			break;
 
 		case RELATIVE:
@@ -298,27 +308,27 @@ public abstract class Instruction {
 			break;
 
 		case ABSOLUTE:
-			suffix = String.format("$%02x%02x", msb, lsb);
+			suffix = String.format("$%02X%02X", msb, lsb);
 			break;
 
 		case ABSOLUTE_X:
-			suffix = String.format("$%02x%02x,X", msb, lsb);
+			suffix = String.format("$%02X%02X,X", msb, lsb);
 			break;
 
 		case ABSOLUTE_Y:
-			suffix = String.format("$%02x%02x,Y", msb, lsb);
+			suffix = String.format("$%02X%02X,Y", msb, lsb);
 			break;
 
 		case INDIRECT:
-			suffix = String.format("($%02x%02x)", msb,  lsb);
+			suffix = String.format("($%02X%02X)", msb, lsb);
 			break;
 
 		case INDIRECT_X:
-			suffix = String.format("($%02x,X)",  lsb);
+			suffix = String.format("($%02X,X)", lsb);
 			break;
 
 		case INDIRECT_Y:
-			suffix = String.format("($%02x,Y)", lsb);
+			suffix = String.format("($%02X),Y", lsb);
 			break;
 
 		default:

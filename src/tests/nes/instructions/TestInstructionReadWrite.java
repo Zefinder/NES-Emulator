@@ -12,7 +12,7 @@ import instructions.Instruction;
 import instructions.alu.ASLInstruction;
 import instructions.registermemory.LDAInstruction;
 import instructions.registermemory.STAInstruction;
-import nes.MapperTest;
+import nes.utils.MapperTest;
 
 class TestInstructionReadWrite {
 

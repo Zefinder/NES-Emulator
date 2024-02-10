@@ -17,7 +17,7 @@ public class Disassembler {
 	private static final int prgChunk = 0x4000;
 	private static final int chrChunk = 0x2000;
 
-	private static final Map<Integer, Instruction> instructionMap = InstructionInfo.getInstructionMap();
+	private static final Map<Integer, Instruction> instructionMap = InstructionInfo.getInstance().getInstructionMap();
 
 	public Disassembler() {
 

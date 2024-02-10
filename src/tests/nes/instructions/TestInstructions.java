@@ -85,7 +85,7 @@ import instructions.stack.PHAInstruction;
 import instructions.stack.PHPInstruction;
 import instructions.stack.PLAInstruction;
 import instructions.stack.PLPInstruction;
-import nes.MapperTest;
+import nes.utils.MapperTest;
 
 @FunctionalInterface
 interface TriIntFunction<T, U, V> {

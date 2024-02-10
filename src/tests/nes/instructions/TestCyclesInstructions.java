@@ -84,7 +84,7 @@ import instructions.stack.PHAInstruction;
 import instructions.stack.PHPInstruction;
 import instructions.stack.PLAInstruction;
 import instructions.stack.PLPInstruction;
-import nes.MapperTest;
+import nes.utils.MapperTest;
 
 class TestCyclesInstructions {
 
@@ -149,6 +149,7 @@ class TestCyclesInstructions {
 
 			// Update page crossed (to 1)
 			instruction = instruction.newInstruction(0xFE);
+			instruction.execute();
 
 			// Cycles + 1
 			assertEquals(cycles[i] + 1, instruction.getCycle());

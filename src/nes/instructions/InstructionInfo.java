@@ -61,6 +61,7 @@ import instructions.stack.PLPInstruction;
 public class InstructionInfo {
 
 	private static final HashMap<Integer, Instruction> instructionMap = new HashMap<Integer, Instruction>();
+	private static final InstructionInfo instance = new InstructionInfo();
 
 	private InstructionInfo() {
 		// Init of the instruction map
@@ -328,8 +329,12 @@ public class InstructionInfo {
 		instructionMap.put(0x98, new TYAInstruction(AddressingMode.IMPLICIT));
 	}
 
-	public static HashMap<Integer, Instruction> getInstructionMap() {
+	public HashMap<Integer, Instruction> getInstructionMap() {
 		return instructionMap;
+	}
+	
+	public static InstructionInfo getInstance() {
+		return instance;
 	}
 
 }
