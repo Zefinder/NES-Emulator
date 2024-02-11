@@ -2,30 +2,17 @@ package disassemble;
 
 import instructions.Instruction;
 
-public class DisassemblyInfo {
-
-	private int mapper;
-	private boolean mirroring;
+public abstract  class DisassemblyInfo {
 	
 	private byte[] prgRom;
 	private byte[] chrRom;
 
 	private Instruction[] instructions;
 
-	public DisassemblyInfo(int mapper, boolean mirroring, byte[] prgRom, byte[] chrRom, Instruction[] instructions) {
-		this.mapper = mapper;
-		this.mirroring = mirroring;
+	public DisassemblyInfo(byte[] prgRom, byte[] chrRom, Instruction[] instructions) {
 		this.prgRom = prgRom;
 		this.chrRom = chrRom;
 		this.instructions = instructions;
-	}
-
-	public int getMapper() {
-		return mapper;
-	}
-
-	public boolean getMirroring() {
-		return mirroring;
 	}
 
 	public byte[] getPrgRom() {
@@ -39,5 +26,10 @@ public class DisassemblyInfo {
 	public Instruction[] getInstructions() {
 		return instructions;
 	}
+	
+	public abstract int getMapper();
 
+	public abstract boolean isVerticalNametableMirroring();
+	
+	public abstract boolean isPALSystem();
 }

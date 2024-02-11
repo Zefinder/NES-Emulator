@@ -1,9 +1,7 @@
 package disassemble;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
@@ -146,25 +144,5 @@ public class Disassembler {
 	private byte[] disassembleINESHeaderFlags(byte[] allBytes) {
 		return new byte[] { allBytes[4], allBytes[5], allBytes[6], allBytes[7], allBytes[8], allBytes[9],
 				allBytes[10] };
-	}
-
-	public static void main(String[] args) throws NotNesFileException, IOException {
-		File inputFile = new File("./console.nes");
-		File resultFile = new File(inputFile.getName() + "lst");
-
-		Disassembler disass = new Disassembler();
-		DisassemblyInfo info = disass.disassembleFile(inputFile);
-
-		final BufferedWriter writer = new BufferedWriter(new FileWriter(resultFile));
-		int instructionCount = 0;
-		for (Instruction instruction : info.getInstructions()) {
-			if (instruction != null) {
-				writer.write(String.format("0x%04X: %s\n", 0x8000 + instructionCount, instruction.toString()));
-			}
-
-			instructionCount++;
-		}
-
-		writer.close();
 	}
 }
