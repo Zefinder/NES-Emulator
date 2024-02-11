@@ -1,4 +1,4 @@
-package nes.instructions;
+package instructions;
 
 import static instructions.AddressingMode.ABSOLUTE;
 import static instructions.AddressingMode.ACCUMULATOR;
@@ -26,7 +26,6 @@ import org.junit.jupiter.api.TestFactory;
 import components.Cpu;
 import components.CpuInfo;
 import exceptions.InstructionNotSupportedException;
-import instructions.Instruction;
 import instructions.alu.ADCInstruction;
 import instructions.alu.ANDInstruction;
 import instructions.alu.ASLInstruction;
@@ -85,7 +84,7 @@ import instructions.stack.PHAInstruction;
 import instructions.stack.PHPInstruction;
 import instructions.stack.PLAInstruction;
 import instructions.stack.PLPInstruction;
-import nes.MapperTest;
+import utils.MapperTest;
 
 @FunctionalInterface
 interface TriIntFunction<T, U, V> {

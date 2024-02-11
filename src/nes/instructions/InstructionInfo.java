@@ -3,123 +3,69 @@ package instructions;
 import java.util.HashMap;
 
 import instructions.alu.ADCInstruction;
+import instructions.alu.ANDInstruction;
+import instructions.alu.ASLInstruction;
+import instructions.alu.BITInstruction;
+import instructions.alu.CMPInstruction;
+import instructions.alu.CPXInstruction;
+import instructions.alu.CPYInstruction;
+import instructions.alu.DECInstruction;
+import instructions.alu.DEXInstruction;
+import instructions.alu.DEYInstruction;
+import instructions.alu.EORInstruction;
+import instructions.alu.INCInstruction;
+import instructions.alu.INXInstruction;
+import instructions.alu.INYInstruction;
+import instructions.alu.LSRInstruction;
+import instructions.alu.ORAInstruction;
+import instructions.alu.ROLInstruction;
+import instructions.alu.RORInstruction;
+import instructions.alu.SBCInstruction;
+import instructions.branch.BCCInstruction;
+import instructions.branch.BCSInstruction;
+import instructions.branch.BEQInstruction;
+import instructions.branch.BMIInstruction;
+import instructions.branch.BNEInstruction;
+import instructions.branch.BPLInstruction;
+import instructions.branch.BVCInstruction;
+import instructions.branch.BVSInstruction;
+import instructions.flags.CLCInstruction;
+import instructions.flags.CLDInstruction;
+import instructions.flags.CLIInstruction;
+import instructions.flags.CLVInstruction;
+import instructions.flags.SECInstruction;
+import instructions.flags.SEDInstruction;
+import instructions.flags.SEIInstruction;
+import instructions.jump.BRKInstruction;
+import instructions.jump.JMPInstruction;
+import instructions.jump.JSRInstruction;
+import instructions.jump.RTIInstruction;
+import instructions.jump.RTSInstruction;
+import instructions.register.TAXInstruction;
+import instructions.register.TAYInstruction;
+import instructions.register.TSXInstruction;
+import instructions.register.TXAInstruction;
+import instructions.register.TXSInstruction;
+import instructions.register.TYAInstruction;
+import instructions.registermemory.LDAInstruction;
+import instructions.registermemory.LDXInstruction;
+import instructions.registermemory.LDYInstruction;
+import instructions.registermemory.STAInstruction;
+import instructions.registermemory.STXInstruction;
+import instructions.registermemory.STYInstruction;
+import instructions.stack.PHAInstruction;
+import instructions.stack.PHPInstruction;
+import instructions.stack.PLAInstruction;
+import instructions.stack.PLPInstruction;
 
 public class InstructionInfo {
 
-	private static final byte NOCOD = (byte) 0xFF;
-
-	public enum InstructionSet {
-
-		// Ordre : Implicit, Accumulator, Immediate, ZP, ZPX, ZPY, Relative, Abs, AbsX,
-		// AbsY, Indir, IndirX, IndirY
-//		ADC(new byte[] { NOCOD, NOCOD, 0x69, 0x65, 0x75, NOCOD, NOCOD, 0x6D, 0x7D, 0x79, NOCOD, 0x61, 0x71 }),
-		AND(new byte[] { NOCOD, NOCOD, 0x29, 0x25, 0x35, NOCOD, NOCOD, 0x2D, 0x3D, 0x39, NOCOD, 0x21, 0x31 }),
-		ASL(new byte[] { NOCOD, 0x0A, NOCOD, 0x06, 0x16, NOCOD, NOCOD, 0x0E, 0x1E, NOCOD, NOCOD, NOCOD, NOCOD }),
-		BCC(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, (byte) 0x90, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		BCS(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, (byte) 0xB0, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		BEQ(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, (byte) 0xF0, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		BIT(new byte[] { NOCOD, NOCOD, NOCOD, 0x24, NOCOD, NOCOD, NOCOD, 0x2C, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		BMI(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, 0x30, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		BNE(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, (byte) 0xD0, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		BPL(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, 0x10, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		BRK(new byte[] { 0x00, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		BVC(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, 0x50, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		BVS(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, 0x70, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		CLC(new byte[] { 0x18, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		CLD(new byte[] { (byte) 0xD8, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		CLI(new byte[] { 0x58, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		CLV(new byte[] { (byte) 0xB8, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		CMP(new byte[] { NOCOD, NOCOD, (byte) 0xC9, (byte) 0xC5, (byte) 0xD5, NOCOD, NOCOD, (byte) 0xCD, (byte) 0xDD,
-				(byte) 0xD9, NOCOD, (byte) 0xC1, (byte) 0xD1 }),
-		CPX(new byte[] { NOCOD, NOCOD, (byte) 0xE0, (byte) 0xE4, NOCOD, NOCOD, NOCOD, (byte) 0xEC, NOCOD, NOCOD, NOCOD,
-				NOCOD, NOCOD }),
-		CPY(new byte[] { NOCOD, NOCOD, (byte) 0xC0, (byte) 0xC4, NOCOD, NOCOD, NOCOD, (byte) 0xCC, NOCOD, NOCOD, NOCOD,
-				NOCOD, NOCOD }),
-		DEC(new byte[] { NOCOD, NOCOD, NOCOD, (byte) 0xC6, (byte) 0xD6, NOCOD, NOCOD, (byte) 0xCE, (byte) 0xDE, NOCOD,
-				NOCOD, NOCOD, NOCOD }),
-		DEX(new byte[] { (byte) 0xCA, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		DEY(new byte[] { (byte) 0x88, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		EOR(new byte[] { NOCOD, NOCOD, 0x49, 0x45, 0x55, NOCOD, NOCOD, 0x4D, 0x5D, 0x59, NOCOD, 0x41, 0x51 }),
-		INC(new byte[] { NOCOD, NOCOD, NOCOD, (byte) 0xE6, (byte) 0xF6, NOCOD, NOCOD, (byte) 0xEE, (byte) 0xFE, NOCOD,
-				NOCOD, NOCOD, NOCOD }),
-		INX(new byte[] { (byte) 0xE8, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		INY(new byte[] { (byte) 0xC8, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		JMP(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, 0x4C, NOCOD, NOCOD, 0x6C, NOCOD, NOCOD }),
-		JSR(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, 0x20, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		LDA(new byte[] { NOCOD, NOCOD, (byte) 0xA9, (byte) 0xA5, (byte) 0xB5, NOCOD, NOCOD, (byte) 0xAD, (byte) 0xBD,
-				(byte) 0xB9, NOCOD, (byte) 0xA1, (byte) 0xB1 }),
-		LDX(new byte[] { NOCOD, NOCOD, (byte) 0xA2, (byte) 0xA6, NOCOD, (byte) 0xB6, NOCOD, (byte) 0xAE, NOCOD,
-				(byte) 0xBE, NOCOD, NOCOD, NOCOD }),
-		LDY(new byte[] { NOCOD, NOCOD, (byte) 0xA0, (byte) 0xA4, (byte) 0xB4, NOCOD, NOCOD, (byte) 0xAC, (byte) 0xBC,
-				NOCOD, NOCOD, NOCOD, NOCOD }),
-		LSR(new byte[] { NOCOD, 0x4A, NOCOD, 0x46, 0x56, NOCOD, NOCOD, 0x4E, 0x5E, NOCOD, NOCOD, NOCOD, NOCOD }),
-		NOP(new byte[] { (byte) 0xEA, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		ORA(new byte[] { NOCOD, NOCOD, 0x09, 0x05, 0x15, NOCOD, NOCOD, 0x0D, 0x1D, 0x19, NOCOD, 0x01, 0x11 }),
-		PHA(new byte[] { 0x48, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		PHP(new byte[] { 0x08, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		PLA(new byte[] { 0x68, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		PLP(new byte[] { 0x28, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		ROL(new byte[] { NOCOD, 0x2A, NOCOD, 0x26, 0x36, NOCOD, NOCOD, 0x2E, 0x3E, NOCOD, NOCOD, NOCOD, NOCOD }),
-		ROR(new byte[] { NOCOD, 0x6A, NOCOD, 0x66, 0x76, NOCOD, NOCOD, 0x6E, 0x7E, NOCOD, NOCOD, NOCOD, NOCOD }),
-		RTI(new byte[] { 0x40, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		RTS(new byte[] { 0x60, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		SBC(new byte[] { NOCOD, NOCOD, (byte) 0xE9, (byte) 0xE5, (byte) 0xF5, NOCOD, NOCOD, (byte) 0xED, (byte) 0xFD,
-				(byte) 0xF9, NOCOD, (byte) 0xE1, (byte) 0xF1 }),
-		SEC(new byte[] { 0x38, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		SED(new byte[] { (byte) 0xF8, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		SEI(new byte[] { 0x78, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD }),
-		STA(new byte[] { NOCOD, NOCOD, NOCOD, (byte) 0x85, (byte) 0x95, NOCOD, NOCOD, (byte) 0x8D, (byte) 0x9D,
-				(byte) 0x99, NOCOD, (byte) 0x81, (byte) 0x91 }),
-		STX(new byte[] { NOCOD, NOCOD, NOCOD, (byte) 0x86, NOCOD, (byte) 0x96, NOCOD, (byte) 0x8E, NOCOD, NOCOD, NOCOD,
-				NOCOD, NOCOD }),
-		STY(new byte[] { NOCOD, NOCOD, NOCOD, (byte) 0x84, (byte) 0x94, NOCOD, NOCOD, (byte) 0x8C, NOCOD, NOCOD, NOCOD,
-				NOCOD, NOCOD }),
-		TAX(new byte[] { (byte) 0xAA, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		TAY(new byte[] { (byte) 0xA8, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		TSX(new byte[] { (byte) 0xBA, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		TXA(new byte[] { (byte) 0x8A, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		TXS(new byte[] { (byte) 0x9A, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		TYA(new byte[] { (byte) 0x98, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD,
-				NOCOD }),
-		NMI(new byte[] { NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD, NOCOD });
-
-		private byte[] opCodes;
-
-		private InstructionSet(byte[] opCodes) {
-			this.opCodes = opCodes;
-		}
-
-		public byte[] getOpCodes() {
-			return this.opCodes;
-		}
-	}
-
-	private static final InstructionInfo instance = new InstructionInfo();
 	private static final HashMap<Integer, Instruction> instructionMap = new HashMap<Integer, Instruction>();
-
-//	private InstructionSet instruction;
-//	private AddressingMode addressingMode;
-//	private int lsb, msb;
+	private static final InstructionInfo instance = new InstructionInfo();
 
 	private InstructionInfo() {
 		// Init of the instruction map
+		// ADC
 		instructionMap.put(0x69, new ADCInstruction(AddressingMode.IMMEDIATE));
 		instructionMap.put(0x65, new ADCInstruction(AddressingMode.ZEROPAGE));
 		instructionMap.put(0x75, new ADCInstruction(AddressingMode.ZEROPAGE_X));
@@ -128,199 +74,267 @@ public class InstructionInfo {
 		instructionMap.put(0x79, new ADCInstruction(AddressingMode.ABSOLUTE_Y));
 		instructionMap.put(0x61, new ADCInstruction(AddressingMode.INDIRECT_X));
 		instructionMap.put(0x71, new ADCInstruction(AddressingMode.INDIRECT_Y));
+
+		// AND
+		instructionMap.put(0x29, new ANDInstruction(AddressingMode.IMMEDIATE));
+		instructionMap.put(0x25, new ANDInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0x35, new ANDInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0x2D, new ANDInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0x3D, new ANDInstruction(AddressingMode.ABSOLUTE_X));
+		instructionMap.put(0x39, new ANDInstruction(AddressingMode.ABSOLUTE_Y));
+		instructionMap.put(0x21, new ANDInstruction(AddressingMode.INDIRECT_X));
+		instructionMap.put(0x31, new ANDInstruction(AddressingMode.INDIRECT_Y));
+
+		// ASL
+		instructionMap.put(0x0A, new ASLInstruction(AddressingMode.ACCUMULATOR));
+		instructionMap.put(0x06, new ASLInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0x16, new ASLInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0x0E, new ASLInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0x1E, new ASLInstruction(AddressingMode.ABSOLUTE_X));
+
+		// BCC
+		instructionMap.put(0x90, new BCCInstruction(AddressingMode.RELATIVE));
+
+		// BCS
+		instructionMap.put(0xB0, new BCSInstruction(AddressingMode.RELATIVE));
+
+		// BEQ
+		instructionMap.put(0xF0, new BEQInstruction(AddressingMode.RELATIVE));
+
+		// BIT
+		instructionMap.put(0x24, new BITInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0x2C, new BITInstruction(AddressingMode.ABSOLUTE));
+
+		// BMI
+		instructionMap.put(0x30, new BMIInstruction(AddressingMode.RELATIVE));
+
+		// BNE
+		instructionMap.put(0xD0, new BNEInstruction(AddressingMode.RELATIVE));
+
+		// BPL
+		instructionMap.put(0x10, new BPLInstruction(AddressingMode.RELATIVE));
+
+		// BRK
+		instructionMap.put(0x00, new BRKInstruction(AddressingMode.IMPLICIT));
+
+		// BVC
+		instructionMap.put(0x50, new BVCInstruction(AddressingMode.RELATIVE));
+
+		// BVS
+		instructionMap.put(0x70, new BVSInstruction(AddressingMode.RELATIVE));
+
+		// CLC
+		instructionMap.put(0x18, new CLCInstruction(AddressingMode.IMPLICIT));
+
+		// CLD
+		instructionMap.put(0xD8, new CLDInstruction(AddressingMode.IMPLICIT));
+
+		// CLI
+		instructionMap.put(0x58, new CLIInstruction(AddressingMode.IMPLICIT));
+
+		// CLV
+		instructionMap.put(0xB8, new CLVInstruction(AddressingMode.IMPLICIT));
+
+		// CMP
+		instructionMap.put(0xC9, new CMPInstruction(AddressingMode.IMMEDIATE));
+		instructionMap.put(0xC5, new CMPInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0xD5, new CMPInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0xCD, new CMPInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0xDD, new CMPInstruction(AddressingMode.ABSOLUTE_X));
+		instructionMap.put(0xD9, new CMPInstruction(AddressingMode.ABSOLUTE_Y));
+		instructionMap.put(0xC1, new CMPInstruction(AddressingMode.INDIRECT_X));
+		instructionMap.put(0xD1, new CMPInstruction(AddressingMode.INDIRECT_Y));
+
+		// CPX
+		instructionMap.put(0xE0, new CPXInstruction(AddressingMode.IMMEDIATE));
+		instructionMap.put(0xE4, new CPXInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0xEC, new CPXInstruction(AddressingMode.ABSOLUTE));
+
+		// CPY
+		instructionMap.put(0xC0, new CPYInstruction(AddressingMode.IMMEDIATE));
+		instructionMap.put(0xC4, new CPYInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0xCC, new CPYInstruction(AddressingMode.ABSOLUTE));
+
+		// DEC
+		instructionMap.put(0xC6, new DECInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0xD6, new DECInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0xCE, new DECInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0xDE, new DECInstruction(AddressingMode.ABSOLUTE_X));
+
+		// DEX
+		instructionMap.put(0xCA, new DEXInstruction(AddressingMode.IMPLICIT));
 		
+		// DEY
+		instructionMap.put(0x88, new DEYInstruction(AddressingMode.IMPLICIT));
+		
+		// EOR
+		instructionMap.put(0x49, new EORInstruction(AddressingMode.IMMEDIATE));
+		instructionMap.put(0x45, new EORInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0x55, new EORInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0x4D, new EORInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0x5D, new EORInstruction(AddressingMode.ABSOLUTE_X));
+		instructionMap.put(0x59, new EORInstruction(AddressingMode.ABSOLUTE_Y));
+		instructionMap.put(0x41, new EORInstruction(AddressingMode.INDIRECT_X));
+		instructionMap.put(0x51, new EORInstruction(AddressingMode.INDIRECT_Y));
+		
+		// INC
+		instructionMap.put(0xE6, new INCInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0xF6, new INCInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0xEE, new INCInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0xFE, new INCInstruction(AddressingMode.ABSOLUTE_X));
+		
+		// INX
+		instructionMap.put(0xE8, new INXInstruction(AddressingMode.IMPLICIT));
+		
+		// INY
+		instructionMap.put(0xC8, new INYInstruction(AddressingMode.IMPLICIT));
+		
+		// JMP
+		instructionMap.put(0x4C, new JMPInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0x6C, new JMPInstruction(AddressingMode.INDIRECT));
+		
+		// JSR
+		instructionMap.put(0x20, new JSRInstruction(AddressingMode.ABSOLUTE));
+		
+		// LDA
+		instructionMap.put(0xA9, new LDAInstruction(AddressingMode.IMMEDIATE));
+		instructionMap.put(0xA5, new LDAInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0xB5, new LDAInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0xAD, new LDAInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0xBD, new LDAInstruction(AddressingMode.ABSOLUTE_X));
+		instructionMap.put(0xB9, new LDAInstruction(AddressingMode.ABSOLUTE_Y));
+		instructionMap.put(0xA1, new LDAInstruction(AddressingMode.INDIRECT_X));
+		instructionMap.put(0xB1, new LDAInstruction(AddressingMode.INDIRECT_Y));
+		
+		// LDX
+		instructionMap.put(0xA2, new LDXInstruction(AddressingMode.IMMEDIATE));
+		instructionMap.put(0xA6, new LDXInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0xB6, new LDXInstruction(AddressingMode.ZEROPAGE_Y));
+		instructionMap.put(0xAE, new LDXInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0xBE, new LDXInstruction(AddressingMode.ABSOLUTE_Y));
+		
+		// LDY
+		instructionMap.put(0xA0, new LDYInstruction(AddressingMode.IMMEDIATE));
+		instructionMap.put(0xA4, new LDYInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0xB4, new LDYInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0xAC, new LDYInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0xBC, new LDYInstruction(AddressingMode.ABSOLUTE_X));
+		
+		// LSR
+		instructionMap.put(0x4A, new LSRInstruction(AddressingMode.ACCUMULATOR));
+		instructionMap.put(0x46, new LSRInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0x56, new LSRInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0x4E, new LSRInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0x5E, new LSRInstruction(AddressingMode.ABSOLUTE_X));
+		
+		// NOP
+		instructionMap.put(0xEA, new NOPInstruction(AddressingMode.IMPLICIT));
+		
+		// ORA
+		instructionMap.put(0x09, new ORAInstruction(AddressingMode.IMMEDIATE));
+		instructionMap.put(0x05, new ORAInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0x15, new ORAInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0x0D, new ORAInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0x1D, new ORAInstruction(AddressingMode.ABSOLUTE_X));
+		instructionMap.put(0x19, new ORAInstruction(AddressingMode.ABSOLUTE_Y));
+		instructionMap.put(0x01, new ORAInstruction(AddressingMode.INDIRECT_X));
+		instructionMap.put(0x11, new ORAInstruction(AddressingMode.INDIRECT_Y));
+		
+		// PHA
+		instructionMap.put(0x48, new PHAInstruction(AddressingMode.IMPLICIT));
+		
+		// PHP
+		instructionMap.put(0x08, new PHPInstruction(AddressingMode.IMPLICIT));
+		
+		// PLA
+		instructionMap.put(0x68, new PLAInstruction(AddressingMode.IMPLICIT));
+		
+		// PLP
+		instructionMap.put(0x28, new PLPInstruction(AddressingMode.IMPLICIT));
+		
+		// ROL
+		instructionMap.put(0x2A, new ROLInstruction(AddressingMode.ACCUMULATOR));
+		instructionMap.put(0x26, new ROLInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0x36, new ROLInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0x2E, new ROLInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0x3E, new ROLInstruction(AddressingMode.ABSOLUTE_X));
+		
+		// ROR
+		instructionMap.put(0x6A, new RORInstruction(AddressingMode.ACCUMULATOR));
+		instructionMap.put(0x66, new RORInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0x76, new RORInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0x6E, new RORInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0x7E, new RORInstruction(AddressingMode.ABSOLUTE_X));
+		
+		// RTI
+		instructionMap.put(0x40, new RTIInstruction(AddressingMode.IMPLICIT));
+		
+		// RTS
+		instructionMap.put(0x60, new RTSInstruction(AddressingMode.IMPLICIT));
+		
+		// SBC
+		instructionMap.put(0xE9, new SBCInstruction(AddressingMode.IMMEDIATE));
+		instructionMap.put(0xE5, new SBCInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0xF5, new SBCInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0xED, new SBCInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0xFD, new SBCInstruction(AddressingMode.ABSOLUTE_X));
+		instructionMap.put(0xF9, new SBCInstruction(AddressingMode.ABSOLUTE_Y));
+		instructionMap.put(0xE1, new SBCInstruction(AddressingMode.INDIRECT_X));
+		instructionMap.put(0xF1, new SBCInstruction(AddressingMode.INDIRECT_Y));
+		
+		// SEC
+		instructionMap.put(0x38, new SECInstruction(AddressingMode.IMPLICIT));
+		
+		// SED
+		instructionMap.put(0xF8, new SEDInstruction(AddressingMode.IMPLICIT));
+		
+		// SEI
+		instructionMap.put(0x78, new SEIInstruction(AddressingMode.IMPLICIT));
+		
+		// STA
+		instructionMap.put(0x85, new STAInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0x95, new STAInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0x8D, new STAInstruction(AddressingMode.ABSOLUTE));
+		instructionMap.put(0x9D, new STAInstruction(AddressingMode.ABSOLUTE_X));
+		instructionMap.put(0x99, new STAInstruction(AddressingMode.ABSOLUTE_Y));
+		instructionMap.put(0x81, new STAInstruction(AddressingMode.INDIRECT_X));
+		instructionMap.put(0x91, new STAInstruction(AddressingMode.INDIRECT_Y));
+		
+		// STX
+		instructionMap.put(0x86, new STXInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0x96, new STXInstruction(AddressingMode.ZEROPAGE_Y));
+		instructionMap.put(0x8E, new STXInstruction(AddressingMode.ABSOLUTE));
+		
+		// STY
+		instructionMap.put(0x84, new STYInstruction(AddressingMode.ZEROPAGE));
+		instructionMap.put(0x94, new STYInstruction(AddressingMode.ZEROPAGE_X));
+		instructionMap.put(0x8C, new STYInstruction(AddressingMode.ABSOLUTE));
+		
+		// TAX
+		instructionMap.put(0xAA, new TAXInstruction(AddressingMode.IMPLICIT));
+		
+		// TAY
+		instructionMap.put(0xA8, new TAYInstruction(AddressingMode.IMPLICIT));
+		
+		// TSX
+		instructionMap.put(0xBA, new TSXInstruction(AddressingMode.IMPLICIT));
+		
+		// TXA
+		instructionMap.put(0x8A, new TXAInstruction(AddressingMode.IMPLICIT));
+		
+		// TXS
+		instructionMap.put(0x9A, new TXSInstruction(AddressingMode.IMPLICIT));
+		
+		// TYA
+		instructionMap.put(0x98, new TYAInstruction(AddressingMode.IMPLICIT));
+	}
+
+	public HashMap<Integer, Instruction> getInstructionMap() {
+		return instructionMap;
 	}
 	
 	public static InstructionInfo getInstance() {
 		return instance;
 	}
-//
-//	public InstructionSet getInstruction() {
-//		return this.instruction;
-//	}
-//
-//	public void setArgument(int lsb, int msb) {
-//		this.lsb = lsb;
-//		this.msb = msb;
-//	}
-//
-//	public int getLsb() {
-//		return this.lsb;
-//	}
-//
-//	public int getAdress() {
-//		int tmpLsb = (lsb < 0 ? lsb + 256 : lsb);
-//		int tmpMsb = (msb < 0 ? msb + 256 : msb);
-//		int address = (tmpMsb << 8) | tmpLsb;
-//		return address;
-//	}
-//
-//	public int getByteNumber() {
-//		return this.byteNumber;
-//	}
-//
-//	public AddressingMode getAddressingMode() {
-//		return addressingMode;
-//	}
-//
-//	@Override
-//	public String toString() {
-//		String suffix;
-//		int n;
-//
-//		switch (addressingMode) {
-//		case IMPLICIT:
-//			suffix = "";
-//			break;
-//
-//		case ACCUMULATOR:
-//			suffix = "A";
-//			break;
-//
-//		case IMMEDIATE:
-//			n = (lsb >= 0 ? lsb : lsb + 256);
-//			suffix = String.format("#%d", n);
-//			break;
-//
-//		case ZEROPAGE:
-//			suffix = String.format("$%02x", (byte) lsb);
-//			break;
-//
-//		case ZEROPAGE_X:
-//			suffix = String.format("$%02x, X", (byte) lsb);
-//			break;
-//
-//		case ZEROPAGE_Y:
-//			suffix = String.format("$%02x, Y", (byte) lsb);
-//			break;
-//
-//		case RELATIVE:
-//			int lol = lsb;
-//			n = lol + 2;
-//			if (n > 0)
-//				suffix = String.format("*+%d", n);
-//			else
-//				suffix = String.format("*%d", n);
-//			break;
-//
-//		case ABSOLUTE:
-//			suffix = String.format("$%02x%02x", (byte) msb, (byte) lsb);
-//			break;
-//
-//		case ABSOLUTE_X:
-//			suffix = String.format("$%02x%02x, X", (byte) msb, (byte) lsb);
-//			break;
-//
-//		case ABSOLUTE_Y:
-//			suffix = String.format("$%02x%02x, Y", (byte) msb, (byte) lsb);
-//			break;
-//
-//		case INDIRECT:
-//			suffix = String.format("($%02x%02x)", (byte) msb, (byte) lsb);
-//			break;
-//
-//		case INDIRECT_X:
-//			suffix = String.format("($%02x, X)", (byte) lsb);
-//			break;
-//
-//		case INDIRECT_Y:
-//			suffix = String.format("($%02x, Y)", (byte) lsb);
-//			break;
-//
-//		default:
-//			suffix = "";
-//			break;
-//		}
-//
-//		return this.instruction.toString() + " " + suffix;
-//	}
-//
-//	private void setInstruction(byte code) {
-//		InstructionSet finalInstruction = InstructionSet.NOP;
-//		AddressingMode addressingMode = AddressingMode.IMPLICIT;
-//		boolean trouve = false;
-//
-//		if (code != NOCOD)
-//			for (InstructionSet instruction : InstructionSet.values()) {
-//				byte[] opCodes = instruction.getOpCodes();
-//				for (int i = 0; i < opCodes.length; i++) {
-//					if (code == opCodes[i]) {
-//						finalInstruction = instruction;
-//						addressingMode = AddressingMode.values()[i];
-//						trouve = true;
-//						break;
-//					}
-//					if (trouve)
-//						break;
-//				}
-//			}
-//
-//		this.instruction = finalInstruction;
-//		this.addressingMode = addressingMode;
-//	}
-//
-//	private void setbyteNumber() {
-//		int byteNumber;
-//
-//		switch (addressingMode) {
-//		case IMPLICIT:
-//			byteNumber = 1;
-//			break;
-//
-//		case ACCUMULATOR:
-//			byteNumber = 1;
-//			break;
-//
-//		case IMMEDIATE:
-//			byteNumber = 2;
-//			break;
-//
-//		case ZEROPAGE:
-//			byteNumber = 2;
-//			break;
-//
-//		case ZEROPAGE_X:
-//			byteNumber = 2;
-//			break;
-//
-//		case ZEROPAGE_Y:
-//			byteNumber = 2;
-//			break;
-//
-//		case RELATIVE:
-//			byteNumber = 2;
-//			break;
-//
-//		case ABSOLUTE:
-//			byteNumber = 3;
-//			break;
-//
-//		case ABSOLUTE_X:
-//			byteNumber = 3;
-//			break;
-//
-//		case ABSOLUTE_Y:
-//			byteNumber = 3;
-//			break;
-//
-//		case INDIRECT:
-//			byteNumber = 3;
-//			break;
-//
-//		case INDIRECT_X:
-//			byteNumber = 2;
-//			break;
-//
-//		case INDIRECT_Y:
-//			byteNumber = 2;
-//			break;
-//
-//		default:
-//			byteNumber = 1;
-//			break;
-//		}
-//
-//		this.byteNumber = byteNumber;
-//	}
 
 }

@@ -1,4 +1,4 @@
-package nes.instructions;
+package instructions;
 
 import static instructions.AddressingMode.ABSOLUTE;
 import static instructions.AddressingMode.ABSOLUTE_X;
@@ -25,9 +25,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import components.Cpu;
 import exceptions.InstructionNotSupportedException;
-import instructions.AddressingMode;
-import instructions.Instruction;
-import instructions.NOPInstruction;
 import instructions.alu.ADCInstruction;
 import instructions.alu.ANDInstruction;
 import instructions.alu.ASLInstruction;
@@ -84,7 +81,7 @@ import instructions.stack.PHAInstruction;
 import instructions.stack.PHPInstruction;
 import instructions.stack.PLAInstruction;
 import instructions.stack.PLPInstruction;
-import nes.MapperTest;
+import utils.MapperTest;
 
 class TestCyclesInstructions {
 
@@ -149,6 +146,7 @@ class TestCyclesInstructions {
 
 			// Update page crossed (to 1)
 			instruction = instruction.newInstruction(0xFE);
+			instruction.execute();
 
 			// Cycles + 1
 			assertEquals(cycles[i] + 1, instruction.getCycle());

@@ -1,6 +1,18 @@
-package nes.instructions;
+package instructions;
 
-import static instructions.AddressingMode.*;
+import static instructions.AddressingMode.ABSOLUTE;
+import static instructions.AddressingMode.ABSOLUTE_X;
+import static instructions.AddressingMode.ABSOLUTE_Y;
+import static instructions.AddressingMode.ACCUMULATOR;
+import static instructions.AddressingMode.IMMEDIATE;
+import static instructions.AddressingMode.IMPLICIT;
+import static instructions.AddressingMode.INDIRECT;
+import static instructions.AddressingMode.INDIRECT_X;
+import static instructions.AddressingMode.INDIRECT_Y;
+import static instructions.AddressingMode.RELATIVE;
+import static instructions.AddressingMode.ZEROPAGE;
+import static instructions.AddressingMode.ZEROPAGE_X;
+import static instructions.AddressingMode.ZEROPAGE_Y;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
@@ -9,8 +21,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
-
-import instructions.AddressingMode;
 
 class TestAddressingMode {
 
