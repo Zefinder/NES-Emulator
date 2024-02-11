@@ -1,4 +1,4 @@
-package nes.cpu;
+package cpu;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -7,9 +7,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import components.Cpu;
-import nes.utils.MapperTest;
+import utils.MapperTest;
 
-class CpuStackTest {
+class TestCpuStack {
 
 	static final Cpu cpu = Cpu.getInstance();
 

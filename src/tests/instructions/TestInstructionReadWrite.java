@@ -1,4 +1,4 @@
-package nes.instructions;
+package instructions;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -7,12 +7,10 @@ import org.junit.jupiter.api.Test;
 
 import components.Cpu;
 import exceptions.InstructionNotSupportedException;
-import instructions.AddressingMode;
-import instructions.Instruction;
 import instructions.alu.ASLInstruction;
 import instructions.registermemory.LDAInstruction;
 import instructions.registermemory.STAInstruction;
-import nes.utils.MapperTest;
+import utils.MapperTest;
 
 class TestInstructionReadWrite {
 

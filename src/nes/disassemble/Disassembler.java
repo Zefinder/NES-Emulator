@@ -50,7 +50,7 @@ public class Disassembler {
 					instruction = instruction.newInstruction(operand1);
 				}
 			} else if (byteNumber == 3) {
-				if (operand1 == -1 && operand2 == -1) {
+				if (operand1 == -1 || operand2 == -1) {
 					instruction = null;
 				} else {
 					instruction = instruction.newInstruction(operand2 << 8 | operand1);
@@ -124,13 +124,14 @@ public class Disassembler {
 	}
 
 	private byte[] getINESPrgRom(byte[] allBytes) {
-		byte[] chrRom = Arrays.copyOfRange(allBytes, 0x10, allBytes[4] * prgChunk + 0x10);
-		return chrRom;
+		byte[] prgRom = Arrays.copyOfRange(allBytes, 0x10, allBytes[4] * prgChunk + 0x10);
+		return prgRom;
 	}
 
 	private byte[] getINESChrRom(byte[] allBytes) {
-		byte[] prgRom = Arrays.copyOfRange(allBytes, 0x10 + prgChunk, 0x10 + prgChunk + allBytes[5] * chrChunk);
-		return prgRom;
+		byte[] chrRom = Arrays.copyOfRange(allBytes, 0x10 + allBytes[4] * prgChunk,
+				0x10 + allBytes[4] * prgChunk + allBytes[5] * chrChunk);
+		return chrRom;
 	}
 
 	private boolean isNesFile(byte[] allBytes) {
