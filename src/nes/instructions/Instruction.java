@@ -44,7 +44,7 @@ public abstract class Instruction {
 	 * @throws InstructionNotSupportedException if the addressing mode does not
 	 *                                          correspond to the instruction
 	 */
-	public abstract int getCycle() throws InstructionNotSupportedException;
+	public abstract int getCycles() throws InstructionNotSupportedException;
 
 	public abstract String getName();
 

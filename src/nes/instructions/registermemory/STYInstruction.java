@@ -25,7 +25,7 @@ public class STYInstruction extends Instruction {
 	}
 
 	@Override
-	public int getCycle() throws InstructionNotSupportedException {
+	public int getCycles() throws InstructionNotSupportedException {
 		switch (getMode()) {
 		case ZEROPAGE:
 			return 3;

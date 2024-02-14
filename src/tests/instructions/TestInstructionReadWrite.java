@@ -94,7 +94,7 @@ class TestInstructionReadWrite {
 				}
 
 				@Override
-				public int getCycle() throws InstructionNotSupportedException {
+				public int getCycles() throws InstructionNotSupportedException {
 					return 0;
 				}
 
@@ -132,7 +132,7 @@ class TestInstructionReadWrite {
 					}
 
 					@Override
-					public int getCycle() throws InstructionNotSupportedException {
+					public int getCycles() throws InstructionNotSupportedException {
 						return 0;
 					}
 
@@ -171,7 +171,7 @@ class TestInstructionReadWrite {
 					}
 
 					@Override
-					public int getCycle() throws InstructionNotSupportedException {
+					public int getCycles() throws InstructionNotSupportedException {
 						return 0;
 					}
 
@@ -208,7 +208,7 @@ class TestInstructionReadWrite {
 				}
 
 				@Override
-				public int getCycle() throws InstructionNotSupportedException {
+				public int getCycles() throws InstructionNotSupportedException {
 					return 0;
 				}
 
@@ -247,7 +247,7 @@ class TestInstructionReadWrite {
 					}
 
 					@Override
-					public int getCycle() throws InstructionNotSupportedException {
+					public int getCycles() throws InstructionNotSupportedException {
 						return 0;
 					}
 
@@ -287,7 +287,7 @@ class TestInstructionReadWrite {
 					}
 
 					@Override
-					public int getCycle() throws InstructionNotSupportedException {
+					public int getCycles() throws InstructionNotSupportedException {
 						return 0;
 					}
 
@@ -329,7 +329,7 @@ class TestInstructionReadWrite {
 					}
 
 					@Override
-					public int getCycle() throws InstructionNotSupportedException {
+					public int getCycles() throws InstructionNotSupportedException {
 						return 0;
 					}
 
@@ -371,7 +371,7 @@ class TestInstructionReadWrite {
 					}
 
 					@Override
-					public int getCycle() throws InstructionNotSupportedException {
+					public int getCycles() throws InstructionNotSupportedException {
 						return 0;
 					}
 

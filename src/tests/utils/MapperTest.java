@@ -15,7 +15,7 @@ public class MapperTest extends Mapper {
 	}
 
 	@Override
-	public int[] readCpuBus(int address) {
+	public int readCpuBus(int address) {
 		if (address == SPECIAL_REGISTER_ADDRESS) {
 			readCounter++;
 		}

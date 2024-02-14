@@ -126,7 +126,7 @@ class TestCyclesInstructions {
 		for (int i = 0; i < cycles.length; i++) {
 			Instruction instruction = (Instruction) instructionClass.getConstructor(AddressingMode.class)
 					.newInstance(addressingModes[i]);
-			assertEquals(cycles[i], instruction.getCycle());
+			assertEquals(cycles[i], instruction.getCycles());
 		}
 	}
 
@@ -142,14 +142,14 @@ class TestCyclesInstructions {
 					.newInstance(addressingMode);
 
 			// Normal cycles
-			assertEquals(cycles[i], instruction.getCycle());
+			assertEquals(cycles[i], instruction.getCycles());
 
 			// Update page crossed (to 1)
 			instruction = instruction.newInstruction(0xFE);
 			instruction.execute();
 
 			// Cycles + 1
-			assertEquals(cycles[i] + 1, instruction.getCycle());
+			assertEquals(cycles[i] + 1, instruction.getCycles());
 		}
 	}
 
@@ -174,7 +174,7 @@ class TestCyclesInstructions {
 		instruction = instruction.newInstruction(2);
 
 		// Normal cycles
-		assertEquals(cycles, instruction.getCycle());
+		assertEquals(cycles, instruction.getCycles());
 
 		// Execute instruction, if jumped then begin tests, else change flags to 1
 		instruction.execute();
@@ -194,14 +194,14 @@ class TestCyclesInstructions {
 		}
 
 		// Branched cycles
-		assertEquals(cycles + 1, instruction.getCycle());
+		assertEquals(cycles + 1, instruction.getCycles());
 
 		// Recreate branch instruction with page change (-128)
 		instruction = instruction.newInstruction(0x80);
 		instruction.execute();
 
 		// Branched cycles with new page
-		assertEquals(cycles + 1 + 2, instruction.getCycle());
+		assertEquals(cycles + 1 + 2, instruction.getCycles());
 	}
 
 	private void testException(Class<?> instructionClass, AddressingMode... addressingModes)
@@ -210,7 +210,7 @@ class TestCyclesInstructions {
 		for (AddressingMode addressingMode : addressingModes) {
 			Instruction instruction = (Instruction) instructionClass.getConstructor(AddressingMode.class)
 					.newInstance(addressingMode);
-			assertThrows(InstructionNotSupportedException.class, () -> instruction.getCycle());
+			assertThrows(InstructionNotSupportedException.class, () -> instruction.getCycles());
 		}
 	}
 

@@ -20,7 +20,7 @@ public class JMPInstruction extends JumpInstruction {
 	}
 
 	@Override
-	public int getCycle() throws InstructionNotSupportedException {
+	public int getCycles() throws InstructionNotSupportedException {
 		switch (getMode()) {
 		case ABSOLUTE:
 			return 3;

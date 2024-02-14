@@ -42,7 +42,7 @@ public class RORInstruction extends AluInstruction {
 	}
 
 	@Override
-	public int getCycle() throws InstructionNotSupportedException {
+	public int getCycles() throws InstructionNotSupportedException {
 		switch (getMode()) {
 		case ACCUMULATOR:
 			return 2;

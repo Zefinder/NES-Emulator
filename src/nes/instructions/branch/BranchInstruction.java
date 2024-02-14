@@ -53,7 +53,7 @@ public abstract class BranchInstruction extends Instruction {
 	}
 
 	@Override
-	public int getCycle() throws InstructionNotSupportedException {
+	public int getCycles() throws InstructionNotSupportedException {
 		switch (getMode()) {
 		case RELATIVE:
 			return 2 + branchSucceed + newPage;

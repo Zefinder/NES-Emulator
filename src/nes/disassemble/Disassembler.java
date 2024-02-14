@@ -16,11 +16,7 @@ public class Disassembler {
 	private static final int chrChunk = 0x2000;
 
 	private static final Map<Integer, Instruction> instructionMap = InstructionInfo.getInstance().getInstructionMap();
-
-	public Disassembler() {
-
-	}
-
+	
 	/**
 	 * Disassembles the instruction with the given opcode and operands. If the
 	 * opcode does not exist, then this returns null. If needed operands are -1,

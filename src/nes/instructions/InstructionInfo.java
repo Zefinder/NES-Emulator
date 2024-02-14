@@ -60,6 +60,7 @@ import instructions.stack.PLPInstruction;
 
 public class InstructionInfo {
 
+	// TODO Transform the map in an array?
 	private static final HashMap<Integer, Instruction> instructionMap = new HashMap<Integer, Instruction>();
 	private static final InstructionInfo instance = new InstructionInfo();
 
@@ -163,10 +164,10 @@ public class InstructionInfo {
 
 		// DEX
 		instructionMap.put(0xCA, new DEXInstruction(AddressingMode.IMPLICIT));
-		
+
 		// DEY
 		instructionMap.put(0x88, new DEYInstruction(AddressingMode.IMPLICIT));
-		
+
 		// EOR
 		instructionMap.put(0x49, new EORInstruction(AddressingMode.IMMEDIATE));
 		instructionMap.put(0x45, new EORInstruction(AddressingMode.ZEROPAGE));
@@ -176,26 +177,26 @@ public class InstructionInfo {
 		instructionMap.put(0x59, new EORInstruction(AddressingMode.ABSOLUTE_Y));
 		instructionMap.put(0x41, new EORInstruction(AddressingMode.INDIRECT_X));
 		instructionMap.put(0x51, new EORInstruction(AddressingMode.INDIRECT_Y));
-		
+
 		// INC
 		instructionMap.put(0xE6, new INCInstruction(AddressingMode.ZEROPAGE));
 		instructionMap.put(0xF6, new INCInstruction(AddressingMode.ZEROPAGE_X));
 		instructionMap.put(0xEE, new INCInstruction(AddressingMode.ABSOLUTE));
 		instructionMap.put(0xFE, new INCInstruction(AddressingMode.ABSOLUTE_X));
-		
+
 		// INX
 		instructionMap.put(0xE8, new INXInstruction(AddressingMode.IMPLICIT));
-		
+
 		// INY
 		instructionMap.put(0xC8, new INYInstruction(AddressingMode.IMPLICIT));
-		
+
 		// JMP
 		instructionMap.put(0x4C, new JMPInstruction(AddressingMode.ABSOLUTE));
 		instructionMap.put(0x6C, new JMPInstruction(AddressingMode.INDIRECT));
-		
+
 		// JSR
 		instructionMap.put(0x20, new JSRInstruction(AddressingMode.ABSOLUTE));
-		
+
 		// LDA
 		instructionMap.put(0xA9, new LDAInstruction(AddressingMode.IMMEDIATE));
 		instructionMap.put(0xA5, new LDAInstruction(AddressingMode.ZEROPAGE));
@@ -205,31 +206,31 @@ public class InstructionInfo {
 		instructionMap.put(0xB9, new LDAInstruction(AddressingMode.ABSOLUTE_Y));
 		instructionMap.put(0xA1, new LDAInstruction(AddressingMode.INDIRECT_X));
 		instructionMap.put(0xB1, new LDAInstruction(AddressingMode.INDIRECT_Y));
-		
+
 		// LDX
 		instructionMap.put(0xA2, new LDXInstruction(AddressingMode.IMMEDIATE));
 		instructionMap.put(0xA6, new LDXInstruction(AddressingMode.ZEROPAGE));
 		instructionMap.put(0xB6, new LDXInstruction(AddressingMode.ZEROPAGE_Y));
 		instructionMap.put(0xAE, new LDXInstruction(AddressingMode.ABSOLUTE));
 		instructionMap.put(0xBE, new LDXInstruction(AddressingMode.ABSOLUTE_Y));
-		
+
 		// LDY
 		instructionMap.put(0xA0, new LDYInstruction(AddressingMode.IMMEDIATE));
 		instructionMap.put(0xA4, new LDYInstruction(AddressingMode.ZEROPAGE));
 		instructionMap.put(0xB4, new LDYInstruction(AddressingMode.ZEROPAGE_X));
 		instructionMap.put(0xAC, new LDYInstruction(AddressingMode.ABSOLUTE));
 		instructionMap.put(0xBC, new LDYInstruction(AddressingMode.ABSOLUTE_X));
-		
+
 		// LSR
 		instructionMap.put(0x4A, new LSRInstruction(AddressingMode.ACCUMULATOR));
 		instructionMap.put(0x46, new LSRInstruction(AddressingMode.ZEROPAGE));
 		instructionMap.put(0x56, new LSRInstruction(AddressingMode.ZEROPAGE_X));
 		instructionMap.put(0x4E, new LSRInstruction(AddressingMode.ABSOLUTE));
 		instructionMap.put(0x5E, new LSRInstruction(AddressingMode.ABSOLUTE_X));
-		
+
 		// NOP
 		instructionMap.put(0xEA, new NOPInstruction(AddressingMode.IMPLICIT));
-		
+
 		// ORA
 		instructionMap.put(0x09, new ORAInstruction(AddressingMode.IMMEDIATE));
 		instructionMap.put(0x05, new ORAInstruction(AddressingMode.ZEROPAGE));
@@ -239,39 +240,39 @@ public class InstructionInfo {
 		instructionMap.put(0x19, new ORAInstruction(AddressingMode.ABSOLUTE_Y));
 		instructionMap.put(0x01, new ORAInstruction(AddressingMode.INDIRECT_X));
 		instructionMap.put(0x11, new ORAInstruction(AddressingMode.INDIRECT_Y));
-		
+
 		// PHA
 		instructionMap.put(0x48, new PHAInstruction(AddressingMode.IMPLICIT));
-		
+
 		// PHP
 		instructionMap.put(0x08, new PHPInstruction(AddressingMode.IMPLICIT));
-		
+
 		// PLA
 		instructionMap.put(0x68, new PLAInstruction(AddressingMode.IMPLICIT));
-		
+
 		// PLP
 		instructionMap.put(0x28, new PLPInstruction(AddressingMode.IMPLICIT));
-		
+
 		// ROL
 		instructionMap.put(0x2A, new ROLInstruction(AddressingMode.ACCUMULATOR));
 		instructionMap.put(0x26, new ROLInstruction(AddressingMode.ZEROPAGE));
 		instructionMap.put(0x36, new ROLInstruction(AddressingMode.ZEROPAGE_X));
 		instructionMap.put(0x2E, new ROLInstruction(AddressingMode.ABSOLUTE));
 		instructionMap.put(0x3E, new ROLInstruction(AddressingMode.ABSOLUTE_X));
-		
+
 		// ROR
 		instructionMap.put(0x6A, new RORInstruction(AddressingMode.ACCUMULATOR));
 		instructionMap.put(0x66, new RORInstruction(AddressingMode.ZEROPAGE));
 		instructionMap.put(0x76, new RORInstruction(AddressingMode.ZEROPAGE_X));
 		instructionMap.put(0x6E, new RORInstruction(AddressingMode.ABSOLUTE));
 		instructionMap.put(0x7E, new RORInstruction(AddressingMode.ABSOLUTE_X));
-		
+
 		// RTI
 		instructionMap.put(0x40, new RTIInstruction(AddressingMode.IMPLICIT));
-		
+
 		// RTS
 		instructionMap.put(0x60, new RTSInstruction(AddressingMode.IMPLICIT));
-		
+
 		// SBC
 		instructionMap.put(0xE9, new SBCInstruction(AddressingMode.IMMEDIATE));
 		instructionMap.put(0xE5, new SBCInstruction(AddressingMode.ZEROPAGE));
@@ -281,16 +282,16 @@ public class InstructionInfo {
 		instructionMap.put(0xF9, new SBCInstruction(AddressingMode.ABSOLUTE_Y));
 		instructionMap.put(0xE1, new SBCInstruction(AddressingMode.INDIRECT_X));
 		instructionMap.put(0xF1, new SBCInstruction(AddressingMode.INDIRECT_Y));
-		
+
 		// SEC
 		instructionMap.put(0x38, new SECInstruction(AddressingMode.IMPLICIT));
-		
+
 		// SED
 		instructionMap.put(0xF8, new SEDInstruction(AddressingMode.IMPLICIT));
-		
+
 		// SEI
 		instructionMap.put(0x78, new SEIInstruction(AddressingMode.IMPLICIT));
-		
+
 		// STA
 		instructionMap.put(0x85, new STAInstruction(AddressingMode.ZEROPAGE));
 		instructionMap.put(0x95, new STAInstruction(AddressingMode.ZEROPAGE_X));
@@ -299,40 +300,56 @@ public class InstructionInfo {
 		instructionMap.put(0x99, new STAInstruction(AddressingMode.ABSOLUTE_Y));
 		instructionMap.put(0x81, new STAInstruction(AddressingMode.INDIRECT_X));
 		instructionMap.put(0x91, new STAInstruction(AddressingMode.INDIRECT_Y));
-		
+
 		// STX
 		instructionMap.put(0x86, new STXInstruction(AddressingMode.ZEROPAGE));
 		instructionMap.put(0x96, new STXInstruction(AddressingMode.ZEROPAGE_Y));
 		instructionMap.put(0x8E, new STXInstruction(AddressingMode.ABSOLUTE));
-		
+
 		// STY
 		instructionMap.put(0x84, new STYInstruction(AddressingMode.ZEROPAGE));
 		instructionMap.put(0x94, new STYInstruction(AddressingMode.ZEROPAGE_X));
 		instructionMap.put(0x8C, new STYInstruction(AddressingMode.ABSOLUTE));
-		
+
 		// TAX
 		instructionMap.put(0xAA, new TAXInstruction(AddressingMode.IMPLICIT));
-		
+
 		// TAY
 		instructionMap.put(0xA8, new TAYInstruction(AddressingMode.IMPLICIT));
-		
+
 		// TSX
 		instructionMap.put(0xBA, new TSXInstruction(AddressingMode.IMPLICIT));
-		
+
 		// TXA
 		instructionMap.put(0x8A, new TXAInstruction(AddressingMode.IMPLICIT));
-		
+
 		// TXS
 		instructionMap.put(0x9A, new TXSInstruction(AddressingMode.IMPLICIT));
-		
+
 		// TYA
 		instructionMap.put(0x98, new TYAInstruction(AddressingMode.IMPLICIT));
+	}
+
+	/**
+	 * Returns the number of bytes needed to declare an instruction from an opcode.
+	 * 
+	 * @param opcode the instruction opcode
+	 * @return the number of byte of the instruction defined by its addressing mode,
+	 *         or -1 if null
+	 */
+	public int getByteNumberFromOpcode(int opcode) {
+		Instruction instruction = instructionMap.get(opcode);
+		if (instruction != null) {
+			return instruction.getByteNumber();
+		}
+
+		return -1;
 	}
 
 	public HashMap<Integer, Instruction> getInstructionMap() {
 		return instructionMap;
 	}
-	
+
 	public static InstructionInfo getInstance() {
 		return instance;
 	}
