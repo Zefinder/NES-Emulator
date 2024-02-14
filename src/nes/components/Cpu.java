@@ -195,8 +195,13 @@ public class Cpu {
 
 		// If DMA requested, add cycles (+1 if DMA put)
 		if (cpuInfo.dmaRequested) {
+			// Reset the DMA request
 			cpuInfo.dmaRequested = false;
+			
+			// Update the state with cycles we've done
 			cpuInfo.dmaState = (cpuInfo.dmaState + cycles) & 0b1;
+			
+			// Adding the DMA transaction
 			cycles += cpuInfo.dmaHaltCycles + cpuInfo.dmaState;
 		}
 
