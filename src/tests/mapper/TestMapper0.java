@@ -14,7 +14,7 @@ public class TestMapper0 {
 
 	@BeforeAll
 	static void init() {
-		cpu.setMapper(new Mapper0());
+		cpu.setMapper(new Mapper0(new byte[0], new byte[0]));
 	}
 
 	@Test

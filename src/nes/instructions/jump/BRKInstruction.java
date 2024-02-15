@@ -1,5 +1,6 @@
 package instructions.jump;
 
+import components.Cpu;
 import exceptions.InstructionNotSupportedException;
 import instructions.AddressingMode;
 import instructions.Instruction;
@@ -15,17 +16,17 @@ public class BRKInstruction extends Instruction {
 	}
 
 	@Override
-	public void execute() throws InstructionNotSupportedException {		
-		// Push PC
-		int address = cpu.cpuInfo.PC;
-		cpu.push((address & 0xFF00) >> 8); // MSB
+	public void execute() throws InstructionNotSupportedException {
+		// Push PC (remove 1 for RTI)
+		int address = (cpu.cpuInfo.PC - 1) & 0xFFFF;
+		cpu.push(address >> 8); // MSB
 		cpu.push(address & 0xFF); // LSB
-		
-		// Push	flags
+
+		// Push flags
 		cpu.push(cpu.cpuInfo.getP());
-		
-		// Load PC with address at 0xFFFE
-		cpu.cpuInfo.PC = fetchAddress(0xFFFE);
+
+		// Load PC with address at 0xFFFE (remove 1 for BRK)
+		cpu.cpuInfo.PC = (fetchAddress(Cpu.BREAK_VECTOR) - 1) & 0xFFFF;
 
 		// Put break to 1
 		cpu.cpuInfo.B = 1;

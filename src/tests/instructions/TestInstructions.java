@@ -872,12 +872,12 @@ class TestInstructions {
 			}
 
 			// Test what is in stack
-			assertEquals(0xBEEF, cpu.fetchAddress(0x1FC), "Old PC should be in first stack position");
+			assertEquals(0xBEEF - 1, cpu.fetchAddress(0x1FC), "Old PC should be in first stack position");
 			assertEquals(0x42, cpu.fetchMemory(0x1FB), "Old flags should be in second stack position");
 
 			// Test values now
 			assertEquals(0xFA, cpu.cpuInfo.SP, "SP should have been decreased by 3");
-			assertEquals(0xDEAD, cpu.cpuInfo.PC, "PC shouls have been updated");
+			assertEquals(0xDEAD - 1, cpu.cpuInfo.PC, "PC should have been updated but removed 1");
 			assertEquals(1, cpu.cpuInfo.B, "Break flag should be 1");
 		}
 
@@ -897,10 +897,10 @@ class TestInstructions {
 					e.printStackTrace();
 				}
 
-				int expectedAddress = address;
+				int expectedAddress = (address - 3) & 0xFFFF;
 				int gotAddress = cpu.cpuInfo.PC;
 				tests.add(DynamicTest.dynamicTest(String.format("0x%04X", address),
-						() -> assertEquals(expectedAddress, gotAddress, "CPU should have jumped")));
+						() -> assertEquals(expectedAddress, gotAddress, "CPU should have jumped but removed 3")));
 			}
 
 			return tests;
@@ -924,7 +924,7 @@ class TestInstructions {
 					e.printStackTrace();
 				}
 
-				int expectedAddress = address;
+				int expectedAddress = (address - 3) & 0xFFFF;
 				int expectedSP = 0xFB;
 				int expectedReturn = 0xFFFF;
 
@@ -933,7 +933,7 @@ class TestInstructions {
 				int gotReturn = cpu.pop() | cpu.pop() << 8;
 
 				tests.add(DynamicTest.dynamicTest(String.format("0x%04X", address), () -> {
-					assertEquals(expectedAddress, gotAddress, "CPU should have jumped");
+					assertEquals(expectedAddress, gotAddress, "CPU should have jumped but removed 3");
 					assertEquals(expectedSP, gotSP, "SP should have been decreased by 2");
 					assertEquals(expectedReturn, gotReturn, "Return address should be 0xFFFF");
 				}));
@@ -956,7 +956,7 @@ class TestInstructions {
 			}
 
 			// Test values
-			assertEquals(0xBEEF, cpu.cpuInfo.PC, "Old PC should be back");
+			assertEquals(0xBEEF - 1, cpu.cpuInfo.PC, "Old PC should be back");
 			assertEquals(0x42, cpu.cpuInfo.getP(), "Old flags should be back");
 		}
 

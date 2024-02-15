@@ -2,27 +2,30 @@ package components;
 
 import disassemble.Disassembler;
 import exceptions.InstructionNotSupportedException;
+import instructions.AddressingMode;
 import instructions.Instruction;
 import instructions.InstructionInfo;
+import instructions.jump.BRKInstruction;
 import mapper.Mapper;
 
 public class Cpu {
 
-	private static final Cpu instance = new Cpu();
-
 	public static final int RESET_VECTOR = 0xFFFA;
 	public static final int NMI_VECTOR = 0xFFFC;
 	public static final int BREAK_VECTOR = 0xFFFE;
+
+	private static final Cpu instance = new Cpu();
+
+	/**
+	 * Clock speed in nano seconds
+	 */
+	public static final int CLOCK_SPEED = 601;
 
 	/* Mapper */
 	private Mapper mapper;
 
 	/* ROM Instructions */
 	private Instruction[] romInstructions;
-
-	/* Disassembler */
-	// TODO Maybe put it elsewhere... Or make it a singleton ?
-	private Disassembler disassembler = new Disassembler();
 
 	/* Registers & Flags */
 	public CpuInfo cpuInfo = new CpuInfo();
@@ -158,11 +161,13 @@ public class Cpu {
 
 		// Get the instruction
 		Instruction instruction;
-		if (cpuInfo.PC > 0x8000) {
+		if (cpuInfo.PC >= 0x8000) {
 			// If in the ROM it's great, there is an array for that!
 			instruction = romInstructions[cpuInfo.PC - 0x8000];
 
 		} else {
+			System.out.println("Instruction not in ROM!");
+
 			// Well we need to disassemble
 			// We need to get the number of bytes we will need
 			int opcode = fetchMemory(cpuInfo.PC);
@@ -184,7 +189,15 @@ public class Cpu {
 			}
 
 			// Finally disassemble the instruction (way longer...)
+			// TODO Maybe make it a singleton... But actually never should be here except
+			// special cases
+			Disassembler disassembler = new Disassembler();
 			instruction = disassembler.disassemble(opcode, operand1, operand2);
+		}
+
+		if (instruction.toString().equals(new BRKInstruction(AddressingMode.IMPLICIT).toString())) {
+			System.err.println("OUCH BRK");
+			System.exit(3);
 		}
 
 		// Execute the instruction
@@ -193,20 +206,25 @@ public class Cpu {
 		// Get waiting cycles
 		int cycles = instruction.getCycles();
 
+		// Increment PC by the byte number of the instruction
+		cpuInfo.PC = (cpuInfo.PC + instruction.getByteNumber()) & 0xFFFF;
+
 		// If DMA requested, add cycles (+1 if DMA put)
 		if (cpuInfo.dmaRequested) {
 			// Reset the DMA request
 			cpuInfo.dmaRequested = false;
-			
+
 			// Update the state with cycles we've done
 			cpuInfo.dmaState = (cpuInfo.dmaState + cycles) & 0b1;
-			
+
 			// Adding the DMA transaction
 			cycles += cpuInfo.dmaHaltCycles + cpuInfo.dmaState;
 		}
 
 		// Update DMA state (even cycles = same state)
 		cpuInfo.dmaState = (cpuInfo.dmaState + cycles) & 0b1;
+
+		System.out.println(instruction.toString());
 
 		// Return the waiting cycles
 		return cycles;

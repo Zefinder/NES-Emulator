@@ -20,8 +20,8 @@ public class JSRInstruction extends JumpInstruction {
 		cpu.push((pushAddress & 0xFF00) >> 8); // MSB
 		cpu.push(pushAddress & 0xFF); // LSB
 
-		// Set new PC
-		cpu.cpuInfo.PC = address;
+		// Set new PC at address - 3 (PC will be updated with the 3 bytes)
+		cpu.cpuInfo.PC = (address - 3) & 0xFFFF;
 	}
 
 	@Override

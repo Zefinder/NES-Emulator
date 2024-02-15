@@ -2,7 +2,7 @@ package mapper;
 
 public class Mapper0 extends Mapper {
 
-	public Mapper0() {
+	public Mapper0(byte[] prgRom, byte[] chrRom) {
 	}
 
 	@Override

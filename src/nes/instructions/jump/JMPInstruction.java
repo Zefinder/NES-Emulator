@@ -15,8 +15,8 @@ public class JMPInstruction extends JumpInstruction {
 
 	@Override
 	protected void jump(int address) {
-		// Set new PC
-		cpu.cpuInfo.PC = address;
+		// Set new PC (indirect or absolute are on 3 bytes)
+		cpu.cpuInfo.PC = (address - 3) & 0xFFFF;
 	}
 
 	@Override
