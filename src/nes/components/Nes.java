@@ -7,6 +7,7 @@ import disassemble.Disassembler;
 import disassemble.DisassemblyInfo;
 import exceptions.InstructionNotSupportedException;
 import exceptions.NotNesFileException;
+import frame.GameFrame;
 import mapper.Mapper0;
 
 public class Nes {
@@ -42,35 +43,9 @@ public class Nes {
 
 		cpu.setMapper(new Mapper0(info.getPrgRom(), info.getChrRom()));
 		cpu.setRomInstructions(info.getInstructions());
-
-		// Must be set by the mapper or by some init function
-		cpu.cpuInfo.PC = 0x8000;
-		Thread cpuThread = new Thread(() -> {
-			try {
-				cpuCycle(cpu);
-			} catch (InstructionNotSupportedException e) {
-				e.printStackTrace();
-			}
-		});
-
-		cpuThread.start();
-	}
-
-	private static void cpuCycle(Cpu cpu) throws InstructionNotSupportedException {
-		// Time for next activation (in ns)
-		long nextTick = System.nanoTime();
-
-		while (true) {
-			long currentTime = System.nanoTime();
-
-			// If it's time to tick, we tick
-			if (currentTime >= nextTick) {
-				// Tick!
-				int cycles = cpu.tick();
-
-				// Setting next tick
-				nextTick = currentTime + cycles * Cpu.CLOCK_SPEED;
-			}
-		}
+		cpu.warmUp();
+		
+		GameFrame frame = new GameFrame(info.getInstructions());
+		frame.initFrame(nesFile.getName());
 	}
 }

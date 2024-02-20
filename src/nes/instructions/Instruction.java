@@ -284,7 +284,7 @@ public abstract class Instruction {
 			break;
 
 		case IMMEDIATE:
-			suffix = String.format("#%d ($%02X)", lsb, lsb);
+			suffix = String.format("#$%02X", lsb, lsb);
 			break;
 
 		case ZEROPAGE:

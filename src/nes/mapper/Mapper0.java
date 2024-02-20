@@ -10,7 +10,8 @@ public class Mapper0 extends Mapper {
 		int value = 0;
 
 		if (address < 0x2000) {
-			value = cpuBus.getFromBus(address & 0x7FF);
+//			value = cpuBus.getFromBus(address & 0x7FF);
+			value = cpuBus.busContent[address & 0x7FF];
 		}
 
 		// If in PPU registers or their mirrors then it's complicated
@@ -27,7 +28,8 @@ public class Mapper0 extends Mapper {
 				break;
 
 			case 0x2002:
-				value = cpuBus.getFromBus(ppuRegister);
+//				value = cpuBus.getFromBus(ppuRegister);
+				value = cpuBus.busContent[ppuRegister];
 				// Remove NMI in 2002 register
 				// Clear PPUScroll and PPUAddress (0x2005 and 0x2006) registers
 				ppuBusLatch = value;
@@ -38,7 +40,8 @@ public class Mapper0 extends Mapper {
 				break;
 
 			case 0x2004:
-				value = cpuBus.getFromBus(ppuRegister);
+//				value = cpuBus.getFromBus(ppuRegister);
+				value = cpuBus.busContent[ppuRegister];
 				ppuBusLatch = value;
 				break;
 
@@ -51,7 +54,8 @@ public class Mapper0 extends Mapper {
 				break;
 
 			case 0x2007:
-				value = cpuBus.getFromBus(ppuRegister);
+//				value = cpuBus.getFromBus(ppuRegister);
+				value = cpuBus.busContent[ppuRegister];
 				ppuBusLatch = value;
 				break;
 			}
@@ -60,7 +64,8 @@ public class Mapper0 extends Mapper {
 			value = ppuBusLatch;
 
 		} else {
-			value = cpuBus.getFromBus(address);
+//			value = cpuBus.getFromBus(address);
+			value = cpuBus.busContent[address];
 		}
 
 		return value;
@@ -74,7 +79,8 @@ public class Mapper0 extends Mapper {
 
 			// If in RAM, write in the RAM (and not in mirrors)
 			if (writeAddress < 0x2000) {
-				cpuBus.writeToBus(writeAddress & 0x7FF, value);
+//				cpuBus.writeToBus(writeAddress & 0x7FF, value);
+				cpuBus.busContent[writeAddress & 0x7FF] = value;
 			}
 
 			// If in PPU registers or their mirrors then it's complicated
@@ -84,37 +90,44 @@ public class Mapper0 extends Mapper {
 				switch (ppuRegister) {
 				case 0x2000:
 					// TODO Set PPU 0x2000 register
-					cpuBus.writeToBus(ppuRegister, value);
+//					cpuBus.writeToBus(ppuRegister, value);
+					cpuBus.busContent[ppuRegister] = value;
 					break;
 
 				case 0x2001:
 					// TODO Set PPU 0x2001 register
-					cpuBus.writeToBus(ppuRegister, value);
+//					cpuBus.writeToBus(ppuRegister, value);
+					cpuBus.busContent[ppuRegister] = value;
 					break;
 
 				case 0x2003:
 					// TODO Set PPU 0x2003 register
-					cpuBus.writeToBus(ppuRegister, value);
+//					cpuBus.writeToBus(ppuRegister, value);
+					cpuBus.busContent[ppuRegister] = value;
 					break;
 
 				case 0x2004:
 					// TODO Set PPU 0x2004 register
-					cpuBus.writeToBus(ppuRegister, value);
+//					cpuBus.writeToBus(ppuRegister, value);
+					cpuBus.busContent[ppuRegister] = value;
 					break;
 
 				case 0x2005:
 					// TODO Set PPU 0x2005 register
-					cpuBus.writeToBus(ppuRegister, value);
+//					cpuBus.writeToBus(ppuRegister, value);
+					cpuBus.busContent[ppuRegister] = value;
 					break;
 
 				case 0x2006:
 					// TODO Set PPU 0x2006 register
-					cpuBus.writeToBus(ppuRegister, value);
+//					cpuBus.writeToBus(ppuRegister, value);
+					cpuBus.busContent[ppuRegister] = value;
 					break;
 
 				case 0x2007:
 					// TODO Set PPU 0x2007 register
-					cpuBus.writeToBus(ppuRegister, value);
+//					cpuBus.writeToBus(ppuRegister, value);
+					cpuBus.busContent[ppuRegister] = value;
 					break;
 				}
 			} else if (address == 0x4014) {
@@ -122,7 +135,8 @@ public class Mapper0 extends Mapper {
 				// TODO Launch OAM DMA action and add wait cycles to CPU (256?)
 				ppuBusLatch = value;
 			} else if (address < 0x8000) { // We don't want to write in the ROM
-				cpuBus.writeToBus(writeAddress & 0x7FF, value);
+//				cpuBus.writeToBus(writeAddress & 0x7FF, value);
+				cpuBus.busContent[writeAddress] = value;
 			}
 		}
 	}

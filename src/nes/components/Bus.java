@@ -1,9 +1,9 @@
 package components;
 
 public abstract class Bus {
-
+	
 	private final int busSize;
-	private final int[] busContent;
+	public final int[] busContent;
 
 	public Bus(int busSize) {
 		this.busSize = busSize;

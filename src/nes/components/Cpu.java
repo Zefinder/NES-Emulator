@@ -6,6 +6,7 @@ import instructions.AddressingMode;
 import instructions.Instruction;
 import instructions.InstructionInfo;
 import instructions.jump.BRKInstruction;
+import instructions.jump.JMPInstruction;
 import mapper.Mapper;
 
 public class Cpu {
@@ -195,10 +196,17 @@ public class Cpu {
 			instruction = disassembler.disassemble(opcode, operand1, operand2);
 		}
 
+		if (instruction.toString().equals(new JMPInstruction(AddressingMode.ABSOLUTE, 0x8057).toString())) {
+			System.err.println("Infinite loop!");
+			System.exit(0);
+		}
+
 		if (instruction.toString().equals(new BRKInstruction(AddressingMode.IMPLICIT).toString())) {
 			System.err.println("OUCH BRK");
 			System.exit(3);
 		}
+		
+		System.out.println(instruction.toString());
 
 		// Execute the instruction
 		instruction.execute();
@@ -224,10 +232,32 @@ public class Cpu {
 		// Update DMA state (even cycles = same state)
 		cpuInfo.dmaState = (cpuInfo.dmaState + cycles) & 0b1;
 
-		System.out.println(instruction.toString());
+//		System.out.println(instruction.toString());
 
 		// Return the waiting cycles
 		return cycles;
+	}
+	
+	/**
+	 * <p>
+	 * This method updates everything to warp up the CPU. It includes:
+	 * 
+	 * <ul>
+	 * <li> Setting up A, X and Y to 0
+	 * <li> Setting up SP to 0xFD
+	 * <li> Setting up P to 0x34
+	 * <li> Setting up APU (TODO)
+	 * </ul>
+	 * 
+	 * PC initialization is done by the mapper itself
+	 * </p>
+	 */
+	public void warmUp() {
+		cpuInfo.A = 0;
+		cpuInfo.X = 0;
+		cpuInfo.Y = 0;
+		cpuInfo.SP = 0xFD;
+		cpuInfo.setP(0x34);
 	}
 
 	public static Cpu getInstance() {
