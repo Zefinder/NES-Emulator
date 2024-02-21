@@ -10,20 +10,57 @@ public class GameThread implements Runnable {
 
 	// Speed 1: 2 Hz
 	public static final long SPEED1 = 500000000;
-	// Speed 2: 10 Hz
+	// Speed 2: 100 Hz
 	public static final long SPEED2 = 10000000;
 	// Speed 3: CPU speed
-	public static final long SPEED3 = Cpu.CLOCK_SPEED;
+	public static final long CPU_CLOCK_SPEED = 601;
+
+	// 5 CPU ticks <=> 16 PPU ticks
+	public static final int CPU_TICK_PER_PERIOD = 25;
+	public static final int PPU_TICK_PER_PERIOD = 16 * (CPU_TICK_PER_PERIOD / 5);
+
+	// In Hz
+	private static final int CPU_FREQUENCY = 1662607;
 
 	private AtomicBoolean running = new AtomicBoolean(false);
 	private AtomicBoolean stopped = new AtomicBoolean(true);
 	private Thread gameThread;
 
 	// In ns
-	private final long waitPeriod;
+	private long waitPeriod;
+	private long tickCounter;
+	private int cpuTickNumber;
 
-	public GameThread(long waitPeriod) {
+	public GameThread() {
+		tickCounter = 0;
+
+		// Creating timing check thread
+		Thread timingCheckThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				long counter = 0;
+				long start = System.currentTimeMillis();
+				while (true) {
+					long end = System.currentTimeMillis();
+					if (end > start + 1000) {
+						long actualTicks = tickCounter;
+						long totalTicks = actualTicks - counter;
+						System.out.println(
+								"CPU frequency: %d Hz (should be: %d Hz)".formatted(totalTicks, CPU_FREQUENCY));
+
+						counter = actualTicks;
+						start = end;
+					}
+				}
+			}
+		});
+		timingCheckThread.start();
+	}
+
+	public void startThread(long waitPeriod, int cpuTickNumber) {
 		this.waitPeriod = waitPeriod;
+		this.cpuTickNumber = cpuTickNumber;
+
 		gameThread = new Thread(this);
 		gameThread.setName("Game Thread (wait: " + waitPeriod + ")");
 		gameThread.start();
@@ -43,19 +80,24 @@ public class GameThread implements Runnable {
 		stopped.set(false);
 
 		// Time for next activation (in ns)
+		int cycles = 0;
 		long nextTick = System.nanoTime();
-
 		while (running.get()) {
 			long currentTime = System.nanoTime();
 			// If it's time to tick, we tick
 			if (currentTime >= nextTick) {
+				nextTick = currentTime;
 				try {
-					// Tick!
-					int cycles;
-					cycles = Cpu.getInstance().tick();
+					for (int tickNumber = 0; tickNumber < cpuTickNumber; tickNumber++) {
+						// For timing
+						tickCounter += cycles;
 
-					// Setting next tick
-					nextTick = currentTime + cycles * waitPeriod;
+						// Tick!
+						cycles = Cpu.getInstance().tick();
+
+						// Setting next tick
+						nextTick += cycles * waitPeriod;
+					}
 				} catch (InstructionNotSupportedException e) {
 					e.printStackTrace();
 				}

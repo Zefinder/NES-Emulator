@@ -28,6 +28,7 @@ public class InstructionDialog extends CpuInfoDialog {
 	public InstructionDialog(Instruction[] romInstructions) {
 		super(TITLE, ELEMENT_NUMBER);
 		this.romInstructions = romInstructions;
+		this.setLocation(328, 512);
 	}
 
 	@Override

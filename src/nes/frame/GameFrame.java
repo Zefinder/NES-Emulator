@@ -21,6 +21,9 @@ public class GameFrame extends JFrame {
 	private RegisterDialog registerDialog;
 	private FlagDialog flagDialog;
 	private InstructionDialog instructionDialog;
+	
+	// Game Thread
+	private GameThread gameThread;
 
 	public GameFrame(Instruction[] romInstructions) {
 		this.setTitle("NES Emulator");
@@ -43,8 +46,6 @@ public class GameFrame extends JFrame {
 			}
 		});
 		
-		this.addKeyListener(new GameKeyListener());
-		
 		this.setVisible(false);		
 	}
 
@@ -57,9 +58,15 @@ public class GameFrame extends JFrame {
 		this.setTitle("NES Emulator - " + gameName);
 		this.setVisible(true);
 		
+		// Init dialogs
 		registerDialog.initDialog();
 		flagDialog.initDialog();
 		instructionDialog.initDialog();
+		
+		// Create game thread and key listener
+		gameThread = new GameThread();
+		this.addKeyListener(new GameKeyListener(gameThread));
+		gameThread.startThread(GameThread.CPU_CLOCK_SPEED, GameThread.CPU_TICK_PER_PERIOD);
 	}
 
 }

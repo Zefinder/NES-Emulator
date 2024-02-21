@@ -12,6 +12,7 @@ public class FlagDialog extends CpuInfoDialog {
 
 	public FlagDialog() {
 		super(TITLE, ELEMENT_NUMBER);
+		this.setLocation(328, 162);
 	}
 
 	@Override

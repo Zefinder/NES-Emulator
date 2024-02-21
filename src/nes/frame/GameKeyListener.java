@@ -10,8 +10,12 @@ import exceptions.InstructionNotSupportedException;
 public class GameKeyListener implements KeyListener {
 
 	private final Cpu cpu = Cpu.getInstance();
-	private int currentMode = 0;
+	private int currentMode = 3;
 	private GameThread gameThread;
+
+	public GameKeyListener(GameThread gameThread) {
+		this.gameThread = gameThread;
+	}
 
 	@Override
 	public void keyTyped(KeyEvent e) {
@@ -60,23 +64,21 @@ public class GameKeyListener implements KeyListener {
 		default:
 			break;
 		}
-		
+
 		// If changing mode then kill the thread if living and create a new one
 		if (newMode != currentMode) {
 			currentMode = newMode;
-			
-			if (gameThread != null) {
-				gameThread.interrupt();
-				// Waiting for thread to stop
-				while (!gameThread.isStopped());
-			}
-			
+
+			gameThread.interrupt();
+			// Waiting for thread to stop
+			while (!gameThread.isStopped());
+
 			if (currentMode == 1) {
-				gameThread = new GameThread(GameThread.SPEED1);
+				gameThread.startThread(GameThread.SPEED1, 1);
 			} else if (currentMode == 2) {
-				gameThread = new GameThread(GameThread.SPEED2);
+				gameThread.startThread(GameThread.SPEED2, 1);
 			} else if (currentMode == 3) {
-				gameThread = new GameThread(GameThread.SPEED3);
+				gameThread.startThread(GameThread.CPU_CLOCK_SPEED, GameThread.CPU_TICK_PER_PERIOD);
 			}
 		}
 	}

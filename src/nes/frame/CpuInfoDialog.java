@@ -40,7 +40,6 @@ public abstract class CpuInfoDialog extends JDialog {
 		this.setTitle(title);
 		this.setSize(200, elementNumber * 50);
 		this.add(createMainPanel());
-		this.setLocationRelativeTo(null);
 		this.setResizable(false);
 		this.setVisible(false);
 	}

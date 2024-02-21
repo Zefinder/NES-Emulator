@@ -15,8 +15,8 @@ public class JSRInstruction extends JumpInstruction {
 
 	@Override
 	protected void jump(int address) {
-		// Push address - 1 to stack (when pop, adding RTS byte number will add 1)
-		int pushAddress = (cpu.cpuInfo.PC - 1) & 0xFFFF;
+		// Push next address (PC + 3) minus RTS size (1) to the stack
+		int pushAddress = (cpu.cpuInfo.PC + 2) & 0xFFFF;
 		cpu.push((pushAddress & 0xFF00) >> 8); // MSB
 		cpu.push(pushAddress & 0xFF); // LSB
 

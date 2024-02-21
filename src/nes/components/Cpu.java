@@ -2,11 +2,8 @@ package components;
 
 import disassemble.Disassembler;
 import exceptions.InstructionNotSupportedException;
-import instructions.AddressingMode;
 import instructions.Instruction;
 import instructions.InstructionInfo;
-import instructions.jump.BRKInstruction;
-import instructions.jump.JMPInstruction;
 import mapper.Mapper;
 
 public class Cpu {
@@ -16,11 +13,6 @@ public class Cpu {
 	public static final int BREAK_VECTOR = 0xFFFE;
 
 	private static final Cpu instance = new Cpu();
-
-	/**
-	 * Clock speed in nano seconds
-	 */
-	public static final int CLOCK_SPEED = 601;
 
 	/* Mapper */
 	private Mapper mapper;
@@ -196,18 +188,6 @@ public class Cpu {
 			instruction = disassembler.disassemble(opcode, operand1, operand2);
 		}
 
-		if (instruction.toString().equals(new JMPInstruction(AddressingMode.ABSOLUTE, 0x8057).toString())) {
-			System.err.println("Infinite loop!");
-			System.exit(0);
-		}
-
-		if (instruction.toString().equals(new BRKInstruction(AddressingMode.IMPLICIT).toString())) {
-			System.err.println("OUCH BRK");
-			System.exit(3);
-		}
-		
-		System.out.println(instruction.toString());
-
 		// Execute the instruction
 		instruction.execute();
 
@@ -231,8 +211,6 @@ public class Cpu {
 
 		// Update DMA state (even cycles = same state)
 		cpuInfo.dmaState = (cpuInfo.dmaState + cycles) & 0b1;
-
-//		System.out.println(instruction.toString());
 
 		// Return the waiting cycles
 		return cycles;

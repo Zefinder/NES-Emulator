@@ -926,7 +926,7 @@ class TestInstructions {
 
 				int expectedAddress = (address - 3) & 0xFFFF;
 				int expectedSP = 0xFB;
-				int expectedReturn = 0xFFFF;
+				int expectedReturn = 0x0002;
 
 				int gotAddress = cpu.cpuInfo.PC;
 				int gotSP = cpu.cpuInfo.SP;
@@ -935,7 +935,7 @@ class TestInstructions {
 				tests.add(DynamicTest.dynamicTest(String.format("0x%04X", address), () -> {
 					assertEquals(expectedAddress, gotAddress, "CPU should have jumped but removed 3");
 					assertEquals(expectedSP, gotSP, "SP should have been decreased by 2");
-					assertEquals(expectedReturn, gotReturn, "Return address should be 0xFFFF");
+					assertEquals(expectedReturn, gotReturn, "Return address should be 0x0002");
 				}));
 			}
 

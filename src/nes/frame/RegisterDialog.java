@@ -12,6 +12,7 @@ public class RegisterDialog extends CpuInfoDialog {
 
 	public RegisterDialog() {
 		super(TITLE, ELEMENT_NUMBER);
+		this.setLocation(138, 287);
 	}
 
 	@Override
