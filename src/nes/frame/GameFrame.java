@@ -4,8 +4,6 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 
-import components.Cpu;
-import components.CpuInfo;
 import instructions.Instruction;
 
 public class GameFrame extends JFrame {
@@ -14,8 +12,6 @@ public class GameFrame extends JFrame {
 	 * 
 	 */
 	private static final long serialVersionUID = 4153332469558642589L;
-
-	private CpuInfo cpuInfo;
 	
 	// Dialogs
 	private RegisterDialog registerDialog;
@@ -50,11 +46,6 @@ public class GameFrame extends JFrame {
 	}
 
 	public void initFrame(String gameName) {
-		cpuInfo = Cpu.getInstance().cpuInfo;
-
-		// Must be set by the mapper or by some init function
-		cpuInfo.PC = 0x8000;
-
 		this.setTitle("NES Emulator - " + gameName);
 		this.setVisible(true);
 		

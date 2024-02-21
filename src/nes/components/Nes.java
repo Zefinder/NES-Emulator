@@ -18,6 +18,7 @@ public class Nes {
 
 	public static void main(String[] args) throws NotNesFileException, IOException, InstructionNotSupportedException {
 		// TODO When everything will be ok to run
+		
 		// Call CPU
 
 		// Call PPU
@@ -30,8 +31,7 @@ public class Nes {
 		DisassemblyInfo info = disassembler.disassembleFile(nesFile);
 
 		if (!info.isPALSystem()) {
-			System.err.println("Not a PAL file, this is not taken into account...");
-			System.exit(1);
+			System.err.println("Not a PAL file, running but can do weird things...");
 		}
 
 		final Cpu cpu = Cpu.getInstance();
