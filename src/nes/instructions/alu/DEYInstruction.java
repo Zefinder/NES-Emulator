@@ -26,7 +26,7 @@ public class DEYInstruction extends AluInstruction {
 	}
 
 	@Override
-	public int getCycle() throws InstructionNotSupportedException {
+	public int getCycles() throws InstructionNotSupportedException {
 		switch (getMode()) {		
 		case IMPLICIT:
 			return 2;

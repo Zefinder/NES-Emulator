@@ -18,6 +18,11 @@ public class CpuInfo {
 	public int V;
 	public int N;
 
+	/* DMA */
+	public boolean dmaRequested;
+	public int dmaHaltCycles;
+	public int dmaState; // Put = 1
+
 	public CpuInfo() {
 		this.A = 0;
 		this.X = 0;
@@ -32,6 +37,10 @@ public class CpuInfo {
 		this.B = 0;
 		this.V = 0;
 		this.N = 0;
+
+		this.dmaRequested = false;
+		this.dmaHaltCycles = 0;
+		this.dmaState = 0;
 	}
 
 	public int getP() {

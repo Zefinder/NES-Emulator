@@ -32,7 +32,7 @@ public class SBCInstruction extends AluInstruction {
 	}
 
 	@Override
-	public int getCycle() throws InstructionNotSupportedException {
+	public int getCycles() throws InstructionNotSupportedException {
 		switch (getMode()) {
 		case IMMEDIATE:
 			return 2;

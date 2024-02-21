@@ -12,7 +12,7 @@ public class DisassemblyInfoINES extends DisassemblyInfo {
 		super(prgRom, chrRom, instructions);
 		nametableVerticalMirroring = (romFlags[2] & 0b1) == 0;
 		mapper = romFlags[3] & 0xFFFF0000 | romFlags[2] >> 4;
-		palSystem = romFlags[5] == 1;
+		palSystem = romFlags[6] != 0;
 	}
 
 	@Override

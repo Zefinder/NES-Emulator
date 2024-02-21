@@ -28,7 +28,7 @@ public class PLAInstruction extends Instruction {
 	}
 
 	@Override
-	public int getCycle() throws InstructionNotSupportedException {
+	public int getCycles() throws InstructionNotSupportedException {
 		switch (getMode()) {
 		case IMPLICIT:
 			return 4;

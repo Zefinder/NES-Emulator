@@ -44,7 +44,7 @@ public abstract class Instruction {
 	 * @throws InstructionNotSupportedException if the addressing mode does not
 	 *                                          correspond to the instruction
 	 */
-	public abstract int getCycle() throws InstructionNotSupportedException;
+	public abstract int getCycles() throws InstructionNotSupportedException;
 
 	public abstract String getName();
 
@@ -284,7 +284,7 @@ public abstract class Instruction {
 			break;
 
 		case IMMEDIATE:
-			suffix = String.format("#%d ($%02X)", lsb, lsb);
+			suffix = String.format("#$%02X", lsb, lsb);
 			break;
 
 		case ZEROPAGE:
