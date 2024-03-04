@@ -3,7 +3,7 @@ package components;
 public class Ppu {
 
 	public final PpuInfo ppuInfo = new PpuInfo();
-	public final int[] oamMemory = new int[64];
+	public final int[] oamMemory = new int[0x100];
 	
 	private static final Ppu ppu = new Ppu();
 	

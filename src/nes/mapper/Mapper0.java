@@ -1,7 +1,6 @@
 package mapper;
 
 import components.Cpu;
-import components.Ppu;
 
 public class Mapper0 extends Mapper {
 
@@ -59,8 +58,8 @@ public class Mapper0 extends Mapper {
 				// Remove NMI in 2002 register
 				ppuInfo.verticalBlankStart = 0;
 
-				// TODO Clear address latch used by PPUScroll and PPUAddress (0x2005 and 0x2006)
-				
+				// Clear address latch used by PPUScroll and PPUAddress (0x2005 and 0x2006)
+				ppuInfo.w = 0;
 				
 				ppuBusLatch = value;
 				break;
