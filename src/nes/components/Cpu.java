@@ -8,8 +8,8 @@ import mapper.Mapper;
 
 public class Cpu {
 
-	public static final int RESET_VECTOR = 0xFFFA;
-	public static final int NMI_VECTOR = 0xFFFC;
+	public static final int NMI_VECTOR = 0xFFFA;
+	public static final int RESET_VECTOR = 0xFFFC;
 	public static final int BREAK_VECTOR = 0xFFFE;
 
 	private static final Cpu instance = new Cpu();
@@ -187,7 +187,7 @@ public class Cpu {
 			Disassembler disassembler = new Disassembler();
 			instruction = disassembler.disassemble(opcode, operand1, operand2);
 		}
-
+		
 		// Execute the instruction
 		instruction.execute();
 

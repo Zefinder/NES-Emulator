@@ -16,6 +16,9 @@ public class GameThread implements Runnable {
 	public static final long CPU_CLOCK_SPEED = 601;
 
 	// 5 CPU ticks <=> 16 PPU ticks
+	// TODO Change the way to time it, not precise...
+	// Idea: while true, take time, count how much master clock passed and thus
+	// count how much CPU and PPU clocks are needed
 	public static final int CPU_TICK_PER_PERIOD = 25;
 	public static final int PPU_TICK_PER_PERIOD = 16 * (CPU_TICK_PER_PERIOD / 5);
 

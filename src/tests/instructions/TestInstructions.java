@@ -986,14 +986,15 @@ class TestInstructions {
 					e.printStackTrace();
 				}
 
-				int expectedAddress = (address - 1) & 0xFFFF;
+				int expectedAddress = (address + 3 - 1) & 0xFFFF;
 				int expectedSP = 0xFD;
 
 				int gotAddress = cpu.cpuInfo.PC;
 				int gotSP = cpu.cpuInfo.SP;
 
 				tests.add(DynamicTest.dynamicTest(String.format("0x%04X", address), () -> {
-					assertEquals(expectedAddress, gotAddress, "CPU should have been back to initial");
+					assertEquals(expectedAddress, gotAddress,
+							"CPU should have been back to initial + 3 from the JSR - 1 from the RTS");
 					assertEquals(expectedSP, gotSP, "SP should have been back to initial");
 				}));
 			}

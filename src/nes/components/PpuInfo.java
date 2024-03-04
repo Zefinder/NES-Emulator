@@ -52,7 +52,43 @@ public class PpuInfo {
 	public int ppuOamDma;
 
 	public PpuInfo() {
+		this.v = 0;
+		this.t = 0;
+		this.x = 0;
+		this.w = 0;
 
+		this.baseNametableAddress = 0;
+		this.vramAddressIncrement = 0;
+		this.spritePatternTableAddress = 0;
+		this.backgroundPatternTableAddress = 0;
+		this.spriteSize = 0;
+		this.ppuMasterSlaveSelect = 0;
+		this.generateNmi = 0;
+
+		this.greyScale = 0;
+		this.showBackgroundInLeftmost = 0;
+		this.showSpriteInLeftmost = 0;
+		this.showBackground = 0;
+		this.showSprites = 0;
+		this.emphasizeGreen = 0;
+		this.emphasizeRed = 0;
+		this.emphasizeBlue = 0;
+
+		this.spriteOverflow = 0;
+		this.sprite0Hit = 0;
+		this.verticalBlankStart = 0;
+
+		this.ppuOamAddress = 0;
+
+		this.ppuOamData = 0;
+
+		this.ppuScroll = 0;
+
+		this.ppuAddress = 0;
+
+		this.ppuData = 0;
+
+		this.ppuOamDma = 0;
 	}
 
 	public int getPpuControl() {
@@ -60,7 +96,7 @@ public class PpuInfo {
 				| spritePatternTableAddress << 3 | vramAddressIncrement << 2 | baseNametableAddress;
 	}
 
-	public void setPpuControl(int ppuControl) {
+	public void setPpuController(int ppuControl) {
 		baseNametableAddress = ppuControl & 0b11;
 		vramAddressIncrement = (ppuControl >> 2) & 0b1;
 		spritePatternTableAddress = (ppuControl >> 3) & 0b1;
@@ -85,15 +121,39 @@ public class PpuInfo {
 		emphasizeRed = (ppuMask >> 6) & 0b1;
 		emphasizeBlue = (ppuMask >> 7) & 0b1;
 	}
-	
+
 	public int getPpuStatus() {
 		return verticalBlankStart << 7 | sprite0Hit << 6 | spriteOverflow << 5;
 	}
-	
+
 	public void setPpuStatus(int ppuStatus) {
 		spriteOverflow = (ppuStatus >> 5) & 0b1;
 		sprite0Hit = (ppuStatus >> 6) & 0b1;
 		verticalBlankStart = (ppuStatus >> 7) & 0b1;
 	}
 
+	// Both of them: upper byte first
+	public void setPpuScroll(int scrollValue) {
+		// If w is 0 then put in t
+		if (w == 0) {
+			t = scrollValue;
+		} else {
+			// Else update PPU scroll register
+			ppuScroll = t << 8 | scrollValue;
+		}
+		
+		w = 1 - w;
+	}
+
+	public void setPpuAddress(int addressValue) {
+		// If w is 0 then put in t
+		if (w == 0) {
+			t = addressValue;
+		} else {
+			// Else update PPU scroll register
+			ppuAddress = t << 8 | addressValue;
+		}
+		
+		w = 1 - w;
+	}
 }

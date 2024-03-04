@@ -14,7 +14,7 @@ public class TestMapper0 {
 
 	@BeforeAll
 	static void init() {
-		cpu.setMapper(new Mapper0(new byte[0], new byte[0]));
+		cpu.setMapper(new Mapper0(new byte[0x8000], new byte[0x2000]));
 	}
 
 	@Test
@@ -43,6 +43,25 @@ public class TestMapper0 {
 			// RAM (no mirror)
 			assertEquals(value, cpu.fetchMemory(address));
 			assertEquals(value, cpu.fetchMemory(0x2000 + address & 0x7));
+		}
+	}
+
+	@Test
+	void testROM() {
+		// Init ROM
+		byte rom[] = new byte[0x8000];
+		for (int index = 0; index < 0x8000; index++) {
+			rom[index] = (byte) (index & 0xFF);
+		}
+		cpu.setMapper(new Mapper0(rom, new byte[0x2000]));
+
+		for (int address = 0x8000; address <= 0xFFFF; address++) {
+			int value = address & 0xFF;
+			int valueToWrite = (value + 1) & 0xFF;
+			cpu.storeMemory(address, valueToWrite);
+
+			// We check that it's not written
+			assertEquals(value, cpu.fetchMemory(address));
 		}
 	}
 }
