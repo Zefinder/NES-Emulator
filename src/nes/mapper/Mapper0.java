@@ -60,7 +60,7 @@ public class Mapper0 extends Mapper {
 
 				// Clear address latch used by PPUScroll and PPUAddress (0x2005 and 0x2006)
 				ppuInfo.w = 0;
-				
+
 				ppuBusLatch = value;
 				break;
 
@@ -84,9 +84,12 @@ public class Mapper0 extends Mapper {
 			case 0x2007:
 				value = ppuInfo.ppuData;
 				ppuBusLatch = value;
-				
+
 				// Increment 0x2006 register
 				ppuInfo.ppuAddress = (ppuInfo.ppuAddress + 1 + 31 * ppuInfo.vramAddressIncrement) & 0x3FFF;
+				
+				// Update 0x2007 with new address
+				ppuInfo.ppuData = readPpuBus(ppuInfo.ppuAddress);
 				break;
 			}
 		} else if (address == 0x4014) {
@@ -113,7 +116,7 @@ public class Mapper0 extends Mapper {
 
 			// If in PPU registers or their mirrors then it's complicated
 			else if (writeAddress < 0x4000) {
-				int ppuRegister = 0x2000 + (address & 0x7);
+				int ppuRegister = 0x2000 + (writeAddress & 0x7);
 				ppuBusLatch = value;
 				switch (ppuRegister) {
 				case 0x2000:
@@ -141,6 +144,9 @@ public class Mapper0 extends Mapper {
 
 					// Increment 0x2003 register
 					ppuInfo.ppuOamAddress = (ppuInfo.ppuOamAddress + 1) & 0xFF;
+
+					// Update 0x2004
+					ppuInfo.ppuOamData = oamMemory[ppuInfo.ppuOamAddress];
 					break;
 
 				case 0x2005:
@@ -154,7 +160,7 @@ public class Mapper0 extends Mapper {
 					// This update must be triggered with a function since it required 2 writes
 					ppuInfo.setPpuAddress(value);
 
-					// TODO Update 0x2007 with value
+					// Update 0x2007 with new address
 					ppuInfo.ppuData = readPpuBus(ppuInfo.ppuAddress);
 					break;
 
@@ -167,8 +173,12 @@ public class Mapper0 extends Mapper {
 
 					// Increment 0x2006 register
 					ppuInfo.ppuAddress = (ppuInfo.ppuAddress + 1 + 31 * ppuInfo.vramAddressIncrement) & 0x3FFF;
+
+					// Update 0x2007 with new address
+					ppuInfo.ppuData = readPpuBus(ppuInfo.ppuAddress);
 					break;
 				}
+				
 			} else if (writeAddress == 0x4014) {
 				// OAM DMA
 				// TODO Launch OAM DMA action

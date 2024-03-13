@@ -31,7 +31,7 @@ public class Cpu {
 	 * 
 	 * @param mapper the mapper to use
 	 */
-	public void setMapper(Mapper mapper) {
+	public void setMapper(final Mapper mapper) {
 		this.mapper = mapper;
 	}
 
