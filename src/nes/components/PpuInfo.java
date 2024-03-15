@@ -50,6 +50,13 @@ public class PpuInfo {
 
 	// PPU OAM DMA (0x4014)
 	public int ppuOamDma;
+	
+	// PPU Pattern table address (TODO Understand...)
+	public int fineYOffset;
+	public int bitPlane;
+	public int tileColumn;
+	public int tileRow;
+	public int patternTableHalf;
 
 	public PpuInfo() {
 		this.v = 0;
