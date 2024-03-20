@@ -10,8 +10,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-import components.Cpu;
-import components.CpuInfo;
+import components.cpu.Cpu;
+import components.cpu.CpuInfo;
 
 public abstract class CpuInfoDialog extends JDialog {
 

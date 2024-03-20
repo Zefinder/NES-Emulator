@@ -1,5 +1,6 @@
 package frame;
 
+import java.awt.GridBagLayout;
 import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
@@ -12,12 +13,12 @@ public class GameFrame extends JFrame {
 	 * 
 	 */
 	private static final long serialVersionUID = 4153332469558642589L;
-	
+
 	// Dialogs
 	private RegisterDialog registerDialog;
 	private FlagDialog flagDialog;
 	private InstructionDialog instructionDialog;
-	
+
 	// Game Thread
 	private GameThread gameThread;
 
@@ -38,22 +39,28 @@ public class GameFrame extends JFrame {
 			public void windowDeiconified(WindowEvent e) {
 				registerDialog.toFront();
 				flagDialog.toFront();
+				instructionDialog.toFront();
 				toFront();
 			}
 		});
 		
-		this.setVisible(false);		
+		// Add screen at the middle
+		this.setLayout(new GridBagLayout());
+		this.add(new ScreenPanel(256, 240));
+
+		this.setVisible(false);
 	}
 
 	public void initFrame(String gameName) {
 		this.setTitle("NES Emulator - " + gameName);
 		this.setVisible(true);
-		
+
 		// Init dialogs
 		registerDialog.initDialog();
 		flagDialog.initDialog();
 		instructionDialog.initDialog();
-		
+		toFront();
+
 		// Create game thread and key listener
 		gameThread = new GameThread();
 		this.addKeyListener(new GameKeyListener(gameThread));

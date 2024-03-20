@@ -3,6 +3,7 @@ package components;
 import java.io.File;
 import java.io.IOException;
 
+import components.cpu.Cpu;
 import disassemble.Disassembler;
 import disassemble.DisassemblyInfo;
 import exceptions.InstructionNotSupportedException;

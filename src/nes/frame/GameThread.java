@@ -2,7 +2,7 @@ package frame;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import components.Cpu;
+import components.cpu.Cpu;
 import exceptions.InstructionNotSupportedException;
 
 // This is only for testing purposes
@@ -66,7 +66,7 @@ public class GameThread implements Runnable {
 
 		gameThread = new Thread(this);
 		gameThread.setName("Game Thread (wait: " + waitPeriod + ")");
-		gameThread.start();
+//		gameThread.start();
 	}
 
 	public void interrupt() {

@@ -1,6 +1,6 @@
 package instructions;
 
-import components.Cpu;
+import components.cpu.Cpu;
 import exceptions.InstructionNotSupportedException;
 
 public abstract class Instruction {

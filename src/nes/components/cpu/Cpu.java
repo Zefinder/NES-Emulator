@@ -1,4 +1,4 @@
-package components;
+package components.cpu;
 
 import disassemble.Disassembler;
 import exceptions.InstructionNotSupportedException;

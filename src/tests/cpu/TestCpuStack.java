@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import components.Cpu;
+import components.cpu.Cpu;
 import utils.MapperTest;
 
 class TestCpuStack {

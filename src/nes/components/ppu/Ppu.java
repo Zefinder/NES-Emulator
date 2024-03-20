@@ -1,4 +1,6 @@
-package components;
+package components.ppu;
+
+import mapper.Mapper;
 
 public class Ppu {
 
@@ -9,7 +11,13 @@ public class Ppu {
 	private int scanlineNumber = -1;
 	private int cycleNumber = 0;
 
-	// Tiles here
+	/* Mapper */
+	private Mapper mapper;
+
+	// Tiles
+	private Tile currentTile = new Tile();
+	private Tile nextFirstTile = new Tile();
+	private Tile nextSecondTile = new Tile();
 
 	// Sprites
 	private int[] spritesCurrentScanline = new int[0x20];
@@ -21,10 +29,26 @@ public class Ppu {
 		// TODO Auto-generated constructor stub
 	}
 
-	public static Ppu getInstance() {
-		return ppu;
+	/**
+	 * Sets the mapper for the CPU. Do not change while running
+	 * 
+	 * @param mapper the mapper to use
+	 */
+	public void setMapper(Mapper mapper) {
+		this.mapper = mapper;
 	}
 
+	/**
+	 * Fetches a value in memory
+	 * 
+	 * @param address the address to look for the value
+	 * @return a value
+	 */
+	public int fetchMemory(int address) {
+		return mapper.readPpuBus(address);
+	}
+
+	// TODO Look at the PPU scrolling for register copying...
 	/**
 	 * <p>
 	 * Exactly like the CPU's tick method, this method does not really represents 1
@@ -98,12 +122,16 @@ public class Ppu {
 	 * </p>
 	 * 
 	 */
-	public int tick() {
+	public int tick(int ticksToCatch) {
+		int nextCycleNumber = cycleNumber + ticksToCatch;
+		// TODO Make the cycle logic
+
 		int waitCycles;
 		if (scanlineNumber < 0) {
 			waitCycles = tickPreRendering();
 		} else if (scanlineNumber < 239) {
 			waitCycles = tickRendering();
+			currentTile.drawPixel(ppuInfo.v & 0b11111, (ppuInfo.v >> 5) & 0b11111);
 		} else if (scanlineNumber == 240) {
 			waitCycles = tickPostRendering();
 		} else {
@@ -119,66 +147,86 @@ public class Ppu {
 
 	private int tickRendering() {
 		int waitCycles = 0;
+		int cyclePart = (cycleNumber & 0b111);
 		if (cycleNumber == 0) {
 			// Nothing :D
 			waitCycles = 1;
+
+			// Just transfer tiles for future fetching
+			currentTile = nextFirstTile;
+			nextFirstTile = nextSecondTile;
+			nextSecondTile = new Tile();
 		} else if (cycleNumber < 257) {
-			// Motion in 4 parts
-			// TODO Nametable byte fetch
-			if ((cycleNumber & 0b111) == 1) {
-
-			}
-			// TODO Attribute table byte fetch
-			else if ((cycleNumber & 0b111) == 3) {
-
-			}
-			// TODO Pattern table tile low fetch
-			else if ((cycleNumber & 0b111) == 5) {
-
-			}
-			// TODO Pattern table tile high fetch
-			else {
-
-			}
-
+			// Motion in 5 parts
 			waitCycles = 2;
+			
+			// Time to switch tiles
+			if (cyclePart == 0) {
+				nextFirstTile = nextSecondTile;
+				nextSecondTile = new Tile();
+				waitCycles = 1;
+			}
+			// Nametable byte fetch
+			else if (cyclePart == 1) {
+				nextSecondTile.setNametableAddress(ppuInfo.v & 0x0FFF, ppuInfo.v >> 12);
+			}
+			// Attribute table byte fetch
+			else if (cyclePart == 3) {
+				nextSecondTile.setAttributeAddress(
+						(ppuInfo.v & 0x0C00) | ((ppuInfo.v >> 4) & 0x38) | ((ppuInfo.v >> 2) & 0x07));
+			}
+			// Pattern table tile low fetch
+			else if (cyclePart == 5) {
+				nextSecondTile.fetchLowPatternTable();
+			}
+			// Pattern table tile high fetch
+			else if (cyclePart == 7) {
+				nextSecondTile.fetchHighPatternTable();
+				waitCycles = 1;
+			}
+
 		} else if (cycleNumber < 321) {
 			// The first two cycles are ignored, nothing happens in there
 			// TODO X and attributes for sprite fetch
-			if ((cycleNumber & 0b111) == 3) {
+			if (cyclePart == 3) {
 
 			}
 			// TODO Pattern table tile low fetch
-			else if ((cycleNumber & 0b111) == 5) {
+			else if (cyclePart == 5) {
 
 			}
 			// TODO Pattern table tile high fetch
-			else {
+			else if (cyclePart == 7) {
 
 			}
 
 			waitCycles = 2;
 		} else if (cycleNumber < 337) {
-			// Maybe make a function because it does it twice...
-			// Motion in 4 parts
-			// TODO Nametable byte fetch
-			if ((cycleNumber & 0b111) == 1) {
-
-			}
-			// TODO Attribute table byte fetch
-			else if ((cycleNumber & 0b111) == 3) {
-
-			}
-			// TODO Pattern table tile low fetch
-			else if ((cycleNumber & 0b111) == 5) {
-
-			}
-			// TODO Pattern table tile high fetch
-			else {
-
-			}
-			
+			// Here we put for the two next tiles
 			waitCycles = 2;
+			
+			// Tile selection
+			Tile tileSelected = (cycleNumber & 0x8) == 0 ? nextFirstTile : nextSecondTile;
+
+			// Nametable byte fetch
+			if (cyclePart == 1) {
+				// Fine y has been incremented at dot 256
+				tileSelected.setNametableAddress(ppuInfo.v & 0x0FFF, ppuInfo.v >> 12);
+			}
+			// Attribute table byte fetch
+			else if (cyclePart == 3) {
+				tileSelected.setAttributeAddress(
+						(ppuInfo.v & 0x0C00) | ((ppuInfo.v >> 4) & 0x38) | ((ppuInfo.v >> 2) & 0x07));
+			}
+			// Pattern table tile low fetch
+			else if (cyclePart == 5) {
+				tileSelected.fetchLowPatternTable();
+			}
+			// Pattern table tile high fetch
+			else if (cyclePart == 7) {
+				tileSelected.fetchHighPatternTable();
+			}
+
 		} else {
 			// Fetching nametable twice of third tile but unknown purpose...
 			// So ignoring for now
@@ -212,6 +260,10 @@ public class Ppu {
 		// This happens on the second cycle, so we wait for the remaining 340 cycles and
 		// the 69 other scanlines
 		return 340 + 69 * 341;
+	}
+
+	public static Ppu getInstance() {
+		return ppu;
 	}
 
 }

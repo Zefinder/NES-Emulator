@@ -3,7 +3,7 @@ package frame;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-import components.Cpu;
+import components.cpu.Cpu;
 import exceptions.InstructionNotSupportedException;
 
 // This is only for testing purposes

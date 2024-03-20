@@ -1,6 +1,6 @@
 package mapper;
 
-import components.Cpu;
+import components.cpu.Cpu;
 
 public class Mapper0 extends Mapper {
 

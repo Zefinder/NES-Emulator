@@ -23,8 +23,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
-import components.Cpu;
-import components.CpuInfo;
+import components.cpu.Cpu;
+import components.cpu.CpuInfo;
 import exceptions.InstructionNotSupportedException;
 import instructions.alu.ADCInstruction;
 import instructions.alu.ANDInstruction;

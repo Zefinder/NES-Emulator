@@ -1,4 +1,6 @@
-package components;
+package components.cpu;
+
+import components.Bus;
 
 public class CpuBus extends Bus {
 

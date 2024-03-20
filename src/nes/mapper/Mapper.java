@@ -1,9 +1,9 @@
 package mapper;
 
-import components.CpuBus;
-import components.Ppu;
-import components.PpuBus;
-import components.PpuInfo;
+import components.cpu.CpuBus;
+import components.ppu.Ppu;
+import components.ppu.PpuBus;
+import components.ppu.PpuInfo;
 
 public abstract class Mapper {
 
