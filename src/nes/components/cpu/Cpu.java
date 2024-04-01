@@ -1,5 +1,7 @@
 package components.cpu;
 
+import components.ppu.Ppu;
+import components.ppu.PpuInfo;
 import disassemble.Disassembler;
 import exceptions.InstructionNotSupportedException;
 import instructions.Instruction;
@@ -13,6 +15,12 @@ public class Cpu {
 	public static final int BREAK_VECTOR = 0xFFFE;
 
 	private static final Cpu instance = new Cpu();
+
+	/* Interruption state */
+	private boolean interruptionState = false;
+
+	/* PpuInfo */
+	private PpuInfo ppuInfo;
 
 	/* Mapper */
 	private Mapper mapper;
@@ -150,7 +158,20 @@ public class Cpu {
 	 */
 	public int tick() throws InstructionNotSupportedException {
 		// Check if NMI
-		// TODO check for NMI
+		if (cpuInfo.I == 1 && !interruptionState && ppuInfo.generateNmi == 1 && ppuInfo.verticalBlankStart == 1) {
+			interruptionState = true;
+			int address = (cpuInfo.PC - 1) & 0xFFFF;
+			push(address >> 8); // MSB
+			push(address & 0xFF); // LSB
+
+			// Push flags
+			push(cpuInfo.getP());
+
+			// Load PC with address at 0xFFFA
+			cpuInfo.PC = fetchAddress(Cpu.NMI_VECTOR) & 0xFFFF;
+
+			return 7;
+		}
 
 		// Get the instruction
 		Instruction instruction;
@@ -187,7 +208,7 @@ public class Cpu {
 			Disassembler disassembler = new Disassembler();
 			instruction = disassembler.disassemble(opcode, operand1, operand2);
 		}
-		
+
 		// Execute the instruction
 		instruction.execute();
 
@@ -215,16 +236,16 @@ public class Cpu {
 		// Return the waiting cycles
 		return cycles;
 	}
-	
+
 	/**
 	 * <p>
 	 * This method updates everything to warp up the CPU. It includes:
 	 * 
 	 * <ul>
-	 * <li> Setting up A, X and Y to 0
-	 * <li> Setting up SP to 0xFD
-	 * <li> Setting up P to 0x34
-	 * <li> Setting up APU (TODO)
+	 * <li>Setting up A, X and Y to 0
+	 * <li>Setting up SP to 0xFD
+	 * <li>Setting up P to 0x34
+	 * <li>Setting up APU (TODO)
 	 * </ul>
 	 * 
 	 * PC initialization is done by the mapper itself
@@ -236,6 +257,8 @@ public class Cpu {
 		cpuInfo.Y = 0;
 		cpuInfo.SP = 0xFD;
 		cpuInfo.setP(0x34);
+
+		ppuInfo = Ppu.getInstance().ppuInfo;
 	}
 
 	public static Cpu getInstance() {

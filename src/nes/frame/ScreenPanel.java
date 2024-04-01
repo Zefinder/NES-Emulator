@@ -24,15 +24,6 @@ public class ScreenPanel extends JPanel {
 		pixelData = new int[bufferSize];
 
 		screen = new BufferedImage(length, height, BufferedImage.TYPE_INT_RGB);
-//		screen.setRGB(10, 10, Color.CYAN.getRGB());
-//		screen.setRGB(11, 10, Color.CYAN.getRGB());
-//		screen.setRGB(12, 10, Color.CYAN.getRGB());
-//		screen.setRGB(10, 11, Color.CYAN.getRGB());
-//		screen.setRGB(11, 11, Color.CYAN.getRGB());
-//		screen.setRGB(12, 11, Color.CYAN.getRGB());
-//		screen.setRGB(10, 12, Color.CYAN.getRGB());
-//		screen.setRGB(11, 12, Color.CYAN.getRGB());
-//		screen.setRGB(12, 12, Color.CYAN.getRGB());
 
 		this.add(new JLabel(new ImageIcon(screen)));
 	}
@@ -58,16 +49,21 @@ public class ScreenPanel extends JPanel {
 		int[] screenToDraw = pixelData;
 		pixelData = new int[bufferSize];
 
-		// TODO Launch thread to draw
+		// Launch thread to draw
+		Thread screenDrawerThread = new Thread(new ScreenDrawer(this, length, screenToDraw, screen));
+		screenDrawerThread.setName("Screen Drawer");
+		screenDrawerThread.start();
 	}
 
 	private static class ScreenDrawer implements Runnable {
 
+		private final JPanel container;
 		private final int width;
 		private final int[] pixelBuffer;
 		private BufferedImage screen;
 
-		public ScreenDrawer(int width, int[] pixelBuffer, BufferedImage screen) {
+		public ScreenDrawer(JPanel container, int width, int[] pixelBuffer, BufferedImage screen) {
+			this.container = container;
 			this.width = width;
 			this.pixelBuffer = pixelBuffer;
 			this.screen = screen;
@@ -77,15 +73,17 @@ public class ScreenPanel extends JPanel {
 		public void run() {
 			int x = 0;
 			int y = 0;
-			
+
 			for (int pixelIndex = 0; pixelIndex < pixelBuffer.length; pixelIndex++) {
 				int nesPixel = pixelBuffer[pixelIndex];
-				// TODO Transform NES pixel into color
-				
-				screen.setRGB(x, y, nesPixel);
+				screen.setRGB(x, y, ColorPalette.values()[nesPixel].getColorValue());
+				if (++x == width) {
+					x = 0;
+					y++;
+				}
 			}
+			
+			container.repaint();
 		}
-
 	}
-
 }

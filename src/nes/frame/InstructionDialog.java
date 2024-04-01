@@ -5,7 +5,7 @@ import instructions.branch.BranchInstruction;
 import instructions.jump.JMPInstruction;
 import instructions.jump.JSRInstruction;
 
-public class InstructionDialog extends CpuInfoDialog {
+public class InstructionDialog extends ComponentInfoDialog {
 
 	private static final String TITLE = "Instructions";
 	private static final int ELEMENT_NUMBER = 3;
@@ -25,10 +25,9 @@ public class InstructionDialog extends CpuInfoDialog {
 	 */
 	private static final long serialVersionUID = -4913622929738924125L;
 
-	public InstructionDialog(Instruction[] romInstructions) {
-		super(TITLE, ELEMENT_NUMBER);
+	public InstructionDialog(Instruction[] romInstructions, int posX, int posY) {
+		super(TITLE, ELEMENT_NUMBER, posX, posY);
 		this.romInstructions = romInstructions;
-		this.setLocation(328, 512);
 	}
 
 	@Override

@@ -73,8 +73,9 @@ public class TestMapper0 {
 				// Writing
 				for (int value = 0; value <= 0xFF; value++) {
 					cpu.storeMemory(address, value);
-					assertEquals(value, ppu.ppuInfo.getPpuControl(),
+					assertEquals(value, ppu.ppuInfo.getPpuController(),
 							"Writing to PPU Controller should write to the register");
+					assertEquals((value & 0b11) << 10, ppu.ppuInfo.t);
 				}
 
 				// Reading (write-only so 0xFF even after modification)
@@ -181,15 +182,20 @@ public class TestMapper0 {
 
 			// PPU Scroll (Wx2)
 			case 5:
+				// Reset t
+				ppu.ppuInfo.t = 0;
+
 				// First write
 				cpu.storeMemory(address, 0x12);
 				assertEquals(ppu.ppuInfo.w, 1, "w must be 1 after one write");
-				assertEquals(ppu.ppuInfo.t, 0x12, "t must be written");
+				assertEquals(ppu.ppuInfo.t, 0x12 >> 3, "t must be written");
+				assertEquals(ppu.ppuInfo.x, 0x12 & 0x3, "t must be written");
 
 				// Second write
 				cpu.storeMemory(address, 0x34);
 				assertEquals(ppu.ppuInfo.w, 0, "w must be back to 0 after two writes");
-				assertEquals(ppu.ppuInfo.ppuScroll, 0x1234, "Write twice to PPU Scroll updates its value");
+				assertEquals(ppu.ppuInfo.t, 0b100000011000010, "t must be written");
+				assertEquals(ppu.ppuInfo.ppuScroll, 0b100000011000010, "Write twice to PPU Scroll updates its value");
 
 				// Reading (write-only so 0x34)
 				assertEquals(0x34, cpu.fetchMemory(address), "Reading PPU Scroll should return the latch value");
@@ -199,10 +205,12 @@ public class TestMapper0 {
 
 			// PPU Address (Wx2)
 			case 6:
+				ppu.ppuInfo.t = 0;
+
 				// First write
 				cpu.storeMemory(address, 0x12);
 				assertEquals(ppu.ppuInfo.w, 1, "w must be 1 after one write");
-				assertEquals(ppu.ppuInfo.t, 0x12, "t must be written");
+				assertEquals(ppu.ppuInfo.t, 0x12 << 8, "t must be written");
 
 				// Second write
 				cpu.storeMemory(address, 0x34);
@@ -305,7 +313,8 @@ public class TestMapper0 {
 			int value = mapper.readPpuBus(address);
 			int valueNotMirrored = mapper.readPpuBus(0x3F00 + address & 0x1F);
 			assertEquals(address & 0xFF, value, "Value read must be the value written...");
-			assertEquals(address & 0xFF, valueNotMirrored, "Value read must be the value written in the non mirrored part...");
+			assertEquals(address & 0xFF, valueNotMirrored,
+					"Value read must be the value written in the non mirrored part...");
 		}
 	}
 }

@@ -7,7 +7,7 @@ public class Tile {
 	// Which palette to choose
 	private int paletteByte;
 	// Which color from palette to choose (for the 8 pixels)
-	private int[] paletteColor;
+	private int[] paletteColor = new int[8];
 
 	public Tile() {
 	}
@@ -27,7 +27,7 @@ public class Tile {
 		// Low plane
 		int lowPattern = Ppu.getInstance().fetchMemory(tileAddress);
 		for (int index = 0; index < 8; index++) {
-			paletteColor[index] = lowPattern & 0b1;
+			paletteColor[7 - index] = lowPattern & 0b1;
 			lowPattern >>= 1;
 		}
 	}
@@ -36,7 +36,7 @@ public class Tile {
 		// High plane (+8)
 		int highPattern = Ppu.getInstance().fetchMemory(tileAddress + 8);
 		for (int index = 0; index < 8; index++) {
-			paletteColor[index] += highPattern & 0b1;
+			paletteColor[7 - index] += highPattern & 0b1;
 			highPattern >>= 1;
 		}
 	}
@@ -57,7 +57,8 @@ public class Tile {
 			paletteAddress += 4 * ((paletteByte >> offset) & 0b11);
 		}
 		
-		// TODO Send pixel to screen
+		// Send pixel to screen
 		int pixelColor = Ppu.getInstance().fetchMemory(paletteAddress);
+		Ppu.getInstance().getScreen().setPixel(pixelColor);
 	}
 }

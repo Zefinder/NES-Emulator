@@ -50,7 +50,7 @@ public class GameKeyListener implements KeyListener {
 			newMode = 3;
 			break;
 
-		// If in pause mode to tick
+		// If in pause mode to tick (deprecated)
 		case KeyEvent.VK_ENTER:
 			try {
 				if (currentMode == 0) {
@@ -61,6 +61,11 @@ public class GameKeyListener implements KeyListener {
 			}
 			break;
 
+		// To show the content of the pattern table
+		case KeyEvent.VK_P:
+			PatternTableDialog dialog = new PatternTableDialog();
+			dialog.initDialog();
+			
 		default:
 			break;
 		}

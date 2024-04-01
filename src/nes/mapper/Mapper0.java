@@ -216,10 +216,10 @@ public class Mapper0 extends Mapper {
 			if (writeAddress < 0x3000) {
 				ppuBus.busContent[writeAddress] = value;
 			} else if (writeAddress < 0x3F00) {
-				value = ppuBus.busContent[writeAddress - 0x1000];
+				ppuBus.busContent[writeAddress - 0x1000] = value;
 			} else {
 				int paletteIndex = writeAddress & 0x1F;
-				value = ppuBus.busContent[0x3F00 + paletteIndex];
+				ppuBus.busContent[0x3F00 + paletteIndex] = value;
 			}
 			offset++;
 		}

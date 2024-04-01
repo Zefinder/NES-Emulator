@@ -120,7 +120,7 @@ public class PpuInfo {
 		this.ppuOamDma = 0;
 	}
 
-	public int getPpuControl() {
+	public int getPpuController() {
 		return generateNmi << 7 | ppuMasterSlaveSelect << 6 | spriteSize << 5 | backgroundPatternTableAddress << 4
 				| spritePatternTableAddress << 3 | vramAddressIncrement << 2 | baseNametableAddress;
 	}
@@ -133,6 +133,13 @@ public class PpuInfo {
 		spriteSize = (ppuControl >> 5) & 0b1;
 		ppuMasterSlaveSelect = (ppuControl >> 6) & 0b1;
 		generateNmi = (ppuControl >> 7) & 0b1;
+
+		// Ppu controller base nametable address is in t
+		// Reset these 2 bits
+		t &= ~0b110000000000;
+
+		// Update t
+		t |= baseNametableAddress << 10;
 	}
 
 	public int getPpuMask() {
@@ -202,24 +209,16 @@ public class PpuInfo {
 		w = 1 - w;
 	}
 
-	public void incrementX() {
-		// As long as x register < 7, just increment
-		if (x != 7) {
-			x += 1;
+	public void incrementCoarseX() {
+		// if coarse X == 31
+		if ((v & 0x001F) == 31) {
+			// Set coarse X to 0 and switch nametable (horizontal) (TODO just do -31
+			// to work faster?)
+			v &= ~0x001F;
+			v ^= 0x0400;
 		} else {
-			// Reset x register
-			x = 0;
-			
-			// if coarse X == 31
-			if ((v & 0x001F) == 31) {
-				// Set coarse X to 0 and switch nametable (horizontal) (TODO just do -31 for it
-				// to work faster?)
-				v &= ~0x001F;
-				v ^= 0x0400;
-			} else {
-				// Just increment coarse X
-				v += 1;
-			}
+			// Just increment coarse X
+			v += 1;
 		}
 	}
 

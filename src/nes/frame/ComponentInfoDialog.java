@@ -1,19 +1,12 @@
 package frame;
 
 import java.awt.GridLayout;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-import components.cpu.Cpu;
-import components.cpu.CpuInfo;
-
-public abstract class CpuInfoDialog extends JDialog {
+public abstract class ComponentInfoDialog extends InfoDialog {
 
 	/**
 	 * 
@@ -25,10 +18,8 @@ public abstract class CpuInfoDialog extends JDialog {
 	private final JLabel[] nameLabels;
 	private final JLabel[] valueLabels;
 
-	protected final CpuInfo cpuInfo;
-
-	public CpuInfoDialog(String title, int elementNumber) {
-		cpuInfo = Cpu.getInstance().cpuInfo;
+	public ComponentInfoDialog(String title, int elementNumber, int posX, int posY) {
+		super(title, posX, posY, 200, elementNumber * 50);
 
 		// Creating the arrays and registering elements
 		nameLabels = new JLabel[elementNumber];
@@ -37,8 +28,6 @@ public abstract class CpuInfoDialog extends JDialog {
 		registerElements();
 
 		// Creating dialog
-		this.setTitle(title);
-		this.setSize(200, elementNumber * 50);
 		this.add(createMainPanel());
 		this.setResizable(false);
 		this.setVisible(false);
@@ -67,7 +56,7 @@ public abstract class CpuInfoDialog extends JDialog {
 	 * <p>
 	 * This method updates values that were registered. It's better not to forget a
 	 * newly added element... See {@link #setElementValue(int, String)} to update
-	 * the value of the selected row
+	 * the value of a String row
 	 * </p>
 	 * 
 	 * <p>
@@ -97,15 +86,4 @@ public abstract class CpuInfoDialog extends JDialog {
 	protected void setElementValue(int index, String value) {
 		valueLabels[index].setText(value);
 	}
-
-	/**
-	 * Inits the dialog and makes it update every 40ms (25Hz)
-	 */
-	public void initDialog() {
-		this.setVisible(true);
-
-		final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-		scheduler.scheduleAtFixedRate(() -> update(), 0, 40, TimeUnit.MILLISECONDS);
-	}
-
 }

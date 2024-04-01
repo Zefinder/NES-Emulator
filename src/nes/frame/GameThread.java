@@ -3,10 +3,11 @@ package frame;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import components.cpu.Cpu;
+import components.ppu.Ppu;
 import exceptions.InstructionNotSupportedException;
 
 // This is only for testing purposes
-public class GameThread implements Runnable {
+public class GameThread {
 
 	// Speed 1: 2 Hz
 	public static final long SPEED1 = 500000000;
@@ -24,34 +25,45 @@ public class GameThread implements Runnable {
 
 	// In Hz
 	private static final int CPU_FREQUENCY = 1662607;
+	private static final int PPU_FREQUENCY = 5320342;
 
 	private AtomicBoolean running = new AtomicBoolean(false);
 	private AtomicBoolean stopped = new AtomicBoolean(true);
-	private Thread gameThread;
+	private Thread gameCpuThread;
+	private Thread gamePpuThread;
 
 	// In ns
 	private long waitPeriod;
-	private long tickCounter;
+	private long cpuTickCounter;
 	private int cpuTickNumber;
 
+	private long ppuTickCounter;
+
 	public GameThread() {
-		tickCounter = 0;
+		cpuTickCounter = 0;
 
 		// Creating timing check thread
 		Thread timingCheckThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				long counter = 0;
+				long cpuCounter = 0;
+				long ppuCounter = 0;
 				long start = System.currentTimeMillis();
 				while (true) {
 					long end = System.currentTimeMillis();
 					if (end > start + 1000) {
-						long actualTicks = tickCounter;
-						long totalTicks = actualTicks - counter;
+						long actualCpuTicks = cpuTickCounter;
+						long totalCpuTicks = actualCpuTicks - cpuCounter;
 						System.out.println(
-								"CPU frequency: %d Hz (should be: %d Hz)".formatted(totalTicks, CPU_FREQUENCY));
+								"CPU frequency: %d Hz (should be: %d Hz)".formatted(totalCpuTicks, CPU_FREQUENCY));
 
-						counter = actualTicks;
+						long actualPpuTicks = ppuTickCounter;
+						long totalPpuTicks = actualPpuTicks - ppuCounter;
+						System.out.println(
+								"PPU frequency: %d Hz (should be: %d Hz)\n".formatted(totalPpuTicks, PPU_FREQUENCY));
+
+						cpuCounter = actualCpuTicks;
+						ppuCounter = actualPpuTicks;
 						start = end;
 					}
 				}
@@ -64,9 +76,14 @@ public class GameThread implements Runnable {
 		this.waitPeriod = waitPeriod;
 		this.cpuTickNumber = cpuTickNumber;
 
-		gameThread = new Thread(this);
-		gameThread.setName("Game Thread (wait: " + waitPeriod + ")");
-//		gameThread.start();
+		gameCpuThread = new Thread(new CpuThread());
+		gameCpuThread.setName("CPU Thread (wait: " + waitPeriod + ")");
+
+		gamePpuThread = new Thread(new PpuThread());
+		gamePpuThread.setName("PPU Thread");
+
+		gameCpuThread.start();
+		gamePpuThread.start();
 	}
 
 	public void interrupt() {
@@ -77,37 +94,59 @@ public class GameThread implements Runnable {
 		return stopped.get();
 	}
 
-	@Override
-	public void run() {
-		running.set(true);
-		stopped.set(false);
+	private class CpuThread implements Runnable {
 
-		// Time for next activation (in ns)
-		int cycles = 0;
-		long nextTick = System.nanoTime();
-		while (running.get()) {
-			long currentTime = System.nanoTime();
-			// If it's time to tick, we tick
-			if (currentTime >= nextTick) {
-				nextTick = currentTime;
-				try {
-					for (int tickNumber = 0; tickNumber < cpuTickNumber; tickNumber++) {
-						// For timing
-						tickCounter += cycles;
+		@Override
+		public void run() {
+			running.set(true);
+			stopped.set(false);
 
-						// Tick!
-						cycles = Cpu.getInstance().tick();
+			// Time for next activation (in ns)
+			int cycles = 0;
+			long nextTick = System.nanoTime();
+			while (running.get()) {
+				long currentTime = System.nanoTime();
+				// If it's time to tick, we tick
+				if (currentTime >= nextTick) {
+					nextTick = currentTime;
+					try {
+						for (int tickNumber = 0; tickNumber < cpuTickNumber; tickNumber++) {
+							// For timing
+							cpuTickCounter += cycles;
 
-						// Setting next tick
-						nextTick += cycles * waitPeriod;
+							// Tick!
+							cycles = Cpu.getInstance().tick();
+
+							// Setting next tick
+							nextTick += cycles * waitPeriod;
+						}
+					} catch (InstructionNotSupportedException e) {
+						e.printStackTrace();
 					}
-				} catch (InstructionNotSupportedException e) {
-					e.printStackTrace();
+				}
+			}
+
+			stopped.set(true);
+		}
+	}
+
+	private class PpuThread implements Runnable {
+
+		@Override
+		public void run() {
+			running.set(true);
+			// FIXME add a stop atomic value
+			// Time for next activation (in ns)
+			long nextTick = System.nanoTime();
+			while (running.get()) {
+				long currentTime = System.nanoTime();
+				long cyclesToCatch = (currentTime - nextTick) / 188l;
+				if (cyclesToCatch != 0) {
+					ppuTickCounter += cyclesToCatch;
+					Ppu.getInstance().tick(cyclesToCatch);
+					nextTick = currentTime;
 				}
 			}
 		}
-
-		stopped.set(true);
 	}
-
 }

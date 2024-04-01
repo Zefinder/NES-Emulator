@@ -1,5 +1,6 @@
 package components.ppu;
 
+import frame.ScreenPanel;
 import mapper.Mapper;
 
 public class Ppu {
@@ -7,21 +8,27 @@ public class Ppu {
 	public final PpuInfo ppuInfo = new PpuInfo();
 	public final int[] oamMemory = new int[0x100];
 
-	private int oddFrame = 0;
+	/* Frame variables */
+	// Begins in an even frame BUT pre-render will inverse it at cycle 0
+	private int oddFrame = 1;
 	private int scanlineNumber = -1;
 	private int cycleNumber = 0;
 
 	/* Mapper */
 	private Mapper mapper;
 
-	// Tiles
+	/* Tiles */
 	private Tile currentTile = new Tile();
 	private Tile nextFirstTile = new Tile();
 	private Tile nextSecondTile = new Tile();
 
-	// Sprites
+	/* Sprites */
+	// TODO Sprites...
 	private int[] spritesCurrentScanline = new int[0x20];
 	private int[] spritesNextScanline = new int[0x20];
+
+	/* Screen linked to the PPU */
+	private ScreenPanel screen;
 
 	private static final Ppu ppu = new Ppu();
 
@@ -36,6 +43,14 @@ public class Ppu {
 	 */
 	public void setMapper(Mapper mapper) {
 		this.mapper = mapper;
+	}
+
+	public void setScreen(ScreenPanel screen) {
+		this.screen = screen;
+	}
+
+	public ScreenPanel getScreen() {
+		return screen;
 	}
 
 	/**
@@ -122,30 +137,107 @@ public class Ppu {
 	 * </p>
 	 * 
 	 */
-	public int tick(int ticksToCatch) {
-		int nextCycleNumber = cycleNumber + ticksToCatch;
+	public int tick(long ticksToCatch) {
 		// TODO Make the cycle logic
 
-		int waitCycles;
-		if (scanlineNumber < 0) {
-			waitCycles = tickPreRendering();
-		} else if (scanlineNumber < 239) {
-			waitCycles = tickRendering();
-			currentTile.drawPixel(ppuInfo.v & 0b11111, (ppuInfo.v >> 5) & 0b11111);
-		} else if (scanlineNumber == 240) {
-			waitCycles = tickPostRendering();
-		} else {
-			waitCycles = tickVBlank();
+		int waitCycles = 0;
+		boolean rendering = ppuInfo.showBackground + ppuInfo.showSprites != 0;
+		for (long i = 0; i < ticksToCatch; i++) {
+			if (scanlineNumber < 0) {
+				waitCycles = tickPreRendering(rendering);
+			} else if (scanlineNumber < 239) {
+				waitCycles = tickRendering(rendering);
+				if (rendering) {
+					// Draw pixel
+					currentTile.drawPixel(ppuInfo.v & 0b11111, (ppuInfo.v >> 5) & 0b11111);
+
+					// Update x
+					ppuInfo.x = (ppuInfo.x + 1) & 0b111;
+				}
+			} else if (scanlineNumber == 239) {
+				waitCycles = tickPostRendering();
+			} else {
+				waitCycles = tickVBlank();
+			}
+
+			// Rendering if background or sprites shown (or both)
+			if (rendering) {
+				// Last pixel rendered, we can increment Y
+				if (cycleNumber == 256) {
+					ppuInfo.incrementY();
+				}
+				// Copy value from t to v for horizontal position
+				else if (cycleNumber == 257) {
+					ppuInfo.v &= ~(0x041F);
+					ppuInfo.v |= (ppuInfo.t & 0x41F);
+				}
+
+				if (scanlineNumber == -1) {
+					// Copy value from t to v for vertical position
+					if (cycleNumber >= 280 && cycleNumber <= 304) {
+						ppuInfo.v &= ~(0x7BE0);
+						ppuInfo.v |= (ppuInfo.t & 0x7BE0);
+					}
+				}
+
+				// Increment X if rendering enabled
+				if (cycleNumber != 0 && (cycleNumber <= 256 || cycleNumber >= 328) && (cycleNumber & 0x8) == 0) {
+					ppuInfo.incrementCoarseX();
+				}
+			}
+			
+			// Cycles from 0 to 340
+			if (++cycleNumber > 340) {
+				cycleNumber = 0;
+				if (++scanlineNumber == 310) {
+					scanlineNumber = -1;
+				}
+			}
 		}
 
 		return waitCycles;
 	}
 
-	private int tickPreRendering() {
+	private int tickPreRendering(boolean rendering) {
+		if (cycleNumber == 0) {
+			oddFrame = 1 - oddFrame;
+		} else if (cycleNumber == 1) {
+			ppu.ppuInfo.setPpuStatus(0);
+		} else if (cycleNumber > 320 && cycleNumber < 337) {
+			int cyclePart = (cycleNumber & 0b111);
+			// Here we put for the two next tiles
+			// Tile selection
+			Tile tileSelected = (cycleNumber & 0x8) == 0 ? nextFirstTile : nextSecondTile;
+
+			// Nametable byte fetch
+			if (cyclePart == 1) {
+				// Fine y has been incremented at dot 256
+				tileSelected.setNametableAddress(ppuInfo.v & 0x0FFF, ppuInfo.v >> 12);
+			}
+			// Attribute table byte fetch
+			else if (cyclePart == 3) {
+				tileSelected.setAttributeAddress(
+						(ppuInfo.v & 0x0C00) | ((ppuInfo.v >> 4) & 0x38) | ((ppuInfo.v >> 2) & 0x07));
+			}
+			// Pattern table tile low fetch
+			else if (cyclePart == 5) {
+				tileSelected.fetchLowPatternTable();
+			}
+			// Pattern table tile high fetch
+			else if (cyclePart == 7) {
+				tileSelected.fetchHighPatternTable();
+			}
+		}
+		
+		// Odd and even frame
+		if (cycleNumber == 339 && oddFrame == 1) {
+			cycleNumber++;
+		}
+		
 		return 0;
 	}
 
-	private int tickRendering() {
+	private int tickRendering(boolean rendering) {
 		int waitCycles = 0;
 		int cyclePart = (cycleNumber & 0b111);
 		if (cycleNumber == 0) {
@@ -159,7 +251,7 @@ public class Ppu {
 		} else if (cycleNumber < 257) {
 			// Motion in 5 parts
 			waitCycles = 2;
-			
+
 			// Time to switch tiles
 			if (cyclePart == 0) {
 				nextFirstTile = nextSecondTile;
@@ -189,7 +281,7 @@ public class Ppu {
 			// The first two cycles are ignored, nothing happens in there
 			// TODO X and attributes for sprite fetch
 			if (cyclePart == 3) {
-
+				
 			}
 			// TODO Pattern table tile low fetch
 			else if (cyclePart == 5) {
@@ -204,12 +296,19 @@ public class Ppu {
 		} else if (cycleNumber < 337) {
 			// Here we put for the two next tiles
 			waitCycles = 2;
-			
+
 			// Tile selection
 			Tile tileSelected = (cycleNumber & 0x8) == 0 ? nextFirstTile : nextSecondTile;
 
+			// Increment coarse X
+			if (cyclePart == 0) {
+				if (rendering) {
+					ppuInfo.incrementCoarseX();
+				}
+				waitCycles = 1;
+			}
 			// Nametable byte fetch
-			if (cyclePart == 1) {
+			else if (cyclePart == 1) {
 				// Fine y has been incremented at dot 256
 				tileSelected.setNametableAddress(ppuInfo.v & 0x0FFF, ppuInfo.v >> 12);
 			}
@@ -225,6 +324,7 @@ public class Ppu {
 			// Pattern table tile high fetch
 			else if (cyclePart == 7) {
 				tileSelected.fetchHighPatternTable();
+				waitCycles = 1;
 			}
 
 		} else {
@@ -238,7 +338,7 @@ public class Ppu {
 
 	private int tickPostRendering() {
 		// Set scanline to 240 for VBlank
-		scanlineNumber = 240;
+//		scanlineNumber = 240;
 
 		// We are waiting for 341 cycles + the first VBlank cycle
 		// No need to set cycleNumber since it's not used in VBlank
@@ -246,16 +346,11 @@ public class Ppu {
 	}
 
 	private int tickVBlank() {
-		// TODO Raise NMI if set in PPU Controller
-
-		// Set cycle to 0 for pre-rendering
-		cycleNumber = 0;
-
-		// Set scanline to -1 (pre-rendering)
-		scanlineNumber = -1;
-
-		// Set odd or even frame
-		oddFrame = 1 - oddFrame;
+		// Raise NMI if set in PPU Controller (TODO Actually if generateNMI and NMI set,
+		// interrupt... Not only in that case... )
+		if (cycleNumber == 1 && scanlineNumber == 240) {
+			ppuInfo.verticalBlankStart = 1;
+		}
 
 		// This happens on the second cycle, so we wait for the remaining 340 cycles and
 		// the 69 other scanlines

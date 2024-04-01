@@ -1,8 +1,8 @@
 package frame;
 
-public class RegisterDialog extends CpuInfoDialog {
+public class CpuRegisterDialog extends ComponentInfoDialog {
 
-	private static final String TITLE = "Registers";
+	private static final String TITLE = "CPU Registers";
 	private static final int ELEMENT_NUMBER = 5;
 
 	/**
@@ -10,9 +10,8 @@ public class RegisterDialog extends CpuInfoDialog {
 	 */
 	private static final long serialVersionUID = -3904741370682224481L;
 
-	public RegisterDialog() {
-		super(TITLE, ELEMENT_NUMBER);
-		this.setLocation(138, 287);
+	public CpuRegisterDialog(int posX, int posY) {
+		super(TITLE, ELEMENT_NUMBER, posX, posY);
 	}
 
 	@Override

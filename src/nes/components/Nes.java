@@ -4,11 +4,13 @@ import java.io.File;
 import java.io.IOException;
 
 import components.cpu.Cpu;
+import components.ppu.Ppu;
 import disassemble.Disassembler;
 import disassemble.DisassemblyInfo;
 import exceptions.InstructionNotSupportedException;
 import exceptions.NotNesFileException;
 import frame.GameFrame;
+import mapper.Mapper;
 import mapper.Mapper0;
 
 public class Nes {
@@ -36,17 +38,23 @@ public class Nes {
 		}
 
 		final Cpu cpu = Cpu.getInstance();
+		final Ppu ppu = Ppu.getInstance();
 
 		if (info.getMapper() != 0) {
 			System.err.println("Mapper %d not implemented...".formatted(info.getMapper()));
 			System.exit(2);
 		}
 
-		cpu.setMapper(new Mapper0(info.getPrgRom(), info.getChrRom()));
+		Mapper mapper = new Mapper0(info.getPrgRom(), info.getChrRom());
+		
+		cpu.setMapper(mapper);
 		cpu.setRomInstructions(info.getInstructions());
 		cpu.warmUp();
 		
+		ppu.setMapper(mapper);
+		
 		GameFrame frame = new GameFrame(info.getInstructions());
+		ppu.setScreen(frame.getScreenPanel());
 		frame.initFrame(nesFile.getName());
 	}
 }
