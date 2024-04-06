@@ -144,16 +144,25 @@ public class Ppu {
 		boolean rendering = ppuInfo.showBackground + ppuInfo.showSprites != 0;
 		for (long i = 0; i < ticksToCatch; i++) {
 			if (scanlineNumber < 0) {
-				waitCycles = tickPreRendering(rendering);
+				waitCycles = tickPreRendering();
 			} else if (scanlineNumber < 239) {
-				waitCycles = tickRendering(rendering);
-				if (rendering) {
+				// First draw pixels and then tick (to not skip a tile when x = 0)
+				if (rendering && cycleNumber != 0 && cycleNumber <= 256) {
 					// Draw pixel
-					currentTile.drawPixel(ppuInfo.v & 0b11111, (ppuInfo.v >> 5) & 0b11111);
+					currentTile.drawPixel();
 
 					// Update x
-					ppuInfo.x = (ppuInfo.x + 1) & 0b111;
+					if (ppuInfo.x == 7) {
+						ppuInfo.x = 0;
+
+						// Change tile!
+						currentTile = nextFirstTile;
+					} else {
+						ppuInfo.x = (ppuInfo.x + 1) & 0b111;
+					}
 				}
+
+				waitCycles = tickRendering();
 			} else if (scanlineNumber == 239) {
 				waitCycles = tickPostRendering();
 			} else {
@@ -181,11 +190,11 @@ public class Ppu {
 				}
 
 				// Increment X if rendering enabled
-				if (cycleNumber != 0 && (cycleNumber <= 256 || cycleNumber >= 328) && (cycleNumber & 0x8) == 0) {
+				if (cycleNumber != 0 && (cycleNumber <= 256 || cycleNumber >= 328) && (cycleNumber & 0x7) == 0) {
 					ppuInfo.incrementCoarseX();
 				}
 			}
-			
+
 			// Cycles from 0 to 340
 			if (++cycleNumber > 340) {
 				cycleNumber = 0;
@@ -198,7 +207,7 @@ public class Ppu {
 		return waitCycles;
 	}
 
-	private int tickPreRendering(boolean rendering) {
+	private int tickPreRendering() {
 		if (cycleNumber == 0) {
 			oddFrame = 1 - oddFrame;
 		} else if (cycleNumber == 1) {
@@ -212,12 +221,13 @@ public class Ppu {
 			// Nametable byte fetch
 			if (cyclePart == 1) {
 				// Fine y has been incremented at dot 256
-				tileSelected.setNametableAddress(ppuInfo.v & 0x0FFF, ppuInfo.v >> 12);
+				tileSelected.setNametableAddress(ppuInfo.v & 0x0FFF, (ppuInfo.v >> 12) & 0b111);
 			}
 			// Attribute table byte fetch
 			else if (cyclePart == 3) {
 				tileSelected.setAttributeAddress(
-						(ppuInfo.v & 0x0C00) | ((ppuInfo.v >> 4) & 0x38) | ((ppuInfo.v >> 2) & 0x07));
+						(ppuInfo.v & 0x0C00) | ((ppuInfo.v >> 4) & 0x38) | ((ppuInfo.v >> 2) & 0x07),
+						ppuInfo.v & 0b11111, (ppuInfo.v >> 5) & 0b11111);
 			}
 			// Pattern table tile low fetch
 			else if (cyclePart == 5) {
@@ -228,23 +238,23 @@ public class Ppu {
 				tileSelected.fetchHighPatternTable();
 			}
 		}
-		
+
 		// Odd and even frame
 		if (cycleNumber == 339 && oddFrame == 1) {
 			cycleNumber++;
 		}
-		
+
 		return 0;
 	}
 
-	private int tickRendering(boolean rendering) {
+	private int tickRendering() {
 		int waitCycles = 0;
 		int cyclePart = (cycleNumber & 0b111);
 		if (cycleNumber == 0) {
 			// Nothing :D
 			waitCycles = 1;
 
-			// Just transfer tiles for future fetching
+			// Load next tiles for rendering
 			currentTile = nextFirstTile;
 			nextFirstTile = nextSecondTile;
 			nextSecondTile = new Tile();
@@ -265,7 +275,8 @@ public class Ppu {
 			// Attribute table byte fetch
 			else if (cyclePart == 3) {
 				nextSecondTile.setAttributeAddress(
-						(ppuInfo.v & 0x0C00) | ((ppuInfo.v >> 4) & 0x38) | ((ppuInfo.v >> 2) & 0x07));
+						(ppuInfo.v & 0x0C00) | ((ppuInfo.v >> 4) & 0x38) | ((ppuInfo.v >> 2) & 0x07),
+						ppuInfo.v & 0b11111, (ppuInfo.v >> 5) & 0b11111);
 			}
 			// Pattern table tile low fetch
 			else if (cyclePart == 5) {
@@ -281,7 +292,7 @@ public class Ppu {
 			// The first two cycles are ignored, nothing happens in there
 			// TODO X and attributes for sprite fetch
 			if (cyclePart == 3) {
-				
+
 			}
 			// TODO Pattern table tile low fetch
 			else if (cyclePart == 5) {
@@ -300,22 +311,16 @@ public class Ppu {
 			// Tile selection
 			Tile tileSelected = (cycleNumber & 0x8) == 0 ? nextFirstTile : nextSecondTile;
 
-			// Increment coarse X
-			if (cyclePart == 0) {
-				if (rendering) {
-					ppuInfo.incrementCoarseX();
-				}
-				waitCycles = 1;
-			}
 			// Nametable byte fetch
-			else if (cyclePart == 1) {
+			if (cyclePart == 1) {
 				// Fine y has been incremented at dot 256
 				tileSelected.setNametableAddress(ppuInfo.v & 0x0FFF, ppuInfo.v >> 12);
 			}
 			// Attribute table byte fetch
 			else if (cyclePart == 3) {
 				tileSelected.setAttributeAddress(
-						(ppuInfo.v & 0x0C00) | ((ppuInfo.v >> 4) & 0x38) | ((ppuInfo.v >> 2) & 0x07));
+						(ppuInfo.v & 0x0C00) | ((ppuInfo.v >> 4) & 0x38) | ((ppuInfo.v >> 2) & 0x07),
+						ppuInfo.v & 0b11111, (ppuInfo.v >> 5) & 0b11111);
 			}
 			// Pattern table tile low fetch
 			else if (cyclePart == 5) {
@@ -324,7 +329,6 @@ public class Ppu {
 			// Pattern table tile high fetch
 			else if (cyclePart == 7) {
 				tileSelected.fetchHighPatternTable();
-				waitCycles = 1;
 			}
 
 		} else {

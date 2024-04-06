@@ -234,7 +234,7 @@ public class PpuInfo {
 			// Get coarse Y
 			int coarseY = (v & 0x03E0) >> 5;
 
-			// There are 29 vertical tiles, at 29 we reset
+			// There are 30 vertical tiles, at 29 we reset
 			if (coarseY == 29) {
 				coarseY = 0;
 
@@ -245,8 +245,12 @@ public class PpuInfo {
 				coarseY = 0;
 			} else {
 				// Just increment (coarse Y is << 5, so 0x20)
-				coarseY += 0x20;
+				coarseY += 1;
 			}
+			
+			// Put coarseY in v
+			v &= ~0b1111100000;
+			v |= coarseY << 5;
 		}
 	}
 }

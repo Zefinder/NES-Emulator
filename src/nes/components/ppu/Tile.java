@@ -5,7 +5,7 @@ public class Tile {
 	// Which tile it is in the patternTable
 	private int tileAddress;
 	// Which palette to choose
-	private int paletteByte;
+	private int paletteNumber;
 	// Which color from palette to choose (for the 8 pixels)
 	private int[] paletteColor = new int[8];
 
@@ -15,12 +15,22 @@ public class Tile {
 	public void setNametableAddress(int nametableOffset, int y) {
 		// Tile address is H NNNN NNNN Pyyy, but P is for plane select (fetching colors)
 		int tileNumber = Ppu.getInstance().fetchMemory(0x2000 | nametableOffset);
-		int patternTableSelect = Ppu.getInstance().ppuInfo.spritePatternTableAddress * 0x1000;
+		int patternTableSelect = Ppu.getInstance().ppuInfo.backgroundPatternTableAddress * 0x1000;
 		tileAddress = patternTableSelect | tileNumber << 4 | y;
 	}
 
-	public void setAttributeAddress(int attributeOffset) {
-		paletteByte = Ppu.getInstance().fetchMemory(0x23C0 | attributeOffset);
+	public void setAttributeAddress(int attributeOffset, int coarseX, int coarseY) {
+		int offset = 0;
+		// Every 16 pixels, we change side
+		if ((coarseX & 0b10) != 0) {
+			offset += 2;
+		}
+		if ((coarseY & 0b10) != 0) {
+			offset += 4;
+		}
+		
+		int paletteByte = Ppu.getInstance().fetchMemory(0x23C0 | attributeOffset);
+		paletteNumber = (paletteByte >> offset) & 0b11;
 	}
 
 	public void fetchLowPatternTable() {
@@ -36,25 +46,16 @@ public class Tile {
 		// High plane (+8)
 		int highPattern = Ppu.getInstance().fetchMemory(tileAddress + 8);
 		for (int index = 0; index < 8; index++) {
-			paletteColor[7 - index] += highPattern & 0b1;
+			paletteColor[7 - index] += 2 * (highPattern & 0b1);
 			highPattern >>= 1;
 		}
 	}
 
-	public void drawPixel(int coarseX, int coarseY) {
-		int offset = 0;
-		// Every 16 pixels, we change side
-		if ((coarseX & 0x10) == 1) {
-			offset += 2;
-		}
-		if ((coarseY & 0x10) == 1) {
-			offset += 4;
-		}
-
+	public void drawPixel() {
 		int paletteIndex = paletteColor[Ppu.getInstance().ppuInfo.x];
 		int paletteAddress = 0x3F00;
 		if (paletteIndex != 0) {
-			paletteAddress += 4 * ((paletteByte >> offset) & 0b11);
+			paletteAddress += 4 * paletteNumber + paletteIndex;
 		}
 		
 		// Send pixel to screen

@@ -28,6 +28,7 @@ public class ScreenPanelTest extends ScreenPanel {
 	
 	public void resetScreen() {
 		pixelData = new int[pixelData.length];
+		index = 0;
 	}
 
 }
