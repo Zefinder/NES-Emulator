@@ -40,12 +40,13 @@ public class InstructionDialog extends ComponentInfoDialog {
 	@Override
 	protected void update() {
 		// If PC didn't change, then why update?
-		if (oldPC == cpuInfo.PC) {
+		int currentPC = cpuInfo.PC;
+		if (oldPC == currentPC) {
 			return;
 		}
 
 		// Updating the old PC
-		oldPC = cpuInfo.PC;
+		oldPC = currentPC;
 
 		// We step forward!
 		if (hasBranched) {
@@ -59,11 +60,11 @@ public class InstructionDialog extends ComponentInfoDialog {
 		}
 
 		// Fetching the instruction to execute (if not in ROM, just ignore)
-		if (cpuInfo.PC < 0x8000) {
+		if (currentPC < 0x8000) {
 			instructionReady = "Not in ROM";
 			instructionNext = "";
 		} else {
-			Instruction instruction = romInstructions[cpuInfo.PC - 0x8000];
+			Instruction instruction = romInstructions[currentPC - 0x8000];
 			// If the instruction is null, give up
 			if (instruction == null) {
 				instructionReady = "Unreadable";
@@ -84,13 +85,14 @@ public class InstructionDialog extends ComponentInfoDialog {
 				// Else just tell the next one
 				else {
 					int byteNumber = instruction.getByteNumber();
-					int nextPC = (cpuInfo.PC + byteNumber) & 0xFFFF;
+					int nextPC = (currentPC + byteNumber) & 0xFFFF;
 
 					// If not in ROM then give up
 					if (nextPC < 0x8000) {
 						instructionNext = "Not in ROM";
 					} else {
 						Instruction nextInstruction = romInstructions[nextPC - 0x8000];
+						
 						// Next instruction should always be readable so it's ok
 						instructionNext = nextInstruction.toString();
 					}
