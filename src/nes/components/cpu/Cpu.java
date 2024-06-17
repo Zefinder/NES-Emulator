@@ -1,5 +1,6 @@
 package components.cpu;
 
+import components.DmaAction;
 import components.ppu.Ppu;
 import components.ppu.PpuInfo;
 import disassemble.Disassembler;
@@ -10,6 +11,8 @@ import mapper.Mapper;
 
 public class Cpu {
 
+	// TODO Redo architecture (mapper not for CPU RAM, deal with the BUS!)
+	
 	public static final int NMI_VECTOR = 0xFFFA;
 	public static final int RESET_VECTOR = 0xFFFC;
 	public static final int BREAK_VECTOR = 0xFFFE;
@@ -141,8 +144,7 @@ public class Cpu {
 	 * 0x2002 PPU register with the CPU (resetting the NMI flag). This then pushes
 	 * everything into the stack and jumps to NMI routine (like BRK) taking 7 cycles
 	 * in total. We can consider the NMI as a virtual instruction taking priority on
-	 * any other normally happening instructions. For more information on the NMI
-	 * routine, maybe check the TODO ppu info
+	 * any other normally happening instructions.
 	 * </p>
 	 * 
 	 * <p>
@@ -171,6 +173,18 @@ public class Cpu {
 			cpuInfo.PC = fetchAddress(Cpu.NMI_VECTOR) & 0xFFFF;
 
 			return 7;
+		}
+		
+		// Check if OAM DMA
+		if (cpuInfo.oamDmaRequested) {
+			cpuInfo.oamDmaRequested = false;
+			DmaAction dmaAction = cpuInfo.oamDmaAction;
+			
+			// Launch action
+			dmaAction.startDma();
+			
+			// Return the cycle taken for DMA
+			return dmaAction.getBlockingTime();
 		}
 
 		// Get the instruction
@@ -217,21 +231,6 @@ public class Cpu {
 
 		// Increment PC by the byte number of the instruction
 		cpuInfo.PC = (cpuInfo.PC + instruction.getByteNumber()) & 0xFFFF;
-
-		// If DMA requested, add cycles (+1 if DMA put)
-		if (cpuInfo.dmaRequested) {
-			// Reset the DMA request
-			cpuInfo.dmaRequested = false;
-
-			// Update the state with cycles we've done
-			cpuInfo.dmaState = (cpuInfo.dmaState + cycles) & 0b1;
-
-			// Adding the DMA transaction
-			cycles += cpuInfo.dmaHaltCycles + cpuInfo.dmaState;
-		}
-
-		// Update DMA state (even cycles = same state)
-		cpuInfo.dmaState = (cpuInfo.dmaState + cycles) & 0b1;
 
 		// Return the waiting cycles
 		return cycles;

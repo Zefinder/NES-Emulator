@@ -23,9 +23,13 @@ public class Ppu {
 	private Tile nextSecondTile = new Tile();
 
 	/* Sprites */
-	// TODO Sprites...
-	private int[] spritesCurrentScanline = new int[0x20];
-	private int[] spritesNextScanline = new int[0x20];
+	private int oamIndex = 0;
+	private OAM[] renderingOAM = new OAM[8];
+	private int[] secondaryOAM = new int[0x20];
+	private int primaryOAMIndex = 0;
+	private int secondaryOAMIndex = 0;
+	private boolean secondaryOAMFull = false;
+	private boolean secondaryOAMOverflow = false;
 
 	/* Screen linked to the PPU */
 	private ScreenPanel screen;
@@ -33,7 +37,6 @@ public class Ppu {
 	private static final Ppu ppu = new Ppu();
 
 	private Ppu() {
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -61,6 +64,19 @@ public class Ppu {
 	 */
 	public int fetchMemory(int address) {
 		return mapper.readPpuBus(address);
+	}
+
+	/**
+	 * Sets the value in the OAM memory. Auto-increments the index
+	 * 
+	 * @param value the value to put in the OAM memory
+	 */
+	public void setOamValue(int value) {
+		oamMemory[oamIndex] = value;
+
+		if (++oamIndex > 0xFF) {
+			oamIndex = 0;
+		}
 	}
 
 	// TODO Look at the PPU scrolling for register copying...
@@ -141,7 +157,8 @@ public class Ppu {
 		// TODO Make the cycle logic
 
 		int waitCycles = 0;
-		boolean rendering = ppuInfo.showBackground + ppuInfo.showSprites != 0;
+		boolean rendering = ppuInfo.showBackgroundInLeftmost + ppuInfo.showBackground + ppuInfo.showSprites
+				+ ppuInfo.showSpriteInLeftmost != 0;
 		for (long i = 0; i < ticksToCatch; i++) {
 			if (scanlineNumber < 0) {
 				waitCycles = tickPreRendering();
@@ -162,7 +179,7 @@ public class Ppu {
 					}
 				}
 
-				waitCycles = tickRendering();
+				waitCycles = tickRendering(rendering);
 			} else if (scanlineNumber == 239) {
 				waitCycles = tickPostRendering();
 			} else {
@@ -247,19 +264,25 @@ public class Ppu {
 		return 0;
 	}
 
-	private int tickRendering() {
+	private int tickRendering(boolean rendering) {
 		int waitCycles = 0;
 		int cyclePart = (cycleNumber & 0b111);
 		if (cycleNumber == 0) {
 			// Nothing :D
 			waitCycles = 1;
 
+			// Reset OAM indexes
+			primaryOAMIndex = 0;
+			secondaryOAMIndex = 0;
+			secondaryOAMFull = false;
+			secondaryOAMOverflow = false;
+
 			// Load next tiles for rendering
 			currentTile = nextFirstTile;
 			nextFirstTile = nextSecondTile;
 			nextSecondTile = new Tile();
 		} else if (cycleNumber < 257) {
-			// Motion in 5 parts
+			// Motion in 5 parts for fetching
 			waitCycles = 2;
 
 			// Time to switch tiles
@@ -288,19 +311,64 @@ public class Ppu {
 				waitCycles = 1;
 			}
 
+			// For sprite evaluation if rendering enabled
+			if (rendering) {
+				boolean write = (cycleNumber & 1) == 0;
+				if (cycleNumber < 65) {
+					// For eatch even ticks you write
+					if (write) {
+						secondaryOAM[cycleNumber / 2 - 1] = 0xFF;
+					}
+				} else {
+					/*
+					 * Sprite is: Byte 0 : Y coord Byte 1 : Tile in pattern table Byte 2 :
+					 * Attributes Byte 3 : X coord
+					 * 
+					 * If primaryOAMIndex has overflowed, just skip
+					 */
+					if (primaryOAMIndex != 256 && write && !secondaryOAMOverflow) {
+						// If sprite in range, copy in secondary oam
+						if (oamMemory[primaryOAMIndex] == ppu.ppuInfo.getCurrentY()) {
+							if (secondaryOAMFull) {
+								secondaryOAMOverflow = true;
+								// Set overflow!
+								ppu.ppuInfo.spriteOverflow = 1;
+							} else {
+								secondaryOAM[secondaryOAMIndex++] = oamMemory[primaryOAMIndex++];
+								secondaryOAM[secondaryOAMIndex++] = oamMemory[primaryOAMIndex++];
+								secondaryOAM[secondaryOAMIndex++] = oamMemory[primaryOAMIndex++];
+								secondaryOAM[secondaryOAMIndex++] = oamMemory[primaryOAMIndex++];
+							}
+						} else {
+							// Else just increment
+							primaryOAMIndex += 4;
+						}
+
+						if (!secondaryOAMFull && secondaryOAMIndex == 0x20) {
+							secondaryOAMFull = true;
+						}
+					}
+				}
+			}
+
 		} else if (cycleNumber < 321) {
+			int spriteNumber = (cycleNumber - 257) / 8;
 			// The first two cycles are ignored, nothing happens in there
-			// TODO X and attributes for sprite fetch
+			// X and attributes for sprite fetch
 			if (cyclePart == 3) {
-
+				// Init with tile
+				OAM sprite = new OAM(secondaryOAM[spriteNumber + 1]);
+				sprite.setX(secondaryOAM[spriteNumber + 3]);
+				sprite.setAttribute(secondaryOAM[spriteNumber + 2]);
+				renderingOAM[spriteNumber] = sprite;
 			}
-			// TODO Pattern table tile low fetch
+			// Pattern table tile low fetch
 			else if (cyclePart == 5) {
-
+				renderingOAM[spriteNumber].fetchLowPatternTable();
 			}
-			// TODO Pattern table tile high fetch
+			// Pattern table tile high fetch
 			else if (cyclePart == 7) {
-
+				renderingOAM[spriteNumber].fetchHighPatternTable();
 			}
 
 			waitCycles = 2;

@@ -13,6 +13,16 @@ public class MapperTest extends Mapper {
 
 	public MapperTest() {
 	}
+	
+	public MapperTest(int[] cpuRom, int[] ppuRom) {
+		for (int address = 0; address < cpuRom.length; address++) {
+			cpuBus.busContent[address + 0x8000] = cpuRom[address];
+		}
+		
+		for (int address = 0; address < ppuRom.length; address++) {
+			ppuBus.busContent[address] = ppuRom[address];
+		}
+	}
 
 	@Override
 	public int readCpuBus(int address) {

@@ -93,8 +93,13 @@ public class InstructionDialog extends ComponentInfoDialog {
 					} else {
 						Instruction nextInstruction = romInstructions[nextPC - 0x8000];
 						
-						// Next instruction should always be readable so it's ok
-						instructionNext = nextInstruction.toString();
+						// Next instruction might not be always be readable after RTS
+						if (nextInstruction == null) {
+							instructionNext = "Unreadable";
+						} else {							
+							instructionNext = nextInstruction.toString();
+						}
+						
 					}
 				}
 			}

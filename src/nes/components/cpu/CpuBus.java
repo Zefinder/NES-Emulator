@@ -8,8 +8,6 @@ public class CpuBus extends Bus {
 	
 	public CpuBus() {
 		super(CPU_BUS_SIZE);
-		// TODO Remove when PPU
-		busContent[0x2002] = 0x80;
 	}
 
 }

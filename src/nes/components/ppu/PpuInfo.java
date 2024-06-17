@@ -169,6 +169,7 @@ public class PpuInfo {
 	}
 
 	public void setPpuScroll(int scrollValue) {
+		// TODO Verify PPU Scroll (set 0 and 0 gives 0x0400...)
 		// If w is 0 then put in t and x
 		if (w == 0) {
 			// Set fine X scroll
@@ -252,5 +253,9 @@ public class PpuInfo {
 			v &= ~0b1111100000;
 			v |= coarseY << 5;
 		}
+	}
+	
+	public int getCurrentY() {
+		return (v >> 5) & 0b11111;
 	}
 }

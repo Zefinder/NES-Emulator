@@ -6,6 +6,7 @@ import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 
 import instructions.Instruction;
+import mapper.Mapper;
 
 public class GameFrame extends JFrame {
 
@@ -28,7 +29,7 @@ public class GameFrame extends JFrame {
 	// Game Thread
 	private GameThread gameThread;
 
-	public GameFrame(Instruction[] romInstructions) {
+	public GameFrame(Instruction[] romInstructions, Mapper mapper) {
 		this.setTitle("NES Emulator");
 		this.setSize(512, 480 + 30);
 		this.setLocationRelativeTo(null);

@@ -1,6 +1,8 @@
 package mapper;
 
+import components.DmaAction;
 import components.cpu.Cpu;
+import components.ppu.Ppu;
 
 public class Mapper0 extends Mapper {
 
@@ -87,7 +89,7 @@ public class Mapper0 extends Mapper {
 
 				// Increment 0x2006 register
 				ppuInfo.ppuAddress = (ppuInfo.ppuAddress + 1 + 31 * ppuInfo.vramAddressIncrement) & 0x3FFF;
-				
+
 				// Update 0x2007 with new address
 				ppuInfo.ppuData = readPpuBus(ppuInfo.ppuAddress);
 				break;
@@ -178,11 +180,19 @@ public class Mapper0 extends Mapper {
 					ppuInfo.ppuData = readPpuBus(ppuInfo.ppuAddress);
 					break;
 				}
-				
+
 			} else if (writeAddress == 0x4014) {
-				// OAM DMA
-				// TODO Launch OAM DMA action
+				// Launch the OAM DMA to fill the primary OAM
 				ppuBusLatch = value;
+
+				// Set DMA action
+				DmaAction action = new DmaAction(value << 8, 0x100,
+						(dmaAddress, dmaValue) -> Ppu.getInstance().setOamValue(value));
+				cpuInfo.oamDmaAction = action;
+
+				// Request DMA
+				cpuInfo.oamDmaRequested = true;
+
 			} else if (address < 0x8000) { // We don't want to write in the ROM
 				cpuBus.busContent[writeAddress] = value;
 			}
@@ -201,7 +211,17 @@ public class Mapper0 extends Mapper {
 			value = ppuBus.busContent[address - 0x1000];
 		} else {
 			int paletteIndex = address & 0x1F;
-			value = ppuBus.busContent[0x3F00 + paletteIndex];
+			if ((paletteIndex & 0b1111) == 0) {
+				value = ppuBus.busContent[0x3F00];
+			} else if ((paletteIndex & 0b1111) == 0b0100) {
+				value = ppuBus.busContent[0x3F04];
+			} else if ((paletteIndex & 0b1111) == 0b1000) {
+				value = ppuBus.busContent[0x3F08];
+			} else if ((paletteIndex & 0b1111) == 0b1100) {
+				value = ppuBus.busContent[0x3F0C];
+			} else {
+				value = ppuBus.busContent[0x3F00 + paletteIndex];
+			}
 		}
 
 		return value;
@@ -219,7 +239,17 @@ public class Mapper0 extends Mapper {
 				ppuBus.busContent[writeAddress - 0x1000] = value;
 			} else {
 				int paletteIndex = writeAddress & 0x1F;
-				ppuBus.busContent[0x3F00 + paletteIndex] = value;
+				if ((paletteIndex & 0b1111) == 0) {
+					ppuBus.busContent[0x3F00] = value;
+				} else if ((paletteIndex & 0b1111) == 0b0100) {
+					ppuBus.busContent[0x3F04] = value;
+				} else if ((paletteIndex & 0b1111) == 0b1000) {
+					ppuBus.busContent[0x3F08] = value;
+				} else if ((paletteIndex & 0b1111) == 0b1100) {
+					ppuBus.busContent[0x3F0C] = value;
+				} else {
+					ppuBus.busContent[0x3F00 + paletteIndex] = value;
+				}
 			}
 			offset++;
 		}
