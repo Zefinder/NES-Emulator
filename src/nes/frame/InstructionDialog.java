@@ -5,7 +5,7 @@ import instructions.branch.BranchInstruction;
 import instructions.jump.JMPInstruction;
 import instructions.jump.JSRInstruction;
 
-public class InstructionDialog extends CpuInfoDialog {
+public class InstructionDialog extends ComponentInfoDialog {
 
 	private static final String TITLE = "Instructions";
 	private static final int ELEMENT_NUMBER = 3;
@@ -25,10 +25,9 @@ public class InstructionDialog extends CpuInfoDialog {
 	 */
 	private static final long serialVersionUID = -4913622929738924125L;
 
-	public InstructionDialog(Instruction[] romInstructions) {
-		super(TITLE, ELEMENT_NUMBER);
+	public InstructionDialog(Instruction[] romInstructions, int posX, int posY) {
+		super(TITLE, ELEMENT_NUMBER, posX, posY);
 		this.romInstructions = romInstructions;
-		this.setLocation(328, 512);
 	}
 
 	@Override
@@ -41,12 +40,13 @@ public class InstructionDialog extends CpuInfoDialog {
 	@Override
 	protected void update() {
 		// If PC didn't change, then why update?
-		if (oldPC == cpuInfo.PC) {
+		int currentPC = cpuInfo.PC;
+		if (oldPC == currentPC) {
 			return;
 		}
 
 		// Updating the old PC
-		oldPC = cpuInfo.PC;
+		oldPC = currentPC;
 
 		// We step forward!
 		if (hasBranched) {
@@ -60,11 +60,11 @@ public class InstructionDialog extends CpuInfoDialog {
 		}
 
 		// Fetching the instruction to execute (if not in ROM, just ignore)
-		if (cpuInfo.PC < 0x8000) {
+		if (currentPC < 0x8000) {
 			instructionReady = "Not in ROM";
 			instructionNext = "";
 		} else {
-			Instruction instruction = romInstructions[cpuInfo.PC - 0x8000];
+			Instruction instruction = romInstructions[currentPC - 0x8000];
 			// If the instruction is null, give up
 			if (instruction == null) {
 				instructionReady = "Unreadable";
@@ -85,15 +85,21 @@ public class InstructionDialog extends CpuInfoDialog {
 				// Else just tell the next one
 				else {
 					int byteNumber = instruction.getByteNumber();
-					int nextPC = (cpuInfo.PC + byteNumber) & 0xFFFF;
+					int nextPC = (currentPC + byteNumber) & 0xFFFF;
 
 					// If not in ROM then give up
 					if (nextPC < 0x8000) {
 						instructionNext = "Not in ROM";
 					} else {
 						Instruction nextInstruction = romInstructions[nextPC - 0x8000];
-						// Next instruction should always be readable so it's ok
-						instructionNext = nextInstruction.toString();
+						
+						// Next instruction might not be always be readable after RTS
+						if (nextInstruction == null) {
+							instructionNext = "Unreadable";
+						} else {							
+							instructionNext = nextInstruction.toString();
+						}
+						
 					}
 				}
 			}

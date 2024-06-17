@@ -1,4 +1,6 @@
-package components;
+package components.cpu;
+
+import components.DmaAction;
 
 public class CpuInfo {
 
@@ -19,9 +21,8 @@ public class CpuInfo {
 	public int N;
 
 	/* DMA */
-	public boolean dmaRequested;
-	public int dmaHaltCycles;
-	public int dmaState; // Put = 1
+	public boolean oamDmaRequested;
+	public DmaAction oamDmaAction;
 
 	public CpuInfo() {
 		this.A = 0;
@@ -38,9 +39,7 @@ public class CpuInfo {
 		this.V = 0;
 		this.N = 0;
 
-		this.dmaRequested = false;
-		this.dmaHaltCycles = 0;
-		this.dmaState = 0;
+		this.oamDmaRequested = false;
 	}
 
 	public int getP() {

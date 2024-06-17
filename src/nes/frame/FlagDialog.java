@@ -1,6 +1,6 @@
 package frame;
 
-public class FlagDialog extends CpuInfoDialog {
+public class FlagDialog extends ComponentInfoDialog {
 
 	private static final String TITLE = "Flags";
 	private static final int ELEMENT_NUMBER = 7;
@@ -10,9 +10,8 @@ public class FlagDialog extends CpuInfoDialog {
 	 */
 	private static final long serialVersionUID = -3356536921605440890L;
 
-	public FlagDialog() {
-		super(TITLE, ELEMENT_NUMBER);
-		this.setLocation(328, 162);
+	public FlagDialog(int posX, int posY) {
+		super(TITLE, ELEMENT_NUMBER, posX, posY);
 	}
 
 	@Override

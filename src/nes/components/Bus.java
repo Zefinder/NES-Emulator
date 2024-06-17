@@ -9,6 +9,8 @@ public abstract class Bus {
 		this.busSize = busSize;
 		busContent = new int[busSize];
 	}
+	
+	// TODO Remove these functions
 
 	/**
 	 * <p>

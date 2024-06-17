@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import components.Cpu;
+import components.cpu.Cpu;
 import exceptions.InstructionNotSupportedException;
 import instructions.alu.ASLInstruction;
 import instructions.registermemory.LDAInstruction;

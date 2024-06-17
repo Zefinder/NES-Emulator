@@ -3,7 +3,7 @@ package frame;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-import components.Cpu;
+import components.cpu.Cpu;
 import exceptions.InstructionNotSupportedException;
 
 // This is only for testing purposes
@@ -50,7 +50,7 @@ public class GameKeyListener implements KeyListener {
 			newMode = 3;
 			break;
 
-		// If in pause mode to tick
+		// If in pause mode to tick (deprecated)
 		case KeyEvent.VK_ENTER:
 			try {
 				if (currentMode == 0) {
@@ -61,6 +61,26 @@ public class GameKeyListener implements KeyListener {
 			}
 			break;
 
+		// To show the content of the pattern table
+		case KeyEvent.VK_P:
+			PatternTableDialog patternDialog = new PatternTableDialog();
+			patternDialog.initDialog();
+			break;
+			
+		case KeyEvent.VK_M:
+			gameThread.interrupt();
+			MemoryDialog memoryDialog = new MemoryDialog(null);
+			memoryDialog.initDialog();
+			changeMode(currentMode);
+			break;
+			
+		case KeyEvent.VK_O:
+			gameThread.interrupt();
+			OAMDialog oamDialog = new OAMDialog();
+			oamDialog.initDialog();
+			changeMode(currentMode);
+			break;
+			
 		default:
 			break;
 		}
@@ -72,19 +92,22 @@ public class GameKeyListener implements KeyListener {
 			gameThread.interrupt();
 			// Waiting for thread to stop
 			while (!gameThread.isStopped());
-
-			if (currentMode == 1) {
-				gameThread.startThread(GameThread.SPEED1, 1);
-			} else if (currentMode == 2) {
-				gameThread.startThread(GameThread.SPEED2, 1);
-			} else if (currentMode == 3) {
-				gameThread.startThread(GameThread.CPU_CLOCK_SPEED, GameThread.CPU_TICK_PER_PERIOD);
-			}
+			changeMode(newMode);
 		}
 	}
 
 	@Override
 	public void keyReleased(KeyEvent e) {
+	}
+	
+	private void changeMode(int mode) {
+		if (mode == 1) {
+			gameThread.startThread(GameThread.SPEED1, 1);
+		} else if (mode == 2) {
+			gameThread.startThread(GameThread.SPEED2, 1);
+		} else if (mode == 3) {
+			gameThread.startThread(GameThread.CPU_CLOCK_SPEED, GameThread.CPU_TICK_PER_PERIOD);
+		}
 	}
 
 }

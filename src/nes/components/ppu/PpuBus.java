@@ -1,4 +1,6 @@
-package components;
+package components.ppu;
+
+import components.Bus;
 
 public class PpuBus extends Bus {
 	

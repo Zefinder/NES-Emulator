@@ -1,6 +1,6 @@
 package instructions;
 
-import components.Cpu;
+import components.cpu.Cpu;
 import exceptions.InstructionNotSupportedException;
 
 public abstract class Instruction {
@@ -170,35 +170,18 @@ public abstract class Instruction {
 			operand = constant & 0xFF;
 			break;
 
-		case ZEROPAGE:
-			operand = cpu.fetchMemory(address);
-			break;
-
 		case ZEROPAGE_X:
-			operand = cpu.fetchMemory(address);
-			break;
-
 		case ZEROPAGE_Y:
-			operand = cpu.fetchMemory(address);
-			break;
-
-		case ABSOLUTE:
-			operand = cpu.fetchMemory(address);
-			break;
-
 		case ABSOLUTE_X:
-			operand = cpu.fetchMemory(address);
-			break;
-
 		case ABSOLUTE_Y:
-			operand = cpu.fetchMemory(address);
-			break;
-
 		case INDIRECT_X:
-			operand = cpu.fetchMemory(address);
-			break;
-
 		case INDIRECT_Y:
+			// Update in case of reusing in loop (no recreation) and register might have
+			// changed
+			updateMemoryAddress();
+
+		case ZEROPAGE:
+		case ABSOLUTE:
 			operand = cpu.fetchMemory(address);
 			break;
 

@@ -1,5 +1,8 @@
-package components;
+package components.cpu;
 
+import components.DmaAction;
+import components.ppu.Ppu;
+import components.ppu.PpuInfo;
 import disassemble.Disassembler;
 import exceptions.InstructionNotSupportedException;
 import instructions.Instruction;
@@ -8,11 +11,19 @@ import mapper.Mapper;
 
 public class Cpu {
 
-	public static final int RESET_VECTOR = 0xFFFA;
-	public static final int NMI_VECTOR = 0xFFFC;
+	// TODO Redo architecture (mapper not for CPU RAM, deal with the BUS!)
+	
+	public static final int NMI_VECTOR = 0xFFFA;
+	public static final int RESET_VECTOR = 0xFFFC;
 	public static final int BREAK_VECTOR = 0xFFFE;
 
 	private static final Cpu instance = new Cpu();
+
+	/* Interruption state */
+	private boolean interruptionState = false;
+
+	/* PpuInfo */
+	private PpuInfo ppuInfo;
 
 	/* Mapper */
 	private Mapper mapper;
@@ -31,7 +42,7 @@ public class Cpu {
 	 * 
 	 * @param mapper the mapper to use
 	 */
-	public void setMapper(Mapper mapper) {
+	public void setMapper(final Mapper mapper) {
 		this.mapper = mapper;
 	}
 
@@ -113,6 +124,13 @@ public class Cpu {
 
 		return value;
 	}
+	
+	/**
+	 * Exits the interruption state. This is used by RTI
+	 */
+	public void exitInterruption() {
+		interruptionState = false;
+	}
 
 	/**
 	 * <p>
@@ -133,8 +151,7 @@ public class Cpu {
 	 * 0x2002 PPU register with the CPU (resetting the NMI flag). This then pushes
 	 * everything into the stack and jumps to NMI routine (like BRK) taking 7 cycles
 	 * in total. We can consider the NMI as a virtual instruction taking priority on
-	 * any other normally happening instructions. For more information on the NMI
-	 * routine, maybe check the TODO ppu info
+	 * any other normally happening instructions.
 	 * </p>
 	 * 
 	 * <p>
@@ -150,7 +167,32 @@ public class Cpu {
 	 */
 	public int tick() throws InstructionNotSupportedException {
 		// Check if NMI
-		// TODO check for NMI
+		if (cpuInfo.I == 1 && !interruptionState && ppuInfo.generateNmi == 1 && ppuInfo.verticalBlankStart == 1) {
+			interruptionState = true;
+			int address = (cpuInfo.PC - 1) & 0xFFFF;
+			push(address >> 8); // MSB
+			push(address & 0xFF); // LSB
+
+			// Push flags
+			push(cpuInfo.getP());
+
+			// Load PC with address at 0xFFFA
+			cpuInfo.PC = fetchAddress(Cpu.NMI_VECTOR) & 0xFFFF;
+
+			return 7;
+		}
+		
+		// Check if OAM DMA
+		if (cpuInfo.oamDmaRequested) {
+			cpuInfo.oamDmaRequested = false;
+			DmaAction dmaAction = cpuInfo.oamDmaAction;
+			
+			// Launch action
+			dmaAction.startDma();
+			
+			// Return the cycle taken for DMA
+			return dmaAction.getBlockingTime();
+		}
 
 		// Get the instruction
 		Instruction instruction;
@@ -197,34 +239,19 @@ public class Cpu {
 		// Increment PC by the byte number of the instruction
 		cpuInfo.PC = (cpuInfo.PC + instruction.getByteNumber()) & 0xFFFF;
 
-		// If DMA requested, add cycles (+1 if DMA put)
-		if (cpuInfo.dmaRequested) {
-			// Reset the DMA request
-			cpuInfo.dmaRequested = false;
-
-			// Update the state with cycles we've done
-			cpuInfo.dmaState = (cpuInfo.dmaState + cycles) & 0b1;
-
-			// Adding the DMA transaction
-			cycles += cpuInfo.dmaHaltCycles + cpuInfo.dmaState;
-		}
-
-		// Update DMA state (even cycles = same state)
-		cpuInfo.dmaState = (cpuInfo.dmaState + cycles) & 0b1;
-
 		// Return the waiting cycles
 		return cycles;
 	}
-	
+
 	/**
 	 * <p>
 	 * This method updates everything to warp up the CPU. It includes:
 	 * 
 	 * <ul>
-	 * <li> Setting up A, X and Y to 0
-	 * <li> Setting up SP to 0xFD
-	 * <li> Setting up P to 0x34
-	 * <li> Setting up APU (TODO)
+	 * <li>Setting up A, X and Y to 0
+	 * <li>Setting up SP to 0xFD
+	 * <li>Setting up P to 0x34
+	 * <li>Setting up APU (TODO)
 	 * </ul>
 	 * 
 	 * PC initialization is done by the mapper itself
@@ -236,6 +263,8 @@ public class Cpu {
 		cpuInfo.Y = 0;
 		cpuInfo.SP = 0xFD;
 		cpuInfo.setP(0x34);
+
+		ppuInfo = Ppu.getInstance().ppuInfo;
 	}
 
 	public static Cpu getInstance() {

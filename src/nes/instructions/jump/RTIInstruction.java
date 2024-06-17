@@ -21,6 +21,9 @@ public class RTIInstruction extends RTSInstruction {
 		
 		// Then basic RTS
 		super.execute();
+		
+		// Set the interruption state to off
+		cpu.exitInterruption();
 	}
 	
 	@Override
