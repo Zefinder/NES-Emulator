@@ -70,27 +70,27 @@ public class Nes {
 			mapper.writeCpuBus(address, r.nextInt(0x100));
 		}
 		
-		// Palette colors
-		cpu.storeMemory(0x2006, 0x3F);
-		cpu.storeMemory(0x2006, 0x00);
-
-		// Palette 0
-		cpu.storeMemory(0x2007, 0x03);
-		cpu.storeMemory(0x2007, 0x04);
-		cpu.storeMemory(0x2007, 0x05);
-		cpu.storeMemory(0x2007, 0x06);
-
-		// Palette 1
-		cpu.storeMemory(0x2007, 0x21);
-		cpu.storeMemory(0x2007, 0x17);
-		cpu.storeMemory(0x2007, 0x18);
-		cpu.storeMemory(0x2007, 0x19);
-
-		// Palette 2
-		cpu.storeMemory(0x2007, 0x0B);
-		cpu.storeMemory(0x2007, 0x1D);
-		cpu.storeMemory(0x2007, 0x2D);
-		cpu.storeMemory(0x2007, 0x3D);
+//		// Palette colors
+//		cpu.storeMemory(0x2006, 0x3F);
+//		cpu.storeMemory(0x2006, 0x00);
+//
+//		// Palette 0
+//		cpu.storeMemory(0x2007, 0x03);
+//		cpu.storeMemory(0x2007, 0x04);
+//		cpu.storeMemory(0x2007, 0x05);
+//		cpu.storeMemory(0x2007, 0x06);
+//
+//		// Palette 1
+//		cpu.storeMemory(0x2007, 0x21);
+//		cpu.storeMemory(0x2007, 0x17);
+//		cpu.storeMemory(0x2007, 0x18);
+//		cpu.storeMemory(0x2007, 0x19);
+//
+//		// Palette 2
+//		cpu.storeMemory(0x2007, 0x0B);
+//		cpu.storeMemory(0x2007, 0x1D);
+//		cpu.storeMemory(0x2007, 0x2D);
+//		cpu.storeMemory(0x2007, 0x3D);
 		
 		GameFrame frame = new GameFrame(info.getInstructions(), mapper);
 		ppu.setScreen(frame.getScreenPanel());

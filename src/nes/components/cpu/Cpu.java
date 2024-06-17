@@ -124,6 +124,13 @@ public class Cpu {
 
 		return value;
 	}
+	
+	/**
+	 * Exits the interruption state. This is used by RTI
+	 */
+	public void exitInterruption() {
+		interruptionState = false;
+	}
 
 	/**
 	 * <p>

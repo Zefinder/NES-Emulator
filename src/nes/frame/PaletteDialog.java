@@ -123,7 +123,6 @@ public class PaletteDialog extends InfoDialog {
 		Color backgroundColor2 = new Color(ColorPalette.values()[Ppu.getInstance().fetchMemory(0x3F08)].getColorValue());
 		Color backgroundColor3 = new Color(ColorPalette.values()[Ppu.getInstance().fetchMemory(0x3F0C)].getColorValue());
 
-
 		Graphics2D graphics = backgroundPalette0[0].createGraphics();
 		graphics.setPaint(backgroundColor);
 		graphics.fillRect(0, 0, 25, 25);
