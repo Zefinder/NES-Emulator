@@ -31,7 +31,7 @@ public class Nes {
 		// Create frame
 
 		// TODO Remove below when tests over
-		File nesFile = new File("./Super Mario Bros.nes");
+		File nesFile = new File("./Donkey Kong.nes");
 		Disassembler disassembler = new Disassembler();
 		DisassemblyInfo info = disassembler.disassembleFile(nesFile);
 

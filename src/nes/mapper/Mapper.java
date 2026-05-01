@@ -1,5 +1,6 @@
 package mapper;
 
+import components.Memory;
 import components.cpu.Cpu;
 import components.cpu.CpuBus;
 import components.cpu.CpuInfo;
@@ -7,7 +8,7 @@ import components.ppu.Ppu;
 import components.ppu.PpuBus;
 import components.ppu.PpuInfo;
 
-public abstract class Mapper {
+public abstract class Mapper implements Memory {
 
 //	protected final Cpu cpu = Cpu.getInstance();
 //	protected final Ppu ppu = Ppu.getInstance();
