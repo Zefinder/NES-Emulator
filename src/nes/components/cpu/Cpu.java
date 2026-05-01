@@ -1,5 +1,6 @@
 package components.cpu;
 
+import components.Bus;
 import components.DmaAction;
 import components.ppu.Ppu;
 import components.ppu.PpuInfo;
@@ -7,7 +8,6 @@ import disassemble.Disassembler;
 import exceptions.InstructionNotSupportedException;
 import instructions.Instruction;
 import instructions.InstructionInfo;
-import mapper.Mapper;
 
 public class Cpu {
 
@@ -17,16 +17,14 @@ public class Cpu {
 	public static final int RESET_VECTOR = 0xFFFC;
 	public static final int BREAK_VECTOR = 0xFFFE;
 
-	private static final Cpu instance = new Cpu();
+//	private static final Cpu instance = new Cpu();
 
 	/* Interruption state */
 	private boolean interruptionState = false;
 
 	/* PpuInfo */
+	// TODO Stop using it
 	private PpuInfo ppuInfo;
-
-	/* Mapper */
-	private Mapper mapper;
 
 	/* ROM Instructions */
 	private Instruction[] romInstructions;
@@ -34,17 +32,23 @@ public class Cpu {
 	/* Registers & Flags */
 	public CpuInfo cpuInfo = new CpuInfo();
 
-	private Cpu() {
+	private Bus bus;
+	
+	public Cpu(Bus bus) {
+		this.bus = bus;
 	}
-
-	/**
-	 * Sets the mapper for the CPU. Do not change while running
-	 * 
-	 * @param mapper the mapper to use
-	 */
-	public void setMapper(final Mapper mapper) {
-		this.mapper = mapper;
-	}
+	
+//	private Cpu() {
+//	}
+//
+//	/**
+//	 * Sets the mapper for the CPU. Do not change while running
+//	 * 
+//	 * @param mapper the mapper to use
+//	 */
+//	public void setMapper(final Mapper mapper) {
+//		this.mapper = mapper;
+//	}
 
 	/**
 	 * Sets the ROM instructions. This is easy because as the section is in read
@@ -63,7 +67,7 @@ public class Cpu {
 	 * @return a value
 	 */
 	public int fetchMemory(int address) {
-		return mapper.readCpuBus(address);
+		return bus.read(address);
 	}
 
 	/**
@@ -73,8 +77,8 @@ public class Cpu {
 	 * @return an address
 	 */
 	public int fetchAddress(int address) {
-		int lsbFetched = mapper.readCpuBus(address);
-		int msbFetched = mapper.readCpuBus((address + 1) & 0xFFFF);
+		int lsbFetched = bus.read(address);
+		int msbFetched = bus.read((address + 1) & 0xFFFF);
 		return msbFetched << 8 | lsbFetched;
 	}
 
@@ -82,10 +86,10 @@ public class Cpu {
 	 * Stores values in memory
 	 * 
 	 * @param address the address to store the value in the memory
-	 * @param values  the values to store
+	 * @param value  the values to store
 	 */
-	public void storeMemory(int address, int... values) {
-		mapper.writeCpuBus(address, values);
+	public void storeMemory(int address, int value) {
+		bus.write(address, value);
 	}
 
 	/**
@@ -98,7 +102,7 @@ public class Cpu {
 		int SP = cpuInfo.SP;
 
 		// Put value in memory
-		mapper.writeCpuBus(0x100 | SP, value);
+		bus.write(0x100 | SP, value);
 
 		// Decrement SP (wrap around 0x100)
 		cpuInfo.SP = (SP - 1) & 0xFF;
@@ -117,7 +121,7 @@ public class Cpu {
 		SP = (SP + 1) & 0xFF;
 
 		// Put value in memory
-		int value = mapper.readCpuBus(0x100 | SP);
+		int value = bus.read(0x100 | SP);
 
 		// Update SP
 		cpuInfo.SP = SP;
@@ -267,7 +271,7 @@ public class Cpu {
 		ppuInfo = Ppu.getInstance().ppuInfo;
 	}
 
-	public static Cpu getInstance() {
-		return instance;
-	}
+//	public static Cpu getInstance() {
+//		return instance;
+//	}
 }
