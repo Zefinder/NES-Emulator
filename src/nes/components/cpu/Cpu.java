@@ -1,6 +1,6 @@
 package components.cpu;
 
-import components.Bus;
+import components.Cartridge;
 import components.DmaAction;
 import components.ppu.Ppu;
 import components.ppu.PpuInfo;
@@ -20,6 +20,7 @@ public class Cpu {
 //	private static final Cpu instance = new Cpu();
 
 	/* Interruption state */
+	// TODO Move and change to AtomicBoolean
 	private boolean interruptionState = false;
 
 	/* PpuInfo */
@@ -32,10 +33,10 @@ public class Cpu {
 	/* Registers & Flags */
 	public CpuInfo cpuInfo = new CpuInfo();
 
-	private Bus bus;
+	private CpuBus bus;
 	
-	public Cpu(Bus bus) {
-		this.bus = bus;
+	public Cpu() {
+		this.bus = new CpuBus();
 	}
 	
 //	private Cpu() {
@@ -50,6 +51,15 @@ public class Cpu {
 //		this.mapper = mapper;
 //	}
 
+	public void insertCartridge(Cartridge cartridge) {
+		bus.insertCartridge(cartridge);
+		romInstructions = cartridge.getInstructions();
+	}
+	
+	public void removeCartridge() {
+		bus.removeCartridge();
+	}
+	
 	/**
 	 * Sets the ROM instructions. This is easy because as the section is in read
 	 * only, they won't change!

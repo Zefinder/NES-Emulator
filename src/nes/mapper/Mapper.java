@@ -23,11 +23,11 @@ public abstract class Mapper {
 		this.ppuMapper = ppuMapper;
 	}
 
-	public Memory getCpuMapper() {
+	public Memory getCpuBusMemory() {
 		return cpuMapper;
 	}
 
-	public Memory getPpuMapper() {
+	public Memory getPpuBusMemory() {
 		return ppuMapper;
 	}
 

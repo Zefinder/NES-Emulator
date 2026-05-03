@@ -6,6 +6,8 @@ import components.cpu.Cpu;
 
 public class DmaAction implements Runnable {
 
+	// TODO This is a component attached to the Bus!
+	
 	// TODO Documentation
 
 	private static final Cpu cpu = Cpu.getInstance();

@@ -1,10 +1,10 @@
 package components.cpu;
 
 import components.Bus;
+import components.Cartridge;
 import components.Memory;
 import components.MemoryImpl;
 import components.TranslatedAddress;
-import mapper.Mapper;
 
 public class CpuBus extends Bus {
 
@@ -22,14 +22,34 @@ public class CpuBus extends Bus {
 	private final MemoryImpl ppuRegisters;
 	private final MemoryImpl apuRegisters;
 	private final MemoryImpl testModeRegisters;
-	private final Memory cpuMapper;
+	private Memory cpuMapper;
 
-	public CpuBus(Mapper mapper) {
+	private boolean cartridgePresent;
+
+	public CpuBus() {
 		ram = new MemoryImpl(RAM_SIZE);
 		ppuRegisters = new MemoryImpl(PPU_REGISTER_SIZE);
 		apuRegisters = new MemoryImpl(APU_REGISTER_SIZE);
 		testModeRegisters = new MemoryImpl(TEST_MODE_SIZE);
-		cpuMapper = mapper.getCpuMapper();
+		cartridgePresent = false;
+	}
+
+	public void insertCartridge(Cartridge cartridge) {
+		if (cartridgePresent) {
+			// TODO Raise error
+		} else {
+			cpuMapper = cartridge.getCpuBusMemory();
+			cartridgePresent = true;
+		}
+	}
+
+	public void removeCartridge() {
+		if (!cartridgePresent) {
+			// TODO Raise error
+		} else {
+			cpuMapper = null;
+			cartridgePresent = false;
+		}
 	}
 
 	@Override
@@ -40,11 +60,16 @@ public class CpuBus extends Bus {
 			return new TranslatedAddress(ppuRegisters, address & 0b111);
 		} else if (address < TEST_MODE_OFFSET) {
 			return new TranslatedAddress(apuRegisters, address & 0x17);
-		} else if (address < CARTRIDGE_OFFSET){
+		} else if (address < CARTRIDGE_OFFSET) {
 			return new TranslatedAddress(testModeRegisters, address & 0b111);
 		} else {
-			return new TranslatedAddress(cpuMapper, address - CARTRIDGE_OFFSET);
+			if (cartridgePresent) {
+				return new TranslatedAddress(cpuMapper, address - CARTRIDGE_OFFSET);
+			} else {
+				// TODO Return OpenBus
+				return new TranslatedAddress(new MemoryImpl(1), 0);
+			}
 		}
 	}
-	
+
 }
