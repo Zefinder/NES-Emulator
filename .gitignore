@@ -1,1 +1,10 @@
 /bin/
+/target/
+.settings/
+.classpath
+.project
+*.nes
+*.neslst
+*.nesasm
+*.pdf
+*.old
