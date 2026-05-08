@@ -2,7 +2,6 @@ package components.cpu;
 
 import components.Cartridge;
 import components.DmaAction;
-import components.ppu.Ppu;
 import components.ppu.PpuInfo;
 import disassemble.Disassembler;
 import exceptions.InstructionNotSupportedException;
@@ -18,6 +17,8 @@ public class Cpu {
 	public static final int BREAK_VECTOR = 0xFFFE;
 
 //	private static final Cpu instance = new Cpu();
+	
+	private final Disassembler disassembler;
 
 	/* Interruption state */
 	// TODO Move and change to AtomicBoolean
@@ -37,6 +38,7 @@ public class Cpu {
 	
 	public Cpu() {
 		this.bus = new CpuBus();
+		this.disassembler = new Disassembler();
 	}
 	
 //	private Cpu() {
@@ -240,7 +242,6 @@ public class Cpu {
 			// Finally disassemble the instruction (way longer...)
 			// TODO Maybe make it a singleton... But actually never should be here except
 			// special cases
-			Disassembler disassembler = new Disassembler();
 			instruction = disassembler.disassemble(opcode, operand1, operand2);
 		}
 
@@ -272,13 +273,14 @@ public class Cpu {
 	 * </p>
 	 */
 	public void warmUp() {
+		// TODO Change this to not use ppuInfo directly but the bus
 		cpuInfo.A = 0;
 		cpuInfo.X = 0;
 		cpuInfo.Y = 0;
 		cpuInfo.SP = 0xFD;
 		cpuInfo.setP(0x34);
 
-		ppuInfo = Ppu.getInstance().ppuInfo;
+//		ppuInfo = Ppu.getInstance().ppuInfo;
 	}
 
 //	public static Cpu getInstance() {

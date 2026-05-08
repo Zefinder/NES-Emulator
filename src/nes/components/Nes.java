@@ -19,6 +19,7 @@ public class Nes {
 		
 		// Init all components
 		Cpu cpu = new Cpu();
+		Ppu ppu = new Ppu();
 		
 		// Call PPU
 
@@ -32,7 +33,7 @@ public class Nes {
 //		DisassemblyInfo info = disassembler.disassembleFile(nesFile);
 
 //		final Cpu cpu = Cpu.getInstance();
-		final Ppu ppu = Ppu.getInstance();
+//		final Ppu ppu = Ppu.getInstance();
 
 
 

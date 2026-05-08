@@ -18,11 +18,11 @@ public class CpuBus extends Bus {
 	private static final int TEST_MODE_OFFSET = 0x4018;
 	private static final int CARTRIDGE_OFFSET = 0x4020;
 
-	private final MemoryImpl ram;
-	private final MemoryImpl ppuRegisters;
-	private final MemoryImpl apuRegisters;
-	private final MemoryImpl testModeRegisters;
-	private Memory cpuMapper;
+	private final Memory ram;
+	private final Memory ppuRegisters;
+	private final Memory apuRegisters;
+	private final Memory testModeRegisters;
+	private Memory cpuBusMemory;
 
 	private boolean cartridgePresent;
 
@@ -38,7 +38,7 @@ public class CpuBus extends Bus {
 		if (cartridgePresent) {
 			// TODO Raise error
 		} else {
-			cpuMapper = cartridge.getCpuBusMemory();
+			cpuBusMemory = cartridge.getCpuBusMemory();
 			cartridgePresent = true;
 		}
 	}
@@ -47,7 +47,7 @@ public class CpuBus extends Bus {
 		if (!cartridgePresent) {
 			// TODO Raise error
 		} else {
-			cpuMapper = null;
+			cpuBusMemory = null;
 			cartridgePresent = false;
 		}
 	}
@@ -64,7 +64,7 @@ public class CpuBus extends Bus {
 			return new TranslatedAddress(testModeRegisters, address & 0b111);
 		} else {
 			if (cartridgePresent) {
-				return new TranslatedAddress(cpuMapper, address - CARTRIDGE_OFFSET);
+				return new TranslatedAddress(cpuBusMemory, address - CARTRIDGE_OFFSET);
 			} else {
 				// TODO Return OpenBus
 				return new TranslatedAddress(new MemoryImpl(1), 0);

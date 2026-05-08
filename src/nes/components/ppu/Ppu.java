@@ -1,21 +1,20 @@
 package components.ppu;
 
+import components.Cartridge;
 import frame.ScreenPanel;
-import mapper.Mapper;
 
 public class Ppu {
 
-	public final PpuInfo ppuInfo = new PpuInfo();
-	public final int[] oamMemory = new int[0x100];
-
+	private final PpuBus bus;
+	public final PpuInfo ppuInfo;
+	public final int[] oamMemory;
+	
 	/* Frame variables */
 	// Begins in an even frame BUT pre-render will inverse it at cycle 0
 	private int oddFrame = 1;
 	private int scanlineNumber = -1;
 	private int cycleNumber = 0;
 
-	/* Mapper */
-	private Mapper mapper;
 
 	/* Tiles */
 	private Tile currentTile = new Tile();
@@ -34,18 +33,32 @@ public class Ppu {
 	/* Screen linked to the PPU */
 	private ScreenPanel screen;
 
-	private static final Ppu ppu = new Ppu();
+//	private static final Ppu ppu = new Ppu();
 
-	private Ppu() {
+	public Ppu() {
+		this.bus = new PpuBus();
+		this.ppuInfo= new PpuInfo();
+		this.oamMemory = new int[0x100];
+		
+		currentTile = new Tile();
+		nextFirstTile = new Tile();
+		nextSecondTile = new Tile();
+		
+		oamIndex = 0;
+		renderingOAM = new OAM[8];
+		secondaryOAM = new int[0x20];
+		primaryOAMIndex = 0;
+		secondaryOAMIndex = 0;
+		secondaryOAMFull = false;
+		secondaryOAMOverflow = false;
 	}
 
-	/**
-	 * Sets the mapper for the CPU. Do not change while running
-	 * 
-	 * @param mapper the mapper to use
-	 */
-	public void setMapper(Mapper mapper) {
-		this.mapper = mapper;
+	public void insertCartridge(Cartridge cartridge) {
+		bus.insertCartridge(cartridge);
+	}
+
+	public void removeCartridge() {
+		bus.removeCartridge();
 	}
 
 	public void setScreen(ScreenPanel screen) {
@@ -63,7 +76,7 @@ public class Ppu {
 	 * @return a value
 	 */
 	public int fetchMemory(int address) {
-		return mapper.readPpuBus(address);
+		return bus.read(address);
 	}
 
 	/**
@@ -228,7 +241,7 @@ public class Ppu {
 		if (cycleNumber == 0) {
 			oddFrame = 1 - oddFrame;
 		} else if (cycleNumber == 1) {
-			ppu.ppuInfo.setPpuStatus(0);
+			ppuInfo.setPpuStatus(0);
 		} else if (cycleNumber > 320 && cycleNumber < 337) {
 			int cyclePart = (cycleNumber & 0b111);
 			// Here we put for the two next tiles
@@ -328,11 +341,11 @@ public class Ppu {
 					 */
 					if (primaryOAMIndex != 256 && write && !secondaryOAMOverflow) {
 						// If sprite in range, copy in secondary oam
-						if (oamMemory[primaryOAMIndex] == ppu.ppuInfo.getCurrentY()) {
+						if (oamMemory[primaryOAMIndex] == ppuInfo.getCurrentY()) {
 							if (secondaryOAMFull) {
 								secondaryOAMOverflow = true;
 								// Set overflow!
-								ppu.ppuInfo.spriteOverflow = 1;
+								ppuInfo.spriteOverflow = 1;
 							} else {
 								secondaryOAM[secondaryOAMIndex++] = oamMemory[primaryOAMIndex++];
 								secondaryOAM[secondaryOAMIndex++] = oamMemory[primaryOAMIndex++];
@@ -429,8 +442,8 @@ public class Ppu {
 		return 340 + 69 * 341;
 	}
 
-	public static Ppu getInstance() {
-		return ppu;
-	}
-	
+//	public static Ppu getInstance() {
+//		return ppu;
+//	}
+
 }
