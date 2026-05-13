@@ -23,7 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import components.cpu.Cpu;
+import components.Cpu;
 import exceptions.InstructionNotSupportedException;
 import instructions.alu.ADCInstruction;
 import instructions.alu.ANDInstruction;

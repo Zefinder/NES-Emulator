@@ -9,7 +9,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import components.ppu.Ppu;
+import components.Ppu;
 
 public class PaletteDialog extends InfoDialog {
 

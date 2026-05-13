@@ -10,8 +10,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 
-import components.cpu.Cpu;
-import components.ppu.Ppu;
+import components.Cpu;
+import components.Ppu;
 import mapper.Mapper;
 
 public class MemoryDialog extends JDialog {

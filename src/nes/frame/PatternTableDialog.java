@@ -11,7 +11,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
-import components.ppu.Ppu;
+import components.Ppu;
 
 public class PatternTableDialog extends JDialog {
 

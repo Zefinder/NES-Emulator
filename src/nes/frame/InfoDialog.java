@@ -6,10 +6,10 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.JDialog;
 
-import components.cpu.Cpu;
-import components.cpu.CpuInfo;
-import components.ppu.Ppu;
-import components.ppu.PpuInfo;
+import components.Cpu;
+import components.Ppu;
+import components.register.CpuInfo;
+import components.register.PpuInfo;
 
 public abstract class InfoDialog extends JDialog {
 

@@ -1,7 +1,11 @@
-package components.ppu;
+package components;
+
+import components.bus.PpuBus;
 
 public class OAM {
 
+	private final PpuBus bus;
+	
 	// Which tile it is in the patternTable
 	private int tileAddress;
 
@@ -16,7 +20,8 @@ public class OAM {
 	// Which color from palette to choose (for the 8 pixels)
 	private int[] paletteColor = new int[8];
 
-	public OAM(int tile, int spriteSize, int spritePatternTableAddress) {
+	public OAM(PpuBus bus, int tile, int spriteSize, int spritePatternTableAddress) {
+		this.bus = bus;
 		if (spriteSize == 1) {
 			// 8x16 mode
 			tileAddress = (0x1000 * (tile & 0b1));
@@ -38,18 +43,18 @@ public class OAM {
 		flipSpriteVertically = (attribute >> 7) & 0b1;
 	}
 
-	public void fetchLowPatternTable(PpuBus ppuBus) {
+	public void fetchLowPatternTable() {
 		// Low plane
-		int lowPattern = ppuBus.fetchAddress(tileAddress);
+		int lowPattern = bus.fetchAddress(tileAddress);
 		for (int index = 0; index < 8; index++) {
 			paletteColor[7 - index] = lowPattern & 0b1;
 			lowPattern >>= 1;
 		}
 	}
 
-	public void fetchHighPatternTable(PpuBus ppuBus) {
+	public void fetchHighPatternTable() {
 		// High plane (+8)
-		int highPattern = ppuBus.fetchAddress(tileAddress + 8);
+		int highPattern = bus.fetchAddress(tileAddress + 8);
 		for (int index = 0; index < 8; index++) {
 			paletteColor[7 - index] += 2 * (highPattern & 0b1);
 			highPattern >>= 1;

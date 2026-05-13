@@ -15,7 +15,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-import components.ppu.Ppu;
+import components.Ppu;
 
 public class OAMDialog extends JDialog {
 

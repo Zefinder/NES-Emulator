@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 
-import components.cpu.Cpu;
-import components.ppu.Ppu;
+import components.Cpu;
+import components.Ppu;
 import mapper.Mapper;
 import mapper.Mapper0;
 import utils.ScreenPanelTest;

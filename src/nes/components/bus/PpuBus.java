@@ -1,6 +1,5 @@
-package components.ppu;
+package components.bus;
 
-import components.Bus;
 import components.Cartridge;
 import components.Memory;
 import components.MemoryImpl;
@@ -42,6 +41,12 @@ public class PpuBus extends Bus {
 			ppuBusMemory = null;
 			cartridgePresent = false;
 		}
+	}
+	
+	@Override
+	protected boolean checkImpl() {
+		// Not link to another component
+		return true;
 	}
 	
 	@Override

@@ -2,8 +2,8 @@ package frame;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import components.cpu.Cpu;
-import components.ppu.Ppu;
+import components.Cpu;
+import components.Ppu;
 import exceptions.InstructionNotSupportedException;
 
 // This is only for testing purposes

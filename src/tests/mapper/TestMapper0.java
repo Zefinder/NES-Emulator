@@ -6,8 +6,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import components.cpu.Cpu;
-import components.ppu.Ppu;
+import components.Cpu;
+import components.Ppu;
 
 public class TestMapper0 {
 

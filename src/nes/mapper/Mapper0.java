@@ -1,8 +1,8 @@
 package mapper;
 
-import components.Bus;
 import components.MemoryImpl;
 import components.TranslatedAddress;
+import components.bus.Bus;
 
 public class Mapper0 extends Mapper {
 
@@ -42,6 +42,12 @@ public class Mapper0 extends Mapper {
 			}
 		}
 
+		@Override
+		protected boolean checkImpl() {
+			// Not link to another component
+			return true;
+		}
+		
 		@Override
 		protected TranslatedAddress translateAddress(int address) {
 			if (address < WRAM_OFFSET) {

@@ -1,6 +1,8 @@
-package components.ppu;
+package components.register;
 
-public class PpuInfo {
+import components.Component;
+
+public class PpuInfo extends Component {
 
 	/* Registers */
 	/**
@@ -139,5 +141,11 @@ public class PpuInfo {
 	
 	public int getCurrentY() {
 		return (v >> 5) & 0b11111;
+	}
+	
+	@Override
+	protected boolean checkImpl() {
+		// Not link to another component
+		return true;
 	}
 }

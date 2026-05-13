@@ -1,8 +1,8 @@
-package components.cpu;
+package components.register;
 
-import components.DmaAction;
+import components.Component;
 
-public class CpuInfo {
+public class CpuInfo extends Component {
 
 	/* Registers */
 	public int A;
@@ -22,7 +22,6 @@ public class CpuInfo {
 
 	/* DMA */
 	public boolean oamDmaRequested;
-	public DmaAction oamDmaAction;
 
 	public CpuInfo() {
 		this.A = 0;
@@ -54,6 +53,12 @@ public class CpuInfo {
 		B = (P >> 4) & 0b11;
 		V = (P >> 6) & 0b1;
 		N = (P >> 7) & 0b1;
+	}
+	
+	@Override
+	protected boolean checkImpl() {
+		// Not link to another component
+		return true;
 	}
 
 }

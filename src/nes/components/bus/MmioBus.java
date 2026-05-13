@@ -1,60 +1,67 @@
-package components.ppu;
+package components.bus;
 
-import components.Memory;
+import components.NmiFlipFlop;
+import components.TranslatedAddress;
+import components.register.PpuInfo;
 
 /**
  * Not implemented as a bus to save time since all registers are on one address.
  * Also the PPU can access the values directly to save function calls.
  */
-public class MmioBus implements Memory {
-
+public class MmioBus extends Bus {
+	
+	public static final int PPUCTRL_ADDR = 0x2000;
+	public static final int PPUMASK_ADDR = 0x2001;
+	public static final int PPUSTATUS_ADDR = 0x2002;
+	public static final int OAMADDR_ADDR = 0x2003;
+	public static final int OAMDATA_ADDR = 0x2004;
+	public static final int PPUSCROLL_ADDR = 0x2005;
+	public static final int PPUADDR_ADDR = 0x2006;
+	public static final int PPUDATA_ADDR = 0x2007;
+	
 	// PPU Control (0x2000)
-	int baseNametableAddress;
-	int vramAddressIncrement;
-	int spritePatternTableAddress;
-	int backgroundPatternTableAddress;
-	int spriteSize;
-	int ppuMasterSlaveSelect;
-	int generateNmi;
+	public int baseNametableAddress;
+	public int vramAddressIncrement;
+	public int spritePatternTableAddress;
+	public int backgroundPatternTableAddress;
+	public int spriteSize;
+	public int ppuMasterSlaveSelect;
+	public int generateNmi;
 
 	// PPU Mask (0x2001)
-	int greyScale;
-	int showBackgroundInLeftmost;
-	int showSpriteInLeftmost;
-	int showBackground;
-	int showSprites;
-	int emphasizeGreen;
-	int emphasizeRed;
-	int emphasizeBlue;
+	public int greyScale;
+	public int showBackgroundInLeftmost;
+	public int showSpriteInLeftmost;
+	public int showBackground;
+	public int showSprites;
+	public int emphasizeGreen;
+	public int emphasizeRed;
+	public int emphasizeBlue;
 
 	// PPU Status (0x2002)
-	int spriteOverflow;
-	int sprite0Hit;
-	int verticalBlankStart;
+	public int spriteOverflow;
+	public int sprite0Hit;
+	public int verticalBlankStart;
 
 	// PPU OAM Address (0x2003)
-	int ppuOamAddress;
+	public int ppuOamAddress;
 
 	// PPU OAM DATA (0x2004)
-	int ppuOamData;
+	public int ppuOamData;
 
 	// PPU Scroll (0x2005)
-	int ppuScroll;
+	public int ppuScroll;
 
 	// PPU Address (0x2006)
-	int ppuAddress;
+	public int ppuAddress;
 
 	// PPU Data (0x2007)
-	int ppuData;
+	public int ppuData;
 
-	// PPU OAM DMA (0x4014)
-	int ppuOamDma;
+	private PpuInfo ppuInfo;
+	private NmiFlipFlop nmiFlipFlop;
 
-	private final PpuInfo ppuInfo;
-
-	public MmioBus(PpuInfo ppuInfo) {
-		this.ppuInfo = ppuInfo; // Holds a reference for
-
+	public MmioBus() {		
 		this.baseNametableAddress = 0;
 		this.vramAddressIncrement = 0;
 		this.spritePatternTableAddress = 0;
@@ -85,8 +92,14 @@ public class MmioBus implements Memory {
 		this.ppuAddress = 0;
 
 		this.ppuData = 0;
-
-		this.ppuOamDma = 0;
+	}
+	
+	public void setPpuInfo(PpuInfo ppuInfo) {
+		this.ppuInfo = ppuInfo;
+	}
+	
+	public void setNmiFlipFlop(NmiFlipFlop nmiFlipFlop) {
+		this.nmiFlipFlop = nmiFlipFlop;
 	}
 
 	public int getPpuController() {
@@ -102,7 +115,8 @@ public class MmioBus implements Memory {
 		spriteSize = (ppuControl >> 5) & 0b1;
 		ppuMasterSlaveSelect = (ppuControl >> 6) & 0b1;
 		generateNmi = (ppuControl >> 7) & 0b1;
-
+		
+		setNmi();
 		ppuInfo.setPpuController(baseNametableAddress);
 	}
 
@@ -130,6 +144,8 @@ public class MmioBus implements Memory {
 		spriteOverflow = (ppuStatus >> 5) & 0b1;
 		sprite0Hit = (ppuStatus >> 6) & 0b1;
 		verticalBlankStart = (ppuStatus >> 7) & 0b1;
+		
+		setNmi();
 	}
 
 	public void setPpuScroll(int scrollValue) {
@@ -148,6 +164,11 @@ public class MmioBus implements Memory {
 	}
 
 	@Override
+	protected boolean checkImpl() {
+		return ppuInfo != null && nmiFlipFlop != null;
+	}
+	
+	@Override
 	public int read(int address) {
 		switch (address) {
 		case 0:
@@ -159,6 +180,7 @@ public class MmioBus implements Memory {
 			break;
 
 		case 2:
+			// TODO Reading PPU Status is a reset? 
 			return getPpuStatus();
 
 		case 4:
@@ -196,6 +218,7 @@ public class MmioBus implements Memory {
 			break;
 
 		case 4:
+			System.out.println("Set OAMDATA to 0x%02X".formatted(value));
 			ppuOamData = value;
 			break;
 		case 5:
@@ -214,5 +237,14 @@ public class MmioBus implements Memory {
 			break;
 		}
 	}
-
+	
+	@Override
+	protected TranslatedAddress translateAddress(int address) {
+		throw new UnsupportedOperationException("Should never be used since read and write are overriden");
+	}
+	
+	private void setNmi() {
+		nmiFlipFlop.setNmiState(generateNmi == 1 && verticalBlankStart == 1);
+	}
+	
 }

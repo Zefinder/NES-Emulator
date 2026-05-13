@@ -1,34 +1,36 @@
-package components.ppu;
+package components;
 
-import components.Cartridge;
+import components.bus.MmioBus;
+import components.bus.PpuBus;
+import components.register.PpuInfo;
 import frame.ScreenPanel;
 
-public class Ppu {
+public class Ppu extends Component {
 
-	private final PpuBus bus;
-	public final PpuInfo ppuInfo;
+	private PpuBus bus;
+	private MmioBus mmioBus;
+	public PpuInfo ppuInfo;
 	public final int[] oamMemory;
-	
+
 	/* Frame variables */
 	// Begins in an even frame BUT pre-render will inverse it at cycle 0
 	private int oddFrame = 1;
 	private int scanlineNumber = -1;
 	private int cycleNumber = 0;
 
-
 	/* Tiles */
-	private Tile currentTile = new Tile();
-	private Tile nextFirstTile = new Tile();
-	private Tile nextSecondTile = new Tile();
+	private Tile currentTile;
+	private Tile nextFirstTile;
+	private Tile nextSecondTile;
 
 	/* Sprites */
-	private int oamIndex = 0;
-	private OAM[] renderingOAM = new OAM[8];
-	private int[] secondaryOAM = new int[0x20];
-	private int primaryOAMIndex = 0;
-	private int secondaryOAMIndex = 0;
-	private boolean secondaryOAMFull = false;
-	private boolean secondaryOAMOverflow = false;
+	private int oamIndex;
+	private OAM[] renderingOAM;
+	private int[] secondaryOAM;
+	private int primaryOAMIndex;
+	private int secondaryOAMIndex;
+	private boolean secondaryOAMFull;
+	private boolean secondaryOAMOverflow;
 
 	/* Screen linked to the PPU */
 	private ScreenPanel screen;
@@ -36,14 +38,8 @@ public class Ppu {
 //	private static final Ppu ppu = new Ppu();
 
 	public Ppu() {
-		this.bus = new PpuBus();
-		this.ppuInfo= new PpuInfo();
 		this.oamMemory = new int[0x100];
-		
-		currentTile = new Tile();
-		nextFirstTile = new Tile();
-		nextSecondTile = new Tile();
-		
+
 		oamIndex = 0;
 		renderingOAM = new OAM[8];
 		secondaryOAM = new int[0x20];
@@ -53,6 +49,26 @@ public class Ppu {
 		secondaryOAMOverflow = false;
 	}
 
+	public void setBus(PpuBus bus) {
+		this.bus = bus;
+		currentTile = new Tile(bus);
+		nextFirstTile = new Tile(bus);
+		nextSecondTile = new Tile(bus);
+	}
+	
+	public void setMmioBus(MmioBus mmioBus) {
+		this.mmioBus = mmioBus;
+	}
+	
+	public void setPpuInfo(PpuInfo ppuInfo) {
+		this.ppuInfo = ppuInfo;
+	}
+	
+	@Override
+	protected boolean checkImpl() {
+		return bus != null && ppuInfo != null && mmioBus != null;
+	}
+	
 	public void insertCartridge(Cartridge cartridge) {
 		bus.insertCartridge(cartridge);
 	}
@@ -67,6 +83,10 @@ public class Ppu {
 
 	public ScreenPanel getScreen() {
 		return screen;
+	}
+	
+	public MmioBus getMmioBus() {
+		return mmioBus;
 	}
 
 	/**
@@ -170,8 +190,8 @@ public class Ppu {
 		// TODO Make the cycle logic
 
 		int waitCycles = 0;
-		boolean rendering = ppuInfo.showBackgroundInLeftmost + ppuInfo.showBackground + ppuInfo.showSprites
-				+ ppuInfo.showSpriteInLeftmost != 0;
+		boolean rendering = mmioBus.showBackgroundInLeftmost + mmioBus.showBackground + mmioBus.showSprites
+				+ mmioBus.showSpriteInLeftmost != 0;
 		for (long i = 0; i < ticksToCatch; i++) {
 			if (scanlineNumber < 0) {
 				waitCycles = tickPreRendering();
@@ -179,7 +199,7 @@ public class Ppu {
 				// First draw pixels and then tick (to not skip a tile when x = 0)
 				if (rendering && cycleNumber != 0 && cycleNumber <= 256) {
 					// Draw pixel
-					currentTile.drawPixel();
+					currentTile.drawPixel(ppuInfo.x);
 
 					// Update x
 					if (ppuInfo.x == 7) {
@@ -241,7 +261,7 @@ public class Ppu {
 		if (cycleNumber == 0) {
 			oddFrame = 1 - oddFrame;
 		} else if (cycleNumber == 1) {
-			ppuInfo.setPpuStatus(0);
+			mmioBus.setPpuStatus(0);
 		} else if (cycleNumber > 320 && cycleNumber < 337) {
 			int cyclePart = (cycleNumber & 0b111);
 			// Here we put for the two next tiles
@@ -251,7 +271,7 @@ public class Ppu {
 			// Nametable byte fetch
 			if (cyclePart == 1) {
 				// Fine y has been incremented at dot 256
-				tileSelected.setNametableAddress(ppuInfo.v & 0x0FFF, (ppuInfo.v >> 12) & 0b111);
+				tileSelected.setNametableAddress(ppuInfo.v & 0x0FFF, (ppuInfo.v >> 12) & 0b111, ppuInfo.getCurrentY());
 			}
 			// Attribute table byte fetch
 			else if (cyclePart == 3) {
@@ -293,7 +313,7 @@ public class Ppu {
 			// Load next tiles for rendering
 			currentTile = nextFirstTile;
 			nextFirstTile = nextSecondTile;
-			nextSecondTile = new Tile();
+			nextSecondTile = new Tile(bus);
 		} else if (cycleNumber < 257) {
 			// Motion in 5 parts for fetching
 			waitCycles = 2;
@@ -301,12 +321,12 @@ public class Ppu {
 			// Time to switch tiles
 			if (cyclePart == 0) {
 				nextFirstTile = nextSecondTile;
-				nextSecondTile = new Tile();
+				nextSecondTile = new Tile(bus);
 				waitCycles = 1;
 			}
 			// Nametable byte fetch
 			else if (cyclePart == 1) {
-				nextSecondTile.setNametableAddress(ppuInfo.v & 0x0FFF, ppuInfo.v >> 12);
+				nextSecondTile.setNametableAddress(ppuInfo.v & 0x0FFF, ppuInfo.v >> 12, ppuInfo.getCurrentY());
 			}
 			// Attribute table byte fetch
 			else if (cyclePart == 3) {
@@ -345,7 +365,7 @@ public class Ppu {
 							if (secondaryOAMFull) {
 								secondaryOAMOverflow = true;
 								// Set overflow!
-								ppuInfo.spriteOverflow = 1;
+								mmioBus.spriteOverflow = 1;
 							} else {
 								secondaryOAM[secondaryOAMIndex++] = oamMemory[primaryOAMIndex++];
 								secondaryOAM[secondaryOAMIndex++] = oamMemory[primaryOAMIndex++];
@@ -370,7 +390,8 @@ public class Ppu {
 			// X and attributes for sprite fetch
 			if (cyclePart == 3) {
 				// Init with tile
-				OAM sprite = new OAM(secondaryOAM[spriteNumber + 1]);
+				OAM sprite = new OAM(bus, secondaryOAM[spriteNumber + 1], mmioBus.spriteSize,
+						mmioBus.spritePatternTableAddress);
 				sprite.setX(secondaryOAM[spriteNumber + 3]);
 				sprite.setAttribute(secondaryOAM[spriteNumber + 2]);
 				renderingOAM[spriteNumber] = sprite;
@@ -395,7 +416,7 @@ public class Ppu {
 			// Nametable byte fetch
 			if (cyclePart == 1) {
 				// Fine y has been incremented at dot 256
-				tileSelected.setNametableAddress(ppuInfo.v & 0x0FFF, ppuInfo.v >> 12);
+				tileSelected.setNametableAddress(ppuInfo.v & 0x0FFF, ppuInfo.v >> 12, ppuInfo.getCurrentY());
 			}
 			// Attribute table byte fetch
 			else if (cyclePart == 3) {
@@ -434,7 +455,7 @@ public class Ppu {
 		// Raise NMI if set in PPU Controller (TODO Actually if generateNMI and NMI set,
 		// interrupt... Not only in that case... )
 		if (cycleNumber == 1 && scanlineNumber == 240) {
-			ppuInfo.verticalBlankStart = 1;
+			mmioBus.verticalBlankStart = 1;
 		}
 
 		// This happens on the second cycle, so we wait for the remaining 340 cycles and

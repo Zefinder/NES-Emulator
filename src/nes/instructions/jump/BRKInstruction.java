@@ -1,6 +1,6 @@
 package instructions.jump;
 
-import components.cpu.Cpu;
+import components.Cpu;
 import exceptions.InstructionNotSupportedException;
 import instructions.AddressingMode;
 import instructions.Instruction;

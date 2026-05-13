@@ -1,6 +1,10 @@
-package components;
+package components.bus;
 
-public abstract class Bus implements Memory {
+import components.Component;
+import components.Memory;
+import components.TranslatedAddress;
+
+public abstract class Bus extends Component implements Memory {
 	
 //	private final int busSize;
 //	public final int[] busContent;

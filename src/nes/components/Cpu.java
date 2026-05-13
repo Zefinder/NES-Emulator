@@ -1,14 +1,10 @@
-package components.cpu;
+package components;
 
-import components.Cartridge;
-import components.DmaAction;
-import components.ppu.PpuInfo;
-import disassemble.Disassembler;
-import exceptions.InstructionNotSupportedException;
+import components.bus.CpuBus;
+import components.register.CpuInfo;
 import instructions.Instruction;
-import instructions.InstructionInfo;
 
-public class Cpu {
+public class Cpu extends Component {
 
 	// TODO Redo architecture (mapper not for CPU RAM, deal with the BUS!)
 	
@@ -18,27 +14,44 @@ public class Cpu {
 
 //	private static final Cpu instance = new Cpu();
 	
-	private final Disassembler disassembler;
+//	private final Disassembler disassembler;
 
 	/* Interruption state */
 	// TODO Move and change to AtomicBoolean
 	private boolean interruptionState = false;
 
 	/* PpuInfo */
-	// TODO Stop using it
-	private PpuInfo ppuInfo;
+//	// TODO Stop using it
+//	private PpuInfo ppuInfo;
 
 	/* ROM Instructions */
 	private Instruction[] romInstructions;
 
 	/* Registers & Flags */
-	public CpuInfo cpuInfo = new CpuInfo();
+	private CpuInfo cpuInfo = new CpuInfo();
+	private NmiFlipFlop nmiFlipFlop;
 
 	private CpuBus bus;
 	
 	public Cpu() {
-		this.bus = new CpuBus();
-		this.disassembler = new Disassembler();
+//		this.disassembler = new Disassembler();
+	}
+	
+	public void setCpuInfo(CpuInfo cpuInfo) {
+		this.cpuInfo = cpuInfo;
+	}
+	
+	public void setBus(CpuBus bus) {
+		this.bus = bus;
+	}
+	
+	public void setNmiFlipFlop(NmiFlipFlop nmiFlipFlop) {
+		this.nmiFlipFlop = nmiFlipFlop;
+	}
+	
+	@Override
+	protected boolean checkImpl() {
+		return cpuInfo != null && bus != null && nmiFlipFlop != null;
 	}
 	
 //	private Cpu() {
@@ -78,8 +91,14 @@ public class Cpu {
 	 * @param address the address to look for the value
 	 * @return a value
 	 */
+	// TODO Useless?
 	public int fetchMemory(int address) {
 		return bus.read(address);
+	}
+	
+	// TODO Remove
+	public void writeMemory(int address, int value) {
+		bus.write(address, value);
 	}
 
 	/**
@@ -181,109 +200,109 @@ public class Cpu {
 	 * @throws InstructionNotSupportedException if an instruction is setup with an
 	 *                                          unsupported addressing mode
 	 */
-	public int tick() throws InstructionNotSupportedException {
-		// Check if NMI
-		if (cpuInfo.I == 1 && !interruptionState && ppuInfo.generateNmi == 1 && ppuInfo.verticalBlankStart == 1) {
-			interruptionState = true;
-			int address = (cpuInfo.PC - 1) & 0xFFFF;
-			push(address >> 8); // MSB
-			push(address & 0xFF); // LSB
-
-			// Push flags
-			push(cpuInfo.getP());
-
-			// Load PC with address at 0xFFFA
-			cpuInfo.PC = fetchAddress(Cpu.NMI_VECTOR) & 0xFFFF;
-
-			return 7;
-		}
-		
-		// Check if OAM DMA
-		if (cpuInfo.oamDmaRequested) {
-			cpuInfo.oamDmaRequested = false;
-			DmaAction dmaAction = cpuInfo.oamDmaAction;
-			
-			// Launch action
-			dmaAction.startDma();
-			
-			// Return the cycle taken for DMA
-			return dmaAction.getBlockingTime();
-		}
-
-		// Get the instruction
-		Instruction instruction;
-		if (cpuInfo.PC >= 0x8000) {
-			// If in the ROM it's great, there is an array for that!
-			instruction = romInstructions[cpuInfo.PC - 0x8000];
-
-		} else {
-			System.out.println("Instruction not in ROM!");
-
-			// Well we need to disassemble
-			// We need to get the number of bytes we will need
-			int opcode = fetchMemory(cpuInfo.PC);
-			int byteNumber = InstructionInfo.getInstance().getByteNumberFromOpcode(opcode);
-
-			// We declare operands and use the byte number to fetch them if needed (we don't
-			// want to provoke a mapper secret sauce if not needed...
-			int operand1 = -1;
-			int operand2 = -1;
-
-			// Two bytes
-			if (byteNumber >= 2) {
-				operand1 = fetchMemory(cpuInfo.PC + 1);
-			}
-
-			// Three bytes
-			if (byteNumber == 3) {
-				operand2 = fetchMemory(cpuInfo.PC + 2);
-			}
-
-			// Finally disassemble the instruction (way longer...)
-			// TODO Maybe make it a singleton... But actually never should be here except
-			// special cases
-			instruction = disassembler.disassemble(opcode, operand1, operand2);
-		}
-
-		// Execute the instruction
-		instruction.execute();
-
-		// Get waiting cycles
-		int cycles = instruction.getCycles();
-
-		// Increment PC by the byte number of the instruction
-		cpuInfo.PC = (cpuInfo.PC + instruction.getByteNumber()) & 0xFFFF;
-
-		// Return the waiting cycles
-		return cycles;
-	}
-
-	/**
-	 * <p>
-	 * This method updates everything to warp up the CPU. It includes:
-	 * 
-	 * <ul>
-	 * <li>Setting up A, X and Y to 0
-	 * <li>Setting up SP to 0xFD
-	 * <li>Setting up P to 0x34
-	 * <li>Setting up APU (TODO)
-	 * </ul>
-	 * 
-	 * PC initialization is done by the mapper itself
-	 * </p>
-	 */
-	public void warmUp() {
-		// TODO Change this to not use ppuInfo directly but the bus
-		cpuInfo.A = 0;
-		cpuInfo.X = 0;
-		cpuInfo.Y = 0;
-		cpuInfo.SP = 0xFD;
-		cpuInfo.setP(0x34);
-
-//		ppuInfo = Ppu.getInstance().ppuInfo;
-	}
-
-//	public static Cpu getInstance() {
-//		return instance;
+//	public int tick() throws InstructionNotSupportedException {
+//		// Check if NMI
+//		if (cpuInfo.I == 1 && !interruptionState && bus.isNmi()) {
+//			interruptionState = true;
+//			int address = (cpuInfo.PC - 1) & 0xFFFF;
+//			push(address >> 8); // MSB
+//			push(address & 0xFF); // LSB
+//
+//			// Push flags
+//			push(cpuInfo.getP());
+//
+//			// Load PC with address at 0xFFFA
+//			cpuInfo.PC = fetchAddress(Cpu.NMI_VECTOR) & 0xFFFF;
+//
+//			return 7;
+//		}
+//		
+//		// Check if OAM DMA
+//		if (cpuInfo.oamDmaRequested) {
+//			cpuInfo.oamDmaRequested = false;
+//			DmaAction dmaAction = cpuInfo.oamDmaAction;
+//			
+//			// Launch action
+//			dmaAction.startDma();
+//			
+//			// Return the cycle taken for DMA
+//			return dmaAction.getBlockingTime();
+//		}
+//
+//		// Get the instruction
+//		Instruction instruction;
+//		if (cpuInfo.PC >= 0x8000) {
+//			// If in the ROM it's great, there is an array for that!
+//			instruction = romInstructions[cpuInfo.PC - 0x8000];
+//
+//		} else {
+//			System.out.println("Instruction not in ROM!");
+//
+//			// Well we need to disassemble
+//			// We need to get the number of bytes we will need
+//			int opcode = fetchMemory(cpuInfo.PC);
+//			int byteNumber = InstructionInfo.getInstance().getByteNumberFromOpcode(opcode);
+//
+//			// We declare operands and use the byte number to fetch them if needed (we don't
+//			// want to provoke a mapper secret sauce if not needed...
+//			int operand1 = -1;
+//			int operand2 = -1;
+//
+//			// Two bytes
+//			if (byteNumber >= 2) {
+//				operand1 = fetchMemory(cpuInfo.PC + 1);
+//			}
+//
+//			// Three bytes
+//			if (byteNumber == 3) {
+//				operand2 = fetchMemory(cpuInfo.PC + 2);
+//			}
+//
+//			// Finally disassemble the instruction (way longer...)
+//			// TODO Maybe make it a singleton... But actually never should be here except
+//			// special cases
+//			instruction = disassembler.disassemble(opcode, operand1, operand2);
+//		}
+//
+//		// Execute the instruction
+//		instruction.execute();
+//
+//		// Get waiting cycles
+//		int cycles = instruction.getCycles();
+//
+//		// Increment PC by the byte number of the instruction
+//		cpuInfo.PC = (cpuInfo.PC + instruction.getByteNumber()) & 0xFFFF;
+//
+//		// Return the waiting cycles
+//		return cycles;
 //	}
+//
+//	/**
+//	 * <p>
+//	 * This method updates everything to warp up the CPU. It includes:
+//	 * 
+//	 * <ul>
+//	 * <li>Setting up A, X and Y to 0
+//	 * <li>Setting up SP to 0xFD
+//	 * <li>Setting up P to 0x34
+//	 * <li>Setting up APU (TODO)
+//	 * </ul>
+//	 * 
+//	 * PC initialization is done by the mapper itself
+//	 * </p>
+//	 */
+//	public void warmUp() {
+//		// TODO Change this to not use ppuInfo directly but the bus
+//		cpuInfo.A = 0;
+//		cpuInfo.X = 0;
+//		cpuInfo.Y = 0;
+//		cpuInfo.SP = 0xFD;
+//		cpuInfo.setP(0x34);
+//
+////		ppuInfo = Ppu.getInstance().ppuInfo;
+//	}
+//
+////	public static Cpu getInstance() {
+////		return instance;
+////	}
 }

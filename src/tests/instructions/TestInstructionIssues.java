@@ -5,9 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import components.Cpu;
+
 import static instructions.AddressingMode.*;
 
-import components.cpu.Cpu;
 import exceptions.InstructionNotSupportedException;
 import instructions.alu.ADCInstruction;
 import instructions.alu.DEXInstruction;
