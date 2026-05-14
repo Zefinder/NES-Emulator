@@ -2,14 +2,14 @@ package components.bus;
 
 import components.NmiFlipFlop;
 import components.TranslatedAddress;
-import components.register.PpuInfo;
+import components.register.PpuRegisters;
 
 /**
  * Not implemented as a bus to save time since all registers are on one address.
  * Also the PPU can access the values directly to save function calls.
  */
 public class MmioBus extends Bus {
-	
+
 	public static final int PPUCTRL_ADDR = 0x2000;
 	public static final int PPUMASK_ADDR = 0x2001;
 	public static final int PPUSTATUS_ADDR = 0x2002;
@@ -18,7 +18,7 @@ public class MmioBus extends Bus {
 	public static final int PPUSCROLL_ADDR = 0x2005;
 	public static final int PPUADDR_ADDR = 0x2006;
 	public static final int PPUDATA_ADDR = 0x2007;
-	
+
 	// PPU Control (0x2000)
 	public int baseNametableAddress;
 	public int vramAddressIncrement;
@@ -56,12 +56,14 @@ public class MmioBus extends Bus {
 	public int ppuAddress;
 
 	// PPU Data (0x2007)
+	private int ppuDataBuffer;
 	public int ppuData;
 
-	private PpuInfo ppuInfo;
+	private PpuRegisters ppuRegisters;
+	private PpuBus ppuBus;
 	private NmiFlipFlop nmiFlipFlop;
 
-	public MmioBus() {		
+	public MmioBus() {
 		this.baseNametableAddress = 0;
 		this.vramAddressIncrement = 0;
 		this.spritePatternTableAddress = 0;
@@ -91,13 +93,18 @@ public class MmioBus extends Bus {
 
 		this.ppuAddress = 0;
 
+		this.ppuDataBuffer = 0;
 		this.ppuData = 0;
 	}
-	
-	public void setPpuInfo(PpuInfo ppuInfo) {
-		this.ppuInfo = ppuInfo;
+
+	public void setPpuRegisters(PpuRegisters ppuRegisters) {
+		this.ppuRegisters = ppuRegisters;
 	}
-	
+
+	public void setPpuBus(PpuBus ppuBus) {
+		this.ppuBus = ppuBus;
+	}
+
 	public void setNmiFlipFlop(NmiFlipFlop nmiFlipFlop) {
 		this.nmiFlipFlop = nmiFlipFlop;
 	}
@@ -115,9 +122,9 @@ public class MmioBus extends Bus {
 		spriteSize = (ppuControl >> 5) & 0b1;
 		ppuMasterSlaveSelect = (ppuControl >> 6) & 0b1;
 		generateNmi = (ppuControl >> 7) & 0b1;
-		
+
 		setNmi();
-		ppuInfo.setPpuController(baseNametableAddress);
+		ppuRegisters.setPpuController(baseNametableAddress);
 	}
 
 	public int getPpuMask() {
@@ -137,114 +144,123 @@ public class MmioBus extends Bus {
 	}
 
 	public int getPpuStatus() {
-		return verticalBlankStart << 7 | sprite0Hit << 6 | spriteOverflow << 5;
+		int value = verticalBlankStart << 7 | sprite0Hit << 6 | spriteOverflow << 5;
+
+		// Reset vertical blank and address latch used by PPU Scroll and PPU Address
+		verticalBlankStart = 0;
+		ppuRegisters.w = 0;
+
+		openBus = (openBus & 0b00011111) | value;
+
+		return value;
 	}
 
 	public void setPpuStatus(int ppuStatus) {
 		spriteOverflow = (ppuStatus >> 5) & 0b1;
 		sprite0Hit = (ppuStatus >> 6) & 0b1;
 		verticalBlankStart = (ppuStatus >> 7) & 0b1;
-		
+
 		setNmi();
 	}
 
 	public void setPpuScroll(int scrollValue) {
-		ppuInfo.setPpuScroll(scrollValue);
-		if (ppuInfo.w == 0) { // w has been reset after calling setPpuScroll
-			// Update PPU Scroll
-			ppuScroll = ppuInfo.t;
-		}
+		ppuRegisters.setPpuScroll(scrollValue);
+		
+		// PPU Scroll is only the last one set
+		ppuScroll = openBus = scrollValue;
 	}
 
 	public void setPpuAddress(int addressValue) {
-		ppuInfo.setPpuAddress(addressValue);
-		if (ppuInfo.w == 0) {
-			ppuAddress = ppuInfo.t; // w has been reset after calling setPpuAddress
-		}
+		ppuRegisters.setPpuAddress(addressValue);
+		
+		// PPU Address is only the last one set
+		ppuAddress = openBus = addressValue;
+	}
+
+	public int getOamData() {
+		// Don't forget to set openbus
+		return (openBus = ppuOamData);
+	}
+
+	public int getPpuData() {
+		// Get value from buffer
+		ppuData = openBus = ppuDataBuffer;
+
+		// Increment PPU address register using the VRAM address increment flag
+		ppuRegisters.t = (ppuRegisters.t + 1 + 31 * vramAddressIncrement) & 0x3FFF;
+
+		// Get value from bus to buffer
+		ppuDataBuffer = ppuBus.read(ppuRegisters.t);
+
+		return ppuData;
+	}
+
+	public void setOamAddress(int value) {
+		// Don't forget openbus
+		ppuOamAddress = openBus = value;
+
+		// Eager OAM Data update for read
+		ppuOamData = ppuRegisters.oamMemory[value];
+	}
+
+	public void setOamData(int value) {
+		// Don't forget openbus
+		ppuOamData = openBus = value;
+
+		// Update OAM memory
+		ppuRegisters.oamMemory[ppuOamAddress] = value;
+
+		// Increment 0x2003 register
+		ppuOamAddress = (ppuOamAddress + 1) & 0xFF;
+	}
+
+	public void setPpuData(int value) {
+		// Set PPU Data here does not affect anything since there is a read buffer
+		ppuData = openBus = value;
+
+		// Write to PPU memory
+		ppuBus.write(ppuRegisters.t, value);
+
+		// Increment PPU Address
+		ppuAddress = (ppuRegisters.t + 1 + 31 * vramAddressIncrement) & 0x3FFF;
 	}
 
 	@Override
 	protected boolean checkImpl() {
-		return ppuInfo != null && nmiFlipFlop != null;
+		return ppuRegisters != null && ppuBus != null && nmiFlipFlop != null;
 	}
-	
+
 	@Override
 	public int read(int address) {
-		switch (address) {
-		case 0:
-		case 1:
-		case 3:
-		case 5:
-		case 6:
-			// TODO Openbus
-			break;
-
-		case 2:
-			// TODO Reading PPU Status is a reset? 
-			return getPpuStatus();
-
-		case 4:
-			return ppuOamData;
-
-		case 7:
-			return ppuData;
-
-		default:
-			// TODO Raise error
-			break;
-		}
-
-		return 0;
+		return switch (address) {
+		case 2 -> getPpuStatus();
+		case 4 -> getOamData();
+		case 7 -> getPpuData();
+		default -> openBus;
+		};
 	}
 
-	// TODO Verify all writes (especially ppu data)
 	@Override
 	public void write(int address, int value) {
 		switch (address) {
-		case 0:
-			setPpuController(value);
-			break;
-
-		case 1:
-			setPpuMask(value);
-			break;
-
-		case 2:
-			// TODO Openbus
-			break;
-
-		case 3:
-			ppuOamAddress = value;
-			break;
-
-		case 4:
-			System.out.println("Set OAMDATA to 0x%02X".formatted(value));
-			ppuOamData = value;
-			break;
-		case 5:
-			setPpuScroll(value);
-			break;
-
-		case 6:
-			setPpuAddress(address);
-			break;
-			
-		case 7:
-			ppuData = value;
-
-		default:
-			// TODO Raise error
-			break;
+		case 0 -> setPpuController(value);
+		case 1 -> setPpuMask(value);
+		case 3 -> setOamAddress(value);
+		case 4 -> setOamData(value);
+		case 5 -> setPpuScroll(value);
+		case 6 -> setPpuAddress(value);
+		case 7 -> setPpuData(value);
+		default -> openBus = value; // Should never happen
 		}
 	}
-	
+
 	@Override
 	protected TranslatedAddress translateAddress(int address) {
 		throw new UnsupportedOperationException("Should never be used since read and write are overriden");
 	}
-	
+
 	private void setNmi() {
 		nmiFlipFlop.setNmiState(generateNmi == 1 && verticalBlankStart == 1);
 	}
-	
+
 }

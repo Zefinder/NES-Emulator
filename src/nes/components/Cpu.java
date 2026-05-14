@@ -1,7 +1,7 @@
 package components;
 
 import components.bus.CpuBus;
-import components.register.CpuInfo;
+import components.register.CpuRegisters;
 import instructions.Instruction;
 
 public class Cpu extends Component {
@@ -28,7 +28,7 @@ public class Cpu extends Component {
 	private Instruction[] romInstructions;
 
 	/* Registers & Flags */
-	private CpuInfo cpuInfo = new CpuInfo();
+	private CpuRegisters cpuRegisters = new CpuRegisters();
 	private NmiFlipFlop nmiFlipFlop;
 
 	private CpuBus bus;
@@ -37,8 +37,8 @@ public class Cpu extends Component {
 //		this.disassembler = new Disassembler();
 	}
 	
-	public void setCpuInfo(CpuInfo cpuInfo) {
-		this.cpuInfo = cpuInfo;
+	public void setCpuRegisters(CpuRegisters cpuRegisters) {
+		this.cpuRegisters = cpuRegisters;
 	}
 	
 	public void setBus(CpuBus bus) {
@@ -51,7 +51,7 @@ public class Cpu extends Component {
 	
 	@Override
 	protected boolean checkImpl() {
-		return cpuInfo != null && bus != null && nmiFlipFlop != null;
+		return cpuRegisters != null && bus != null && nmiFlipFlop != null;
 	}
 	
 //	private Cpu() {
@@ -130,13 +130,13 @@ public class Cpu extends Component {
 	 */
 	public void push(int value) {
 		// Remember that SP points on nothing
-		int SP = cpuInfo.SP;
+		int SP = cpuRegisters.SP;
 
 		// Put value in memory
 		bus.write(0x100 | SP, value);
 
 		// Decrement SP (wrap around 0x100)
-		cpuInfo.SP = (SP - 1) & 0xFF;
+		cpuRegisters.SP = (SP - 1) & 0xFF;
 	}
 
 	/**
@@ -146,7 +146,7 @@ public class Cpu extends Component {
 	 */
 	public int pop() {
 		// Remember that SP points on nothing
-		int SP = cpuInfo.SP;
+		int SP = cpuRegisters.SP;
 
 		// Increment SP (wrap around 0x100)
 		SP = (SP + 1) & 0xFF;
@@ -155,7 +155,7 @@ public class Cpu extends Component {
 		int value = bus.read(0x100 | SP);
 
 		// Update SP
-		cpuInfo.SP = SP;
+		cpuRegisters.SP = SP;
 
 		return value;
 	}

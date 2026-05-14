@@ -2,7 +2,7 @@ package components.register;
 
 import components.Component;
 
-public class CpuInfo extends Component {
+public class CpuRegisters extends Component {
 
 	/* Registers */
 	public int A;
@@ -23,7 +23,7 @@ public class CpuInfo extends Component {
 	/* DMA */
 	public boolean oamDmaRequested;
 
-	public CpuInfo() {
+	public CpuRegisters() {
 		this.A = 0;
 		this.X = 0;
 		this.Y = 0;

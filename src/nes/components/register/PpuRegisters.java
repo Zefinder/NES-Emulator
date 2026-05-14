@@ -2,7 +2,7 @@ package components.register;
 
 import components.Component;
 
-public class PpuInfo extends Component {
+public class PpuRegisters extends Component {
 
 	/* Registers */
 	/**
@@ -38,12 +38,17 @@ public class PpuInfo extends Component {
 	public int tileColumn;
 	public int tileRow;
 	public int patternTableHalf;
+	
+	// Oam memory is an internal memory, put with registers for now
+	public int oamMemory[];
 
-	public PpuInfo() {
+	public PpuRegisters() {
 		this.v = 0;
 		this.t = 0;
 		this.x = 0;
 		this.w = 0;
+		
+		this.oamMemory = new int[0x100];
 	}
 
 	public void setPpuController(int baseNametableAddress) {
@@ -82,7 +87,7 @@ public class PpuInfo extends Component {
 		// If w is 0 then put in t
 		if (w == 0) {
 			// Reset last byte and update (two last bits ignored)
-			t &= ~0xFF00;
+			t &= ~0x3F00;
 			t |= (addressValue & 0b111111) << 8;
 		} else {
 			// Reset first byte and update

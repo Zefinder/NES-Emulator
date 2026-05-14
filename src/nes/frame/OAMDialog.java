@@ -46,8 +46,8 @@ public class OAMDialog extends JDialog {
 		
 		int[] oamMemory = ppu.oamMemory;
 		int baseAddress = -1;
-		if (ppu.ppuInfo.spriteSize == 0) {
-			baseAddress = 0x1000 * ppu.ppuInfo.spritePatternTableAddress;
+		if (ppu.ppuRegisters.spriteSize == 0) {
+			baseAddress = 0x1000 * ppu.ppuRegisters.spritePatternTableAddress;
 		}
 		
 		for (int spriteNumber = 0; spriteNumber < 64; spriteNumber++) {

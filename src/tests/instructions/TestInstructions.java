@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import components.Cpu;
-import components.register.CpuInfo;
+import components.register.CpuRegisters;
 import exceptions.InstructionNotSupportedException;
 import instructions.alu.ADCInstruction;
 import instructions.alu.ANDInstruction;
@@ -287,7 +287,7 @@ class TestInstructions {
 		 * Used by instructions like ASL
 		 */
 		private Collection<DynamicTest> getTestsAluInstructionAccumulator(AluInstruction instruction,
-				Consumer<CpuInfo> flagSet, IntFunction<Integer> function, IntFunction<Integer> carryEvaluation) {
+				Consumer<CpuRegisters> flagSet, IntFunction<Integer> function, IntFunction<Integer> carryEvaluation) {
 			List<DynamicTest> tests = new ArrayList<DynamicTest>();
 
 			for (int operand1 = 0; operand1 <= 0xFF; operand1++) {
@@ -586,7 +586,7 @@ class TestInstructions {
 	class TestBranchInstructions {
 
 		private Collection<DynamicTest> generateTestsBranchInstruction(BranchInstruction instruction,
-				Consumer<CpuInfo> branchCondition, Consumer<CpuInfo> nonBranchCondition, int PC) {
+				Consumer<CpuRegisters> branchCondition, Consumer<CpuRegisters> nonBranchCondition, int PC) {
 			List<DynamicTest> tests = new ArrayList<DynamicTest>();
 
 			for (int offset = 0; offset <= 0xFF; offset++) {
@@ -650,7 +650,7 @@ class TestInstructions {
 		 * @param nonBranchCondition the function that will disable branching
 		 */
 		private Collection<DynamicTest> getTestsBranchInstruction(BranchInstruction instruction,
-				Consumer<CpuInfo> branchCondition, Consumer<CpuInfo> nonBranchCondition) {
+				Consumer<CpuRegisters> branchCondition, Consumer<CpuRegisters> nonBranchCondition) {
 			List<DynamicTest> tests = new ArrayList<DynamicTest>();
 			tests.addAll(generateTestsBranchInstruction(instruction, branchCondition, nonBranchCondition, 0x0000));
 			tests.addAll(generateTestsBranchInstruction(instruction, branchCondition, nonBranchCondition, 0x8000));

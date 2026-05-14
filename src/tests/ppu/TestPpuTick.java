@@ -123,36 +123,36 @@ public class TestPpuTick {
 	void testPreRenderScanlineNoRender() {
 		// Cycles 280 to 304: copy vertical position of t to v IF RENDERING
 		for (int cycleNumber = 0; cycleNumber <= 340; cycleNumber++) {
-			ppu.ppuInfo.t = 0x7FFF;
-			ppu.ppuInfo.v = 0;
-			ppu.ppuInfo.setPpuStatus(0b11100000);
+			ppu.ppuRegisters.t = 0x7FFF;
+			ppu.ppuRegisters.v = 0;
+			ppu.ppuRegisters.setPpuStatus(0b11100000);
 
 			ppu.tick(1);
 
 			// Cycle 1 resets PPU Status
 			if (cycleNumber == 1) {
-				assertEquals(0, ppu.ppuInfo.getPpuStatus());
+				assertEquals(0, ppu.ppuRegisters.getPpuStatus());
 			}
 
 			// Cycle 256 increment v if rendering enabled (no)
 			if (cycleNumber == 256) {
-				assertEquals(0, ppu.ppuInfo.v, "V should not be incremented since rendering disabled (Y)");
+				assertEquals(0, ppu.ppuRegisters.v, "V should not be incremented since rendering disabled (Y)");
 			}
 
 			// Cycle 257 copies horizontal t to v if rendering enabled (no)
 			if (cycleNumber == 257) {
-				assertEquals(0, ppu.ppuInfo.v, "V should not be updated from t since rendering disabled (horizontal)");
+				assertEquals(0, ppu.ppuRegisters.v, "V should not be updated from t since rendering disabled (horizontal)");
 			}
 
 			// Cycles 280 to 304 copies vertical t to v if rendering enabled (no)
 			if (cycleNumber >= 280 && cycleNumber <= 304) {
-				assertEquals(0, ppu.ppuInfo.v, "V should not be updated from t since rendering disabled (vertical)");
+				assertEquals(0, ppu.ppuRegisters.v, "V should not be updated from t since rendering disabled (vertical)");
 			}
 
 			// Every 8 cycles from 8 to 256 plus 328 and 336, increment coarse X from v v if
 			// rendering enabled (no)
 			if ((cycleNumber & 0b111) == 0 && ((cycleNumber >= 8 && cycleNumber <= 256) || cycleNumber >= 328)) {
-				assertEquals(0, ppu.ppuInfo.v, "V should not be incremented since rendering disabled (coarse X)");
+				assertEquals(0, ppu.ppuRegisters.v, "V should not be incremented since rendering disabled (coarse X)");
 			}
 
 			// Cycles 321 to 336 is fetching, but not possible to verify it... (render
@@ -165,7 +165,7 @@ public class TestPpuTick {
 	void testRenderScanlineNoRender() {
 		// No rendering so just verify that the screen is blank at the end of the
 		// scanlines
-		ppu.ppuInfo.v = 0;
+		ppu.ppuRegisters.v = 0;
 
 		// 239 lines
 		for (int scanline = 0; scanline <= 238; scanline++) {
@@ -175,20 +175,20 @@ public class TestPpuTick {
 
 				// Cycle 256 increment v if rendering enabled (no)
 				if (cycleNumber == 256) {
-					assertEquals(0, ppu.ppuInfo.v, "V should not be incremented since rendering disabled (Y)");
+					assertEquals(0, ppu.ppuRegisters.v, "V should not be incremented since rendering disabled (Y)");
 				}
 
 				// Cycle 257 copies horizontal t to v if rendering enabled (no)
 				if (cycleNumber == 257) {
-					ppu.ppuInfo.t = 0x7FFF;
-					assertEquals(0, ppu.ppuInfo.v,
+					ppu.ppuRegisters.t = 0x7FFF;
+					assertEquals(0, ppu.ppuRegisters.v,
 							"V should not be updated from t since rendering disabled (horizontal)");
 				}
 
 				// Every 8 cycles from 8 to 256 plus 328 and 336, increment coarse X from v v if
 				// rendering enabled (no)
 				if ((cycleNumber & 0b111) == 0 && ((cycleNumber >= 8 && cycleNumber <= 256) || cycleNumber >= 328)) {
-					assertEquals(0, ppu.ppuInfo.v, "V should not be incremented since rendering disabled (coarse X)");
+					assertEquals(0, ppu.ppuRegisters.v, "V should not be incremented since rendering disabled (coarse X)");
 				}
 			}
 		}
@@ -201,12 +201,12 @@ public class TestPpuTick {
 	@Order(3)
 	void testPostRenderScanlineNoRender() {
 		// Just nothing here, like really nothing
-		ppu.ppuInfo.v = 0;
-		ppu.ppuInfo.t = 0;
+		ppu.ppuRegisters.v = 0;
+		ppu.ppuRegisters.t = 0;
 
 		ppu.tick(341);
 
-		assertEquals(0, ppu.ppuInfo.v, "Nothing happens during post rendering");
+		assertEquals(0, ppu.ppuRegisters.v, "Nothing happens during post rendering");
 	}
 
 	@Test
@@ -214,13 +214,13 @@ public class TestPpuTick {
 	void testVBlankScanlineNoRender() {
 		// VBlank set cycle 1 (even if no rendering) and then... Nothing for 70
 		// scanlines
-		ppu.ppuInfo.setPpuStatus(0);
+		ppu.ppuRegisters.setPpuStatus(0);
 		ppu.tick(2);
 
-		assertEquals(0b10000000, ppu.ppuInfo.getPpuStatus());
+		assertEquals(0b10000000, ppu.ppuRegisters.getPpuStatus());
 
 		ppu.tick(339 + 69 * 341);
-		assertEquals(0, ppu.ppuInfo.v, "Nothing happens during VBlank");
+		assertEquals(0, ppu.ppuRegisters.v, "Nothing happens during VBlank");
 	}
 
 	@Test
@@ -230,20 +230,20 @@ public class TestPpuTick {
 		int fineY = 4;
 		int coarseY = 0;
 		int nametable = 0;
-		ppu.ppuInfo.v = (fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX;
-		ppu.ppuInfo.t = (fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX;
+		ppu.ppuRegisters.v = (fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX;
+		ppu.ppuRegisters.t = (fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX;
 
 		// Enable rendering (background is enough)
-		ppu.ppuInfo.showBackground = 1;
+		ppu.ppuRegisters.showBackground = 1;
 
 		// This is an odd frame, so one tick less
 		for (int cycleNumber = 0; cycleNumber <= 339; cycleNumber++) {
-			ppu.ppuInfo.setPpuStatus(0b11100000);
+			ppu.ppuRegisters.setPpuStatus(0b11100000);
 			ppu.tick(1);
 
 			// Cycle 1 resets PPU Status
 			if (cycleNumber == 1) {
-				assertEquals(0, ppu.ppuInfo.getPpuStatus());
+				assertEquals(0, ppu.ppuRegisters.getPpuStatus());
 			}
 
 			// Cycle 256 increment vertical v if rendering enabled (yes)
@@ -256,28 +256,28 @@ public class TestPpuTick {
 					}
 				}
 
-				assertEquals(fineY, (ppu.ppuInfo.v >> 12) & 0b111, "V should be incremented (fineY)");
-				assertEquals(coarseY, (ppu.ppuInfo.v >> 5) & 0b11111, "V should be incremented (coarseY)");
-				assertEquals(nametable, (ppu.ppuInfo.v >> 10) & 0b11, "Nametable should be updated");
+				assertEquals(fineY, (ppu.ppuRegisters.v >> 12) & 0b111, "V should be incremented (fineY)");
+				assertEquals(coarseY, (ppu.ppuRegisters.v >> 5) & 0b11111, "V should be incremented (coarseY)");
+				assertEquals(nametable, (ppu.ppuRegisters.v >> 10) & 0b11, "Nametable should be updated");
 			}
 
 			// Cycle 257 copies horizontal t to v if rendering enabled (yes)
 			else if (cycleNumber == 257) {
-				coarseX = ppu.ppuInfo.t & 0b11111;
+				coarseX = ppu.ppuRegisters.t & 0b11111;
 				nametable &= ~0b1;
-				nametable |= (ppu.ppuInfo.t >> 10) & 0b1;
+				nametable |= (ppu.ppuRegisters.t >> 10) & 0b1;
 
-				assertEquals((fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX, ppu.ppuInfo.v,
+				assertEquals((fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX, ppu.ppuRegisters.v,
 						"V should be updated from t (horizontal)");
 			}
 
 			// Cycles 280 to 304 copies vertical t to v if rendering enabled (yes)
 			else if (cycleNumber >= 280 && cycleNumber <= 304) {
-				coarseY = (ppu.ppuInfo.t >> 5) & 0b11111;
-				fineY = (ppu.ppuInfo.t >> 12) & 0b111;
+				coarseY = (ppu.ppuRegisters.t >> 5) & 0b11111;
+				fineY = (ppu.ppuRegisters.t >> 12) & 0b111;
 				nametable &= ~0b10;
-				nametable |= (ppu.ppuInfo.t >> 10) & 0b10;
-				assertEquals((fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX, ppu.ppuInfo.v,
+				nametable |= (ppu.ppuRegisters.t >> 10) & 0b10;
+				assertEquals((fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX, ppu.ppuRegisters.v,
 						"V should be updated from t (vertical)");
 			}
 
@@ -289,7 +289,7 @@ public class TestPpuTick {
 					nametable ^= 0b01;
 				}
 
-				assertEquals((fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX, ppu.ppuInfo.v,
+				assertEquals((fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX, ppu.ppuRegisters.v,
 						"V should be incremented (coarse X) (cycle %d)".formatted(cycleNumber));
 			}
 
@@ -307,9 +307,9 @@ public class TestPpuTick {
 
 		// We assume that all latter tests are correct
 		assumeTrue("V does not have the same value than the precedent scanline, abort...",
-				ppu.ppuInfo.v == ((fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX));
+				ppu.ppuRegisters.v == ((fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX));
 		assumeTrue("T does not have the same value than the precedent scanline, abort...",
-				ppu.ppuInfo.t == ((fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX - 2));
+				ppu.ppuRegisters.t == ((fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX - 2));
 
 		for (int scanline = 0; scanline <= 238; scanline++) {
 			for (int cycleNumber = 0; cycleNumber <= 340; cycleNumber++) {
@@ -325,19 +325,19 @@ public class TestPpuTick {
 						}
 					}
 
-					assertEquals(fineY, (ppu.ppuInfo.v >> 12) & 0b111, "V should be incremented (fineY)");
-					assertEquals(coarseY, (ppu.ppuInfo.v >> 5) & 0b11111,
+					assertEquals(fineY, (ppu.ppuRegisters.v >> 12) & 0b111, "V should be incremented (fineY)");
+					assertEquals(coarseY, (ppu.ppuRegisters.v >> 5) & 0b11111,
 							"V should be incremented (coarseY) (scanline %d)".formatted(scanline));
-					assertEquals(nametable, (ppu.ppuInfo.v >> 10) & 0b11, "Nametable should be updated");
+					assertEquals(nametable, (ppu.ppuRegisters.v >> 10) & 0b11, "Nametable should be updated");
 				}
 
 				// Cycle 257 copies horizontal t to v if rendering enabled (yes)
 				else if (cycleNumber == 257) {
-					coarseX = ppu.ppuInfo.t & 0b11111;
+					coarseX = ppu.ppuRegisters.t & 0b11111;
 					nametable &= ~0b1;
-					nametable |= (ppu.ppuInfo.t >> 10) & 0b1;
+					nametable |= (ppu.ppuRegisters.t >> 10) & 0b1;
 
-					assertEquals((fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX, ppu.ppuInfo.v,
+					assertEquals((fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX, ppu.ppuRegisters.v,
 							"V should be updated from t (horizontal)");
 				}
 
@@ -349,7 +349,7 @@ public class TestPpuTick {
 						nametable ^= 0b01;
 					}
 
-					assertEquals((fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX, ppu.ppuInfo.v,
+					assertEquals((fineY << 12) | (nametable << 10) | (coarseY << 5) | coarseX, ppu.ppuRegisters.v,
 							"V should be incremented (coarse X) (cycle %d)".formatted(cycleNumber));
 				}
 			}

@@ -6,9 +6,9 @@ import components.bus.CpuBus;
 import components.bus.MmioBus;
 import components.bus.PpuBus;
 import components.dma.OamDma;
-import components.register.CpuInfo;
+import components.register.CpuRegisters;
 import components.register.IoRegisters;
-import components.register.PpuInfo;
+import components.register.PpuRegisters;
 import exceptions.ComponentCheckException;
 import exceptions.InstructionNotSupportedException;
 import exceptions.NotNesFileException;
@@ -22,11 +22,11 @@ public class Nes {
 	public static void main(String[] args)
 			throws NotNesFileException, IOException, InstructionNotSupportedException, ComponentCheckException {
 		// Create all components
-		PpuInfo ppuInfo = new PpuInfo();
+		PpuRegisters ppuRegisters = new PpuRegisters();
 		PpuBus ppuBus = new PpuBus();
 		MmioBus mmioBus = new MmioBus();
 
-		CpuInfo cpuInfo = new CpuInfo();
+		CpuRegisters cpuRegisters = new CpuRegisters();
 		CpuBus cpuBus = new CpuBus();
 
 		IoRegisters ioRegisters = new IoRegisters();
@@ -39,16 +39,18 @@ public class Nes {
 		Cpu cpu = new Cpu();
 
 		// Link components
-		cpu.setCpuInfo(cpuInfo);
+		cpu.setCpuRegisters(cpuRegisters);
 		cpu.setBus(cpuBus);
 		cpu.setNmiFlipFlop(nmiFlipFlop);
 		cpuBus.setPpuMmioBus(mmioBus);
 		cpuBus.setIoRegisters(ioRegisters);
 
-		ppu.setPpuInfo(ppuInfo);
+		ppu.setPpuRegisters(ppuRegisters);
 		ppu.setBus(ppuBus);
 		ppu.setMmioBus(mmioBus);
-		mmioBus.setPpuInfo(ppuInfo);
+		
+		mmioBus.setPpuBus(ppuBus);
+		mmioBus.setPpuRegisters(ppuRegisters);
 		mmioBus.setNmiFlipFlop(nmiFlipFlop);
 
 		oamDma.setSource(cpuBus);
@@ -57,10 +59,10 @@ public class Nes {
 		ioRegisters.setOamDma(oamDma);
 
 		// Check all components
-		ppuInfo.check();
+		ppuRegisters.check();
 		ppuBus.check();
 		mmioBus.check();
-		cpuInfo.check();
+		cpuRegisters.check();
 		cpuBus.check();
 		ioRegisters.check();
 		nmiFlipFlop.check();
@@ -68,23 +70,13 @@ public class Nes {
 		cpu.check();
 		ppu.check();
 
-		// OAM DMA test
-		for (int address = 0; address < 0x800; address++) {
-			cpu.writeMemory(address, ((address & 0xFF) * (address >> 8)) & 0xFF);
-		}
+		// MMIO Bus test (in palette because does not require cartridge)
+		cpu.writeMemory(MmioBus.PPUADDR_ADDR, 0x3F);
+		cpu.writeMemory(MmioBus.PPUADDR_ADDR, 0x02);
+		cpu.writeMemory(MmioBus.PPUDATA_ADDR, 0x03);
 		
-		System.out.println("Should print only 0");
-		cpu.writeMemory(IoRegisters.OAMDMA_ADDR, 0);
-		while (oamDma.isRunning());
-		
-		
-		System.out.println("\nShould print numbers 0 to 255");
-		cpu.writeMemory(IoRegisters.OAMDMA_ADDR, 1);
-		while (oamDma.isRunning());
-		
-		System.out.println("\nShould print numbers 2 by 2");
-		cpu.writeMemory(IoRegisters.OAMDMA_ADDR, 2);
-		while (oamDma.isRunning());
+		// Should output 0x03
+		System.out.println("0x%02X".formatted(ppu.fetchMemory(0x3F02)));
 		
 		// Create frame
 

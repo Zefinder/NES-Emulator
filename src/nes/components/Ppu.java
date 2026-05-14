@@ -2,15 +2,14 @@ package components;
 
 import components.bus.MmioBus;
 import components.bus.PpuBus;
-import components.register.PpuInfo;
+import components.register.PpuRegisters;
 import frame.ScreenPanel;
 
 public class Ppu extends Component {
 
 	private PpuBus bus;
 	private MmioBus mmioBus;
-	public PpuInfo ppuInfo;
-	public final int[] oamMemory;
+	public PpuRegisters ppuRegisters;
 
 	/* Frame variables */
 	// Begins in an even frame BUT pre-render will inverse it at cycle 0
@@ -38,8 +37,6 @@ public class Ppu extends Component {
 //	private static final Ppu ppu = new Ppu();
 
 	public Ppu() {
-		this.oamMemory = new int[0x100];
-
 		oamIndex = 0;
 		renderingOAM = new OAM[8];
 		secondaryOAM = new int[0x20];
@@ -60,13 +57,13 @@ public class Ppu extends Component {
 		this.mmioBus = mmioBus;
 	}
 	
-	public void setPpuInfo(PpuInfo ppuInfo) {
-		this.ppuInfo = ppuInfo;
+	public void setPpuRegisters(PpuRegisters ppuInfo) {
+		this.ppuRegisters = ppuInfo;
 	}
 	
 	@Override
 	protected boolean checkImpl() {
-		return bus != null && ppuInfo != null && mmioBus != null;
+		return bus != null && ppuRegisters != null && mmioBus != null;
 	}
 	
 	public void insertCartridge(Cartridge cartridge) {
@@ -105,7 +102,7 @@ public class Ppu extends Component {
 	 * @param value the value to put in the OAM memory
 	 */
 	public void setOamValue(int value) {
-		oamMemory[oamIndex] = value;
+		ppuRegisters.oamMemory[oamIndex] = value;
 
 		if (++oamIndex > 0xFF) {
 			oamIndex = 0;
@@ -199,16 +196,16 @@ public class Ppu extends Component {
 				// First draw pixels and then tick (to not skip a tile when x = 0)
 				if (rendering && cycleNumber != 0 && cycleNumber <= 256) {
 					// Draw pixel
-					currentTile.drawPixel(ppuInfo.x);
+					currentTile.drawPixel(ppuRegisters.x);
 
 					// Update x
-					if (ppuInfo.x == 7) {
-						ppuInfo.x = 0;
+					if (ppuRegisters.x == 7) {
+						ppuRegisters.x = 0;
 
 						// Change tile!
 						currentTile = nextFirstTile;
 					} else {
-						ppuInfo.x = (ppuInfo.x + 1) & 0b111;
+						ppuRegisters.x = (ppuRegisters.x + 1) & 0b111;
 					}
 				}
 
@@ -223,25 +220,25 @@ public class Ppu extends Component {
 			if (rendering) {
 				// Last pixel rendered, we can increment Y
 				if (cycleNumber == 256) {
-					ppuInfo.incrementY();
+					ppuRegisters.incrementY();
 				}
 				// Copy value from t to v for horizontal position
 				else if (cycleNumber == 257) {
-					ppuInfo.v &= ~(0x041F);
-					ppuInfo.v |= (ppuInfo.t & 0x41F);
+					ppuRegisters.v &= ~(0x041F);
+					ppuRegisters.v |= (ppuRegisters.t & 0x41F);
 				}
 
 				if (scanlineNumber == -1) {
 					// Copy value from t to v for vertical position
 					if (cycleNumber >= 280 && cycleNumber <= 304) {
-						ppuInfo.v &= ~(0x7BE0);
-						ppuInfo.v |= (ppuInfo.t & 0x7BE0);
+						ppuRegisters.v &= ~(0x7BE0);
+						ppuRegisters.v |= (ppuRegisters.t & 0x7BE0);
 					}
 				}
 
 				// Increment X if rendering enabled
 				if (cycleNumber != 0 && (cycleNumber <= 256 || cycleNumber >= 328) && (cycleNumber & 0x7) == 0) {
-					ppuInfo.incrementCoarseX();
+					ppuRegisters.incrementCoarseX();
 				}
 			}
 
@@ -271,13 +268,13 @@ public class Ppu extends Component {
 			// Nametable byte fetch
 			if (cyclePart == 1) {
 				// Fine y has been incremented at dot 256
-				tileSelected.setNametableAddress(ppuInfo.v & 0x0FFF, (ppuInfo.v >> 12) & 0b111, ppuInfo.getCurrentY());
+				tileSelected.setNametableAddress(ppuRegisters.v & 0x0FFF, (ppuRegisters.v >> 12) & 0b111, ppuRegisters.getCurrentY());
 			}
 			// Attribute table byte fetch
 			else if (cyclePart == 3) {
 				tileSelected.setAttributeAddress(
-						(ppuInfo.v & 0x0C00) | ((ppuInfo.v >> 4) & 0x38) | ((ppuInfo.v >> 2) & 0x07),
-						ppuInfo.v & 0b11111, (ppuInfo.v >> 5) & 0b11111);
+						(ppuRegisters.v & 0x0C00) | ((ppuRegisters.v >> 4) & 0x38) | ((ppuRegisters.v >> 2) & 0x07),
+						ppuRegisters.v & 0b11111, (ppuRegisters.v >> 5) & 0b11111);
 			}
 			// Pattern table tile low fetch
 			else if (cyclePart == 5) {
@@ -326,13 +323,13 @@ public class Ppu extends Component {
 			}
 			// Nametable byte fetch
 			else if (cyclePart == 1) {
-				nextSecondTile.setNametableAddress(ppuInfo.v & 0x0FFF, ppuInfo.v >> 12, ppuInfo.getCurrentY());
+				nextSecondTile.setNametableAddress(ppuRegisters.v & 0x0FFF, ppuRegisters.v >> 12, ppuRegisters.getCurrentY());
 			}
 			// Attribute table byte fetch
 			else if (cyclePart == 3) {
 				nextSecondTile.setAttributeAddress(
-						(ppuInfo.v & 0x0C00) | ((ppuInfo.v >> 4) & 0x38) | ((ppuInfo.v >> 2) & 0x07),
-						ppuInfo.v & 0b11111, (ppuInfo.v >> 5) & 0b11111);
+						(ppuRegisters.v & 0x0C00) | ((ppuRegisters.v >> 4) & 0x38) | ((ppuRegisters.v >> 2) & 0x07),
+						ppuRegisters.v & 0b11111, (ppuRegisters.v >> 5) & 0b11111);
 			}
 			// Pattern table tile low fetch
 			else if (cyclePart == 5) {
@@ -360,8 +357,9 @@ public class Ppu extends Component {
 					 * If primaryOAMIndex has overflowed, just skip
 					 */
 					if (primaryOAMIndex != 256 && write && !secondaryOAMOverflow) {
+						int oamMemory[] = ppuRegisters.oamMemory;
 						// If sprite in range, copy in secondary oam
-						if (oamMemory[primaryOAMIndex] == ppuInfo.getCurrentY()) {
+						if (oamMemory[primaryOAMIndex] == ppuRegisters.getCurrentY()) {
 							if (secondaryOAMFull) {
 								secondaryOAMOverflow = true;
 								// Set overflow!
@@ -416,13 +414,13 @@ public class Ppu extends Component {
 			// Nametable byte fetch
 			if (cyclePart == 1) {
 				// Fine y has been incremented at dot 256
-				tileSelected.setNametableAddress(ppuInfo.v & 0x0FFF, ppuInfo.v >> 12, ppuInfo.getCurrentY());
+				tileSelected.setNametableAddress(ppuRegisters.v & 0x0FFF, ppuRegisters.v >> 12, ppuRegisters.getCurrentY());
 			}
 			// Attribute table byte fetch
 			else if (cyclePart == 3) {
 				tileSelected.setAttributeAddress(
-						(ppuInfo.v & 0x0C00) | ((ppuInfo.v >> 4) & 0x38) | ((ppuInfo.v >> 2) & 0x07),
-						ppuInfo.v & 0b11111, (ppuInfo.v >> 5) & 0b11111);
+						(ppuRegisters.v & 0x0C00) | ((ppuRegisters.v >> 4) & 0x38) | ((ppuRegisters.v >> 2) & 0x07),
+						ppuRegisters.v & 0b11111, (ppuRegisters.v >> 5) & 0b11111);
 			}
 			// Pattern table tile low fetch
 			else if (cyclePart == 5) {

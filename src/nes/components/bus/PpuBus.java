@@ -51,6 +51,7 @@ public class PpuBus extends Bus {
 	
 	@Override
 	protected TranslatedAddress translateAddress(int address) {
+		System.out.println("0x%04X".formatted(address));
 		if (address < PALETTE_MEMORY_OFFSET) {
 			if (cartridgePresent) {
 				return new TranslatedAddress(ppuBusMemory, address);

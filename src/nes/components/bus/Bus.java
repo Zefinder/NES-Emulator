@@ -41,16 +41,17 @@ public abstract class Bus extends Component implements Memory {
 //		}
 //	}
 	
+	protected int openBus;
+	
+	public Bus() {
+		this.openBus = 0;
+	}
+	
 	protected abstract TranslatedAddress translateAddress(int address);
 	
 //	protected abstract int readImpl(TranslatedAddress translatedAddress);
 //	
 //	protected abstract void writeImpl(TranslatedAddress translatedAddress, int value);
-	
-	// TODO Add open bus and check if memory is readable/writable
-	public int getOpenBus() {
-		return 0;
-	}
 	
 	@Override
 	public int read(int address) {

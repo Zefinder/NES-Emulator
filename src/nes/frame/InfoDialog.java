@@ -8,8 +8,8 @@ import javax.swing.JDialog;
 
 import components.Cpu;
 import components.Ppu;
-import components.register.CpuInfo;
-import components.register.PpuInfo;
+import components.register.CpuRegisters;
+import components.register.PpuRegisters;
 
 public abstract class InfoDialog extends JDialog {
 
@@ -18,8 +18,8 @@ public abstract class InfoDialog extends JDialog {
 	 */
 	private static final long serialVersionUID = -3595150045454482981L;
 	
-	protected final CpuInfo cpuInfo;
-	protected final PpuInfo ppuInfo;
+	protected final CpuRegisters cpuInfo;
+	protected final PpuRegisters ppuInfo;
 
 	public InfoDialog(String title, int posX, int posY, int sizeX, int sizeY) {
 		this.setTitle(title);
@@ -27,7 +27,7 @@ public abstract class InfoDialog extends JDialog {
 		this.setSize(sizeX, sizeY);
 		
 		cpuInfo = Cpu.getInstance().cpuInfo;
-		ppuInfo = Ppu.getInstance().ppuInfo;
+		ppuInfo = Ppu.getInstance().ppuRegisters;
 	}
 
 	/**
