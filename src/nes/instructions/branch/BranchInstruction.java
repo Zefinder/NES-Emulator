@@ -32,13 +32,13 @@ public abstract class BranchInstruction extends Instruction {
 		offset = offset > 0x7F ? offset - 256 : offset;
 		
 		if (branchCondition.getAsBoolean()) {
-			int oldPC = cpu.cpuInfo.PC;
+			int oldPC = cpuRegisters.PC;
 			
 			// Applying offset and wrap to avoid negative
 			int newPC = (oldPC + offset) & 0xFFFF;
 
 			// Update PC
-			cpu.cpuInfo.PC = newPC;
+			cpuRegisters.PC = newPC;
 			
 			// Branch succeeded
 			branchSucceed = 1;

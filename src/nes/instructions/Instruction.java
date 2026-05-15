@@ -1,11 +1,16 @@
 package instructions;
 
-import components.Cpu;
+import components.bus.CpuBus;
+import components.register.CpuRegisters;
 import exceptions.InstructionNotSupportedException;
 
 public abstract class Instruction {
 
-	protected static final Cpu cpu = Cpu.getInstance();
+	// Stores CPU information at a global state since nothing will change during
+	// execution and this will reduce compute time by reducing object access
+	protected static CpuBus bus;
+	protected static CpuRegisters cpuRegisters;
+	
 	private final AddressingMode mode;
 	protected int pageCrossed = 0;
 	private final int constant;
@@ -15,14 +20,13 @@ public abstract class Instruction {
 	 */
 	private int address = -1;
 
-	public Instruction(AddressingMode mode) {
-		this.mode = mode;
-		this.constant = -1;
-	}
-
 	protected Instruction(AddressingMode mode, int constant) {
 		this.mode = mode;
 		this.constant = constant;
+	}
+
+	public Instruction(AddressingMode mode) {
+		this(mode, -1);
 	}
 
 	/**
@@ -98,7 +102,7 @@ public abstract class Instruction {
 	 * WITHOUT accessing to the memory and provoke PPU read when we only want to
 	 * write (for example)
 	 */
-	protected void updateMemoryAddress() {
+	protected void updateMemoryAddress(int X, int Y) {
 		if (constant == -1) {
 			return;
 		}
@@ -109,11 +113,11 @@ public abstract class Instruction {
 			break;
 
 		case ZEROPAGE_X:
-			address = (constant + cpu.cpuInfo.X) & 0xFF;
+			address = (constant + X) & 0xFF;
 			break;
 
 		case ZEROPAGE_Y:
-			address = (constant + cpu.cpuInfo.Y) & 0xFF;
+			address = (constant + Y) & 0xFF;
 			break;
 
 		case ABSOLUTE:
@@ -121,23 +125,23 @@ public abstract class Instruction {
 			break;
 
 		case ABSOLUTE_X:
-			address = (constant + cpu.cpuInfo.X) & 0xFFFF;
-			pageCrossed = (constant & 0xFF) + cpu.cpuInfo.X > 0xFF ? 1 : 0;
+			address = (constant + X) & 0xFFFF;
+			pageCrossed = (constant & 0xFF) + X > 0xFF ? 1 : 0;
 			break;
 
 		case ABSOLUTE_Y:
-			address = (constant + cpu.cpuInfo.Y) & 0xFFFF;
-			pageCrossed = (constant & 0xFF) + cpu.cpuInfo.Y > 0xFF ? 1 : 0;
+			address = (constant + Y) & 0xFFFF;
+			pageCrossed = (constant & 0xFF) + Y > 0xFF ? 1 : 0;
 			break;
 
 		case INDIRECT_X:
-			address = cpu.fetchAddress((constant + cpu.cpuInfo.X) & 0xFFFF);
+			address = bus.readAddress((constant + X) & 0xFFFF);
 			break;
 
 		case INDIRECT_Y:
-			int tmpAddress = cpu.fetchAddress(constant & 0xFFFF);
-			address = (tmpAddress + cpu.cpuInfo.Y) & 0xFFFF;
-			pageCrossed = (tmpAddress & 0xFF) + cpu.cpuInfo.Y > 0xFF ? 1 : 0;
+			int tmpAddress = bus.readAddress(constant & 0xFFFF);
+			address = (tmpAddress + Y) & 0xFFFF;
+			pageCrossed = (tmpAddress & 0xFF) + Y > 0xFF ? 1 : 0;
 			break;
 
 		default:
@@ -160,7 +164,7 @@ public abstract class Instruction {
 		}
 
 		if (address == -1) {
-			updateMemoryAddress();
+			updateMemoryAddress(cpuRegisters.X, cpuRegisters.Y);
 		}
 
 		int operand;
@@ -178,11 +182,11 @@ public abstract class Instruction {
 		case INDIRECT_Y:
 			// Update in case of reusing in loop (no recreation) and register might have
 			// changed
-			updateMemoryAddress();
+			updateMemoryAddress(cpuRegisters.X, cpuRegisters.Y);
 
 		case ZEROPAGE:
 		case ABSOLUTE:
-			operand = cpu.fetchMemory(address);
+			operand = bus.read(address);
 			break;
 
 		default:
@@ -208,7 +212,7 @@ public abstract class Instruction {
 			break;
 
 		case INDIRECT:
-			retAddress = cpu.fetchAddress(constant & 0xFFFF);
+			retAddress = bus.readAddress(constant & 0xFFFF);
 			break;
 
 		default:
@@ -225,7 +229,7 @@ public abstract class Instruction {
 	 * @return an address in memory
 	 */
 	protected int fetchAddress(int address) {
-		return cpu.fetchAddress(address);
+		return bus.readAddress(address);
 	}
 
 	/**
@@ -235,10 +239,10 @@ public abstract class Instruction {
 	 */
 	protected void storeMemory(int value) {
 		if (address == -1) {
-			updateMemoryAddress();
+			updateMemoryAddress(cpuRegisters.X, cpuRegisters.Y);
 		}
 
-		cpu.storeMemory(address, value);
+		bus.write(address, value);
 	}
 
 	@Override
@@ -321,4 +325,42 @@ public abstract class Instruction {
 
 		return getName() + " " + suffix;
 	}
+	
+	/**
+	 * Pushes the value into the stack
+	 * 
+	 * @param value the value to push
+	 */
+	public static void push(int value) {
+		// Remember that SP points on nothing
+		int SP = cpuRegisters.SP;
+
+		// Put value in memory
+		bus.write(0x100 | SP, value);
+
+		// Decrement SP (wrap around 0x100)
+		cpuRegisters.SP = (SP - 1) & 0xFF;
+	}
+
+	/**
+	 * Pops a value from the stack
+	 * 
+	 * @return the value poped
+	 */
+	public static int pop() {
+		// Remember that SP points on nothing
+		int SP = cpuRegisters.SP;
+
+		// Increment SP (wrap around 0x100)
+		SP = (SP + 1) & 0xFF;
+
+		// Put value in memory
+		int value = bus.read(0x100 | SP);
+
+		// Update SP
+		cpuRegisters.SP = SP;
+
+		return value;
+	}
+	
 }

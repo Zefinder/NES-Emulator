@@ -16,8 +16,8 @@ public class TSXInstruction extends TransferInstruction {
 	@Override
 	public void execute() throws InstructionNotSupportedException {
 		// X = SP
-		int value = cpu.cpuInfo.SP;
-		cpu.cpuInfo.X = value;
+		int value = cpuRegisters.SP;
+		cpuRegisters.X = value;
 		
 		// Update flags
 		updateFlags(value);

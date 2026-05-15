@@ -16,8 +16,8 @@ public class TXSInstruction extends TransferInstruction {
 	@Override
 	public void execute() throws InstructionNotSupportedException {
 		// SP = X
-		int value = cpu.cpuInfo.X;
-		cpu.cpuInfo.SP = value;
+		int value = cpuRegisters.X;
+		cpuRegisters.SP = value;
 	}
 
 	@Override

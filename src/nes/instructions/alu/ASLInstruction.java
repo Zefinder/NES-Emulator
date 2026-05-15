@@ -23,7 +23,7 @@ public class ASLInstruction extends AluInstruction {
 			result = operand1 << 1;
 			
 			// Register A update
-			cpu.cpuInfo.A = result & 0xFF;
+			cpuRegisters.A = result & 0xFF;
 		} else {
 			result = operand2 << 1;
 			

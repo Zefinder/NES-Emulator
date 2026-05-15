@@ -16,7 +16,7 @@ public class PHPInstruction extends Instruction {
 
 	@Override
 	public void execute() throws InstructionNotSupportedException {
-		cpu.push(cpu.cpuInfo.getP());
+		push(cpuRegisters.getP());
 	}
 
 	@Override

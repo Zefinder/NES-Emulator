@@ -18,18 +18,18 @@ public class BRKInstruction extends Instruction {
 	@Override
 	public void execute() throws InstructionNotSupportedException {
 		// Push PC (remove 1 for RTI)
-		int address = (cpu.cpuInfo.PC - 1) & 0xFFFF;
-		cpu.push(address >> 8); // MSB
-		cpu.push(address & 0xFF); // LSB
+		int address = (cpuRegisters.PC - 1) & 0xFFFF;
+		push(address >> 8); // MSB
+		push(address & 0xFF); // LSB
 
 		// Push flags
-		cpu.push(cpu.cpuInfo.getP());
+		push(cpuRegisters.getP());
 
 		// Load PC with address at 0xFFFE (remove 1 for BRK)
-		cpu.cpuInfo.PC = (fetchAddress(Cpu.BREAK_VECTOR) - 1) & 0xFFFF;
+		cpuRegisters.PC = (fetchAddress(Cpu.BREAK_VECTOR) - 1) & 0xFFFF;
 
 		// Put break to 1
-		cpu.cpuInfo.B = 1;
+		cpuRegisters.B = 1;
 	}
 
 	@Override

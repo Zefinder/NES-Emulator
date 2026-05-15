@@ -17,14 +17,14 @@ public class PLAInstruction extends Instruction {
 	@Override
 	public void execute() throws InstructionNotSupportedException {
 		// Pop value
-		int value = cpu.pop();
+		int value = pop();
 
 		// Update A
-		cpu.cpuInfo.A = value;
+		cpuRegisters.A = value;
 
 		// Update flags
-		cpu.cpuInfo.Z = value == 0 ? 1 : 0;
-		cpu.cpuInfo.N = value >= 0x80 ? 1 : 0;
+		cpuRegisters.Z = value == 0 ? 1 : 0;
+		cpuRegisters.N = value >= 0x80 ? 1 : 0;
 	}
 
 	@Override

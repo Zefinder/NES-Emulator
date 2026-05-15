@@ -15,7 +15,7 @@ public class SEIInstruction extends FlagInstruction {
 
 	@Override
 	public void execute() throws InstructionNotSupportedException {
-		cpu.cpuInfo.I = 1;
+		cpuRegisters.I = 1;
 	}
 
 	@Override

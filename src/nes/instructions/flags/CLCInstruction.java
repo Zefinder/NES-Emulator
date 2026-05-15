@@ -15,7 +15,7 @@ public class CLCInstruction extends FlagInstruction {
 
 	@Override
 	public void execute() throws InstructionNotSupportedException {
-		cpu.cpuInfo.C = 0;
+		cpuRegisters.C = 0;
 	}
 
 	@Override

@@ -19,7 +19,10 @@ public class CpuRegisters extends Component {
 	public int B;
 	public int V;
 	public int N;
-
+	
+	/* Interruption state (IRQ/BRK/NMI) */
+	public boolean interruption;
+	
 	/* DMA */
 	public boolean oamDmaRequested;
 

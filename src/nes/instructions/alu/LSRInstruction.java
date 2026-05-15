@@ -23,10 +23,10 @@ public class LSRInstruction extends AluInstruction {
 			result = operand1 >> 1;
 
 			// Register A update
-			cpu.cpuInfo.A = result & 0xFF;
+			cpuRegisters.A = result & 0xFF;
 
 			// Flag C update
-			cpu.cpuInfo.C = operand1 & 0b00000001;
+			cpuRegisters.C = operand1 & 0b00000001;
 		} else {
 			result = operand2 >> 1;
 
@@ -34,7 +34,7 @@ public class LSRInstruction extends AluInstruction {
 			storeMemory(result & 0xFF);
 
 			// Flag C update
-			cpu.cpuInfo.C = operand2 & 0b00000001;
+			cpuRegisters.C = operand2 & 0b00000001;
 		}
 
 		// Flags update

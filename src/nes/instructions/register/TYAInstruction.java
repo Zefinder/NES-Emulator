@@ -16,8 +16,8 @@ public class TYAInstruction extends TransferInstruction {
 	@Override
 	public void execute() throws InstructionNotSupportedException {
 		// A = Y
-		int value = cpu.cpuInfo.Y;
-		cpu.cpuInfo.A = value;
+		int value = cpuRegisters.Y;
+		cpuRegisters.A = value;
 		
 		// Update flags
 		updateFlags(value);

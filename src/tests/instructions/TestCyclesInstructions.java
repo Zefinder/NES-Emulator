@@ -93,20 +93,20 @@ class TestCyclesInstructions {
 		cpu.setMapper(new MapperTest());
 
 		// Registers at 0
-		cpu.cpuInfo.A = 0;
-		cpu.cpuInfo.X = 0;
-		cpu.cpuInfo.Y = 0;
-		cpu.cpuInfo.SP = 0xFD;
-		cpu.cpuInfo.PC = 0;
+		cpuRegisters.A = 0;
+		cpuRegisters.X = 0;
+		cpuRegisters.Y = 0;
+		cpuRegisters.SP = 0xFD;
+		cpuRegisters.PC = 0;
 
 		// Flags at 0
-		cpu.cpuInfo.C = 0;
-		cpu.cpuInfo.Z = 0;
-		cpu.cpuInfo.I = 0;
-		cpu.cpuInfo.D = 0;
-		cpu.cpuInfo.B = 0;
-		cpu.cpuInfo.V = 0;
-		cpu.cpuInfo.N = 0;
+		cpuRegisters.C = 0;
+		cpuRegisters.Z = 0;
+		cpuRegisters.I = 0;
+		cpuRegisters.D = 0;
+		cpuRegisters.B = 0;
+		cpuRegisters.V = 0;
+		cpuRegisters.N = 0;
 
 		// Reset all memory
 		for (int address = 0; address <= 0xFFFF; address++) {
@@ -134,8 +134,8 @@ class TestCyclesInstructions {
 			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
 			NoSuchMethodException, SecurityException, InstructionNotSupportedException {
 		for (int i = 0; i < cycles.length; i++) {
-			cpu.cpuInfo.X = 0xFF;
-			cpu.cpuInfo.Y = 0xFF;
+			cpuRegisters.X = 0xFF;
+			cpuRegisters.Y = 0xFF;
 			AddressingMode addressingMode = addressingModes[i];
 
 			Instruction instruction = (Instruction) instructionClass.getConstructor(AddressingMode.class)
@@ -157,16 +157,16 @@ class TestCyclesInstructions {
 			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException,
 			NoSuchMethodException, SecurityException, InstructionNotSupportedException {
 		// Flags at 0
-		cpu.cpuInfo.C = 0;
-		cpu.cpuInfo.Z = 0;
-		cpu.cpuInfo.I = 0;
-		cpu.cpuInfo.D = 0;
-		cpu.cpuInfo.B = 0;
-		cpu.cpuInfo.V = 0;
-		cpu.cpuInfo.N = 0;
+		cpuRegisters.C = 0;
+		cpuRegisters.Z = 0;
+		cpuRegisters.I = 0;
+		cpuRegisters.D = 0;
+		cpuRegisters.B = 0;
+		cpuRegisters.V = 0;
+		cpuRegisters.N = 0;
 
 		// PC at 0
-		cpu.cpuInfo.PC = 0;
+		cpuRegisters.PC = 0;
 
 		BranchInstruction instruction = (BranchInstruction) instructionClass.getConstructor(AddressingMode.class)
 				.newInstance(RELATIVE);
@@ -179,15 +179,15 @@ class TestCyclesInstructions {
 		// Execute instruction, if jumped then begin tests, else change flags to 1
 		instruction.execute();
 
-		if (cpu.cpuInfo.PC == 0) {
+		if (cpuRegisters.PC == 0) {
 			// Flags at 1
-			cpu.cpuInfo.C = 1;
-			cpu.cpuInfo.Z = 1;
-			cpu.cpuInfo.I = 1;
-			cpu.cpuInfo.D = 1;
-			cpu.cpuInfo.B = 1;
-			cpu.cpuInfo.V = 1;
-			cpu.cpuInfo.N = 1;
+			cpuRegisters.C = 1;
+			cpuRegisters.Z = 1;
+			cpuRegisters.I = 1;
+			cpuRegisters.D = 1;
+			cpuRegisters.B = 1;
+			cpuRegisters.V = 1;
+			cpuRegisters.N = 1;
 
 			// Execute again
 			instruction.execute();

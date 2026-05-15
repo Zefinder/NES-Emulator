@@ -20,12 +20,12 @@ public class ROLInstruction extends AluInstruction {
 		// A/M = (A/M << 1) | C
 		int result;
 		if (getMode() == AddressingMode.ACCUMULATOR) {
-			result = (operand1 << 1) | cpu.cpuInfo.C;
+			result = (operand1 << 1) | cpuRegisters.C;
 			
 			// Register A update
-			cpu.cpuInfo.A = result & 0xFF;
+			cpuRegisters.A = result & 0xFF;
 		} else {
-			result = (operand2 << 1) | cpu.cpuInfo.C;
+			result = (operand2 << 1) | cpuRegisters.C;
 			
 			// Memory update
 			storeMemory(result & 0xFF);

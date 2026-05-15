@@ -69,14 +69,6 @@ public class Nes {
 		oamDma.check();
 		cpu.check();
 		ppu.check();
-
-		// MMIO Bus test (in palette because does not require cartridge)
-		cpu.writeMemory(MmioBus.PPUADDR_ADDR, 0x3F);
-		cpu.writeMemory(MmioBus.PPUADDR_ADDR, 0x02);
-		cpu.writeMemory(MmioBus.PPUDATA_ADDR, 0x03);
-		
-		// Should output 0x03
-		System.out.println("0x%02X".formatted(ppu.fetchMemory(0x3F02)));
 		
 		// Create frame
 

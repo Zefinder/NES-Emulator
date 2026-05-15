@@ -16,16 +16,16 @@ public class SBCInstruction extends AluInstruction {
 	@Override
 	protected void execute(int operand1, int operand2) {
 		// A = A - M - (1 - C)
-		int result = operand1 + (255 - operand2) + cpu.cpuInfo.C;
+		int result = operand1 + (255 - operand2) + cpuRegisters.C;
 
 		// Register A update
-		cpu.cpuInfo.A = result & 0xFF;
+		cpuRegisters.A = result & 0xFF;
 
 		// Flags update
 		updateFlags(result, true);
 
 		// C re-update (SBC is always 1 - C)
-		cpu.cpuInfo.C = 1 - cpu.cpuInfo.C;
+		cpuRegisters.C = 1 - cpuRegisters.C;
 
 		// Gym for V
 		updateV(operand1, (255 - operand2), result);

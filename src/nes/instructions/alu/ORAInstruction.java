@@ -20,7 +20,7 @@ public class ORAInstruction extends AluInstruction {
 
 		// Register A update
 		// No need & 0xFF since ORA has no overflow
-		cpu.cpuInfo.A = result;
+		cpuRegisters.A = result;
 
 		// Flags update
 		updateFlags(result, false);

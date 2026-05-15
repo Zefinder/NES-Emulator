@@ -17,13 +17,13 @@ public class RTIInstruction extends RTSInstruction {
 	@Override
 	public void execute() throws InstructionNotSupportedException {
 		// We pop flags
-		cpu.cpuInfo.setP(cpu.pop());
+		cpuRegisters.setP(pop());
 		
 		// Then basic RTS
 		super.execute();
 		
 		// Set the interruption state to off
-		cpu.exitInterruption();
+		cpuRegisters.interruption = false;
 	}
 	
 	@Override

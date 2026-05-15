@@ -23,20 +23,20 @@ class TestInstructionReadWrite {
 		cpu.setMapper(mapper);
 
 		// Registers at 0
-		cpu.cpuInfo.A = 0;
-		cpu.cpuInfo.X = 0;
-		cpu.cpuInfo.Y = 0;
-		cpu.cpuInfo.SP = 0xFD;
-		cpu.cpuInfo.PC = 0;
+		cpuRegisters.A = 0;
+		cpuRegisters.X = 0;
+		cpuRegisters.Y = 0;
+		cpuRegisters.SP = 0xFD;
+		cpuRegisters.PC = 0;
 
 		// Flags at 0
-		cpu.cpuInfo.C = 0;
-		cpu.cpuInfo.Z = 0;
-		cpu.cpuInfo.I = 0;
-		cpu.cpuInfo.D = 0;
-		cpu.cpuInfo.B = 0;
-		cpu.cpuInfo.V = 0;
-		cpu.cpuInfo.N = 0;
+		cpuRegisters.C = 0;
+		cpuRegisters.Z = 0;
+		cpuRegisters.I = 0;
+		cpuRegisters.D = 0;
+		cpuRegisters.B = 0;
+		cpuRegisters.V = 0;
+		cpuRegisters.N = 0;
 
 		// Reset all memory
 		for (int address = 0; address <= 0xFFFF; address++) {
@@ -119,7 +119,7 @@ class TestInstructionReadWrite {
 	void testMemoryZeroPageXAddressingMode() {
 		for (int zeroPageAddress = 0; zeroPageAddress <= 0xFF; zeroPageAddress++) {
 			for (int xValue = 0; xValue <= 0xFF; xValue++) {
-				cpu.cpuInfo.X = xValue;
+				cpuRegisters.X = xValue;
 				Instruction instruction = new Instruction(AddressingMode.ZEROPAGE_X, zeroPageAddress) {
 					@Override
 					public Instruction newInstruction(int constant) {
@@ -158,7 +158,7 @@ class TestInstructionReadWrite {
 	void testMemoryZeroPageYAddressingMode() {
 		for (int zeroPageAddress = 0; zeroPageAddress <= 0xFF; zeroPageAddress++) {
 			for (int yValue = 0; yValue <= 0xFF; yValue++) {
-				cpu.cpuInfo.Y = yValue;
+				cpuRegisters.Y = yValue;
 				Instruction instruction = new Instruction(AddressingMode.ZEROPAGE_Y, zeroPageAddress) {
 					@Override
 					public Instruction newInstruction(int constant) {
@@ -233,7 +233,7 @@ class TestInstructionReadWrite {
 	void testMemoryAbsoluteXAddressingMode() {
 		for (int absoluteAddress = 0; absoluteAddress <= 0xFFFF; absoluteAddress++) {
 			for (int xValue = 0; xValue <= 0xFF; xValue++) {
-				cpu.cpuInfo.X = xValue;
+				cpuRegisters.X = xValue;
 
 				Instruction instruction = new Instruction(AddressingMode.ABSOLUTE_X, absoluteAddress) {
 					@Override
@@ -273,7 +273,7 @@ class TestInstructionReadWrite {
 	void testMemoryAbsoluteYAddressingMode() {
 		for (int absoluteAddress = 0; absoluteAddress <= 0xFFFF; absoluteAddress++) {
 			for (int yValue = 0; yValue <= 0xFF; yValue++) {
-				cpu.cpuInfo.Y = yValue;
+				cpuRegisters.Y = yValue;
 
 				Instruction instruction = new Instruction(AddressingMode.ABSOLUTE_Y, absoluteAddress) {
 					@Override
@@ -315,7 +315,7 @@ class TestInstructionReadWrite {
 			for (int xValue = 0; xValue <= 0xFF; xValue++) {
 				// Set address to put the value in
 				cpu.storeMemory((zeroPageAddress + xValue) & 0xFF, 0x34, 0x12);
-				cpu.cpuInfo.X = xValue;
+				cpuRegisters.X = xValue;
 
 				Instruction instruction = new Instruction(AddressingMode.INDIRECT_X, zeroPageAddress) {
 					@Override
@@ -357,7 +357,7 @@ class TestInstructionReadWrite {
 			cpu.storeMemory(zeroPageAddress, 0x34, 0x12);
 			for (int yValue = 0; yValue <= 0xFF; yValue++) {
 				// Set address to put the value in
-				cpu.cpuInfo.Y = yValue;
+				cpuRegisters.Y = yValue;
 
 				Instruction instruction = new Instruction(AddressingMode.INDIRECT_Y, zeroPageAddress) {
 					@Override

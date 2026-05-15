@@ -6,7 +6,7 @@ import instructions.AddressingMode;
 
 public class BEQInstruction extends BranchInstruction {
 
-	private static final BooleanSupplier branchCondition = () -> cpu.cpuInfo.Z == 1;
+	private static final BooleanSupplier branchCondition = () -> cpuRegisters.Z == 1;
 	
 	public BEQInstruction(AddressingMode mode) {
 		super(mode, branchCondition);

@@ -16,10 +16,10 @@ public class INYInstruction extends AluInstruction {
 	@Override
 	protected void execute(int operand1, int operand2) {
 		// Y = Y + 1
-		int result = cpu.cpuInfo.Y + 1;
+		int result = cpuRegisters.Y + 1;
 
 		// Update Y register
-		cpu.cpuInfo.Y = result & 0xFF;
+		cpuRegisters.Y = result & 0xFF;
 
 		// Update flags
 		updateFlags(result, false);

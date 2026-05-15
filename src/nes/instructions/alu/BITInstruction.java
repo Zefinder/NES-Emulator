@@ -22,7 +22,7 @@ public class BITInstruction extends AluInstruction {
 		updateFlags(result, false);
 		
 		// V update
-		cpu.cpuInfo.V = (result & 0b01000000) >> 6;
+		cpuRegisters.V = (result & 0b01000000) >> 6;
 	}
 
 	@Override

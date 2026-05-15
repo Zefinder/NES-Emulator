@@ -16,10 +16,10 @@ public class INXInstruction extends AluInstruction {
 	@Override
 	protected void execute(int operand1, int operand2) {
 		// X = X + 1
-		int result = cpu.cpuInfo.X + 1;
+		int result = cpuRegisters.X + 1;
 		
 		// Update X register
-		cpu.cpuInfo.X = result & 0xFF;
+		cpuRegisters.X = result & 0xFF;
 		
 		// Update flags
 		updateFlags(result, false);

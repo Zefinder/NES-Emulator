@@ -20,21 +20,21 @@ public class RORInstruction extends AluInstruction {
 		// A/M = (C << 7) | (A/M >> 1)
 		int result;
 		if (getMode() == AddressingMode.ACCUMULATOR) {
-			result = (cpu.cpuInfo.C << 7) | (operand1 >> 1);
+			result = (cpuRegisters.C << 7) | (operand1 >> 1);
 
 			// Register A update
-			cpu.cpuInfo.A = result & 0xFF;
+			cpuRegisters.A = result & 0xFF;
 
 			// Flag C update
-			cpu.cpuInfo.C = operand1 & 0b00000001;
+			cpuRegisters.C = operand1 & 0b00000001;
 		} else {
-			result = (cpu.cpuInfo.C << 7) | (operand2 >> 1);
+			result = (cpuRegisters.C << 7) | (operand2 >> 1);
 
 			// Memory update
 			storeMemory(result & 0xFF);
 
 			// Flag C update
-			cpu.cpuInfo.C = operand2 & 0b00000001;
+			cpuRegisters.C = operand2 & 0b00000001;
 		}
 		
 		// Flags update

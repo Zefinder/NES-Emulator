@@ -17,7 +17,7 @@ public class PLPInstruction extends Instruction {
 	@Override
 	public void execute() throws InstructionNotSupportedException {
 		// Pop value and update flags
-		cpu.cpuInfo.setP(cpu.pop());		
+		cpuRegisters.setP(pop());		
 	}
 
 	@Override

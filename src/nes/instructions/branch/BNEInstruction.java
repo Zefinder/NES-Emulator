@@ -6,7 +6,7 @@ import instructions.AddressingMode;
 
 public class BNEInstruction extends BranchInstruction {
 
-	private static final BooleanSupplier branchCondition = () -> cpu.cpuInfo.Z == 0;
+	private static final BooleanSupplier branchCondition = () -> cpuRegisters.Z == 0;
 
 	public BNEInstruction(AddressingMode mode) {
 		super(mode, branchCondition);

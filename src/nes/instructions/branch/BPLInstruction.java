@@ -6,7 +6,7 @@ import instructions.AddressingMode;
 
 public class BPLInstruction extends BranchInstruction {
 
-	private static final BooleanSupplier branchCondition = () -> cpu.cpuInfo.N == 0;
+	private static final BooleanSupplier branchCondition = () -> cpuRegisters.N == 0;
 
 	public BPLInstruction(AddressingMode mode) {
 		super(mode, branchCondition);

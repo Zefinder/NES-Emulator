@@ -18,10 +18,10 @@ public class STYInstruction extends Instruction {
 	public void execute() throws InstructionNotSupportedException {
 		// M = Y
 		// Set address to write
-		updateMemoryAddress();
+		updateMemoryAddress(cpuRegisters.X, cpuRegisters.Y);
 
 		// Set in memory
-		storeMemory(cpu.cpuInfo.Y);
+		storeMemory(cpuRegisters.Y);
 	}
 
 	@Override

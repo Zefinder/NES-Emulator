@@ -27,7 +27,7 @@ public abstract class AluInstruction extends Instruction {
 	@Override
 	public void execute() throws InstructionNotSupportedException {
 		int operand2 = fetchOperand2();
-		execute(cpu.cpuInfo.A, operand2);
+		execute(cpuRegisters.A, operand2);
 	}
 
 	@Override
@@ -35,14 +35,14 @@ public abstract class AluInstruction extends Instruction {
 
 	protected void updateFlags(int result, boolean updateC) {
 		if (updateC) {
-			cpu.cpuInfo.C = result > 255 ? 1 : 0;
+			cpuRegisters.C = result > 255 ? 1 : 0;
 		}
 
-		cpu.cpuInfo.Z = (result & 0xFF) == 0 ? 1 : 0;
-		cpu.cpuInfo.N = (result & 0x80) != 0 || result < 0 ? 1 : 0;
+		cpuRegisters.Z = (result & 0xFF) == 0 ? 1 : 0;
+		cpuRegisters.N = (result & 0x80) != 0 || result < 0 ? 1 : 0;
 	}
 
 	protected void updateV(int operand1, int operand2, int result) {
-		cpu.cpuInfo.V = ((operand1 ^ result) & (operand2 ^ result) & 0x80) == 0 ? 0 : 1;
+		cpuRegisters.V = ((operand1 ^ result) & (operand2 ^ result) & 0x80) == 0 ? 0 : 1;
 	}
 }

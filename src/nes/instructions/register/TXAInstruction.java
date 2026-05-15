@@ -16,8 +16,8 @@ public class TXAInstruction extends TransferInstruction {
 	@Override
 	public void execute() throws InstructionNotSupportedException {
 		// A = X
-		int value = cpu.cpuInfo.X;
-		cpu.cpuInfo.A = value;
+		int value = cpuRegisters.X;
+		cpuRegisters.A = value;
 		
 		// Update flags
 		updateFlags(value);

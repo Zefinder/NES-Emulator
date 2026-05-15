@@ -20,7 +20,7 @@ public class ANDInstruction extends AluInstruction {
 
 		// Register A update
 		// No need & 0xFF since AND has no overflow
-		cpu.cpuInfo.A = result;
+		cpuRegisters.A = result;
 
 		// Flags update
 		updateFlags(result, false);

@@ -6,7 +6,7 @@ import instructions.AddressingMode;
 
 public class BVSInstruction extends BranchInstruction {
 
-	private static final BooleanSupplier branchCondition = () -> cpu.cpuInfo.V == 1;
+	private static final BooleanSupplier branchCondition = () -> cpuRegisters.V == 1;
 
 	public BVSInstruction(AddressingMode mode) {
 		super(mode, branchCondition);

@@ -59,6 +59,13 @@ public abstract class Bus extends Component implements Memory {
 		return translateAddress(address).read();
 	}
 	
+	public int readAddress(int address) {
+		// TODO If takes too much time, remove read and call yourself, even if they should be optimised
+		int lsbFetched = read(address);
+		int msbFetched = read((address + 1) & 0xFFFF);
+		return msbFetched << 8 | lsbFetched;
+	}
+	
 	@Override
 	public void write(int address, int value) {
 //		writeImpl(translateAddress(address), value);

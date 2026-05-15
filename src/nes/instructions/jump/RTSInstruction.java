@@ -17,10 +17,10 @@ public class RTSInstruction extends Instruction {
 	@Override
 	public void execute() throws InstructionNotSupportedException {
 		// Popping values
-		int address = cpu.pop() | cpu.pop() << 8;
+		int address = pop() | pop() << 8;
 		
 		// Update PC
-		cpu.cpuInfo.PC = address;
+		cpuRegisters.PC = address;
 	}
 
 	@Override

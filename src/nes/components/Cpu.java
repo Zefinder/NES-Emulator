@@ -18,7 +18,7 @@ public class Cpu extends Component {
 
 	/* Interruption state */
 	// TODO Move and change to AtomicBoolean
-	private boolean interruptionState = false;
+//	private boolean interruptionState = false;
 
 	/* PpuInfo */
 //	// TODO Stop using it
@@ -95,11 +95,6 @@ public class Cpu extends Component {
 	public int fetchMemory(int address) {
 		return bus.read(address);
 	}
-	
-	// TODO Remove
-	public void writeMemory(int address, int value) {
-		bus.write(address, value);
-	}
 
 	/**
 	 * Fetches an address in memory
@@ -124,48 +119,11 @@ public class Cpu extends Component {
 	}
 
 	/**
-	 * Pushes the value into the stack
-	 * 
-	 * @param value the value to push
-	 */
-	public void push(int value) {
-		// Remember that SP points on nothing
-		int SP = cpuRegisters.SP;
-
-		// Put value in memory
-		bus.write(0x100 | SP, value);
-
-		// Decrement SP (wrap around 0x100)
-		cpuRegisters.SP = (SP - 1) & 0xFF;
-	}
-
-	/**
-	 * Pops a value from the stack
-	 * 
-	 * @return the value poped
-	 */
-	public int pop() {
-		// Remember that SP points on nothing
-		int SP = cpuRegisters.SP;
-
-		// Increment SP (wrap around 0x100)
-		SP = (SP + 1) & 0xFF;
-
-		// Put value in memory
-		int value = bus.read(0x100 | SP);
-
-		// Update SP
-		cpuRegisters.SP = SP;
-
-		return value;
-	}
-	
-	/**
 	 * Exits the interruption state. This is used by RTI
 	 */
-	public void exitInterruption() {
-		interruptionState = false;
-	}
+//	public void exitInterruption() {
+//		interruptionState = false;
+//	}
 
 	/**
 	 * <p>

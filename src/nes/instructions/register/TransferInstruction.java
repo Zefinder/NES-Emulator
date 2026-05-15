@@ -29,7 +29,7 @@ public abstract class TransferInstruction extends Instruction {
 	public abstract TransferInstruction newInstruction(int constant);
 	
 	protected void updateFlags(int result) {
-		cpu.cpuInfo.Z = (result & 0xFF) == 0 ? 1 : 0;
-		cpu.cpuInfo.N = (result & 0x80) != 0 ? 1 : 0;
+		cpuRegisters.Z = (result & 0xFF) == 0 ? 1 : 0;
+		cpuRegisters.N = (result & 0x80) != 0 ? 1 : 0;
 	}
 }

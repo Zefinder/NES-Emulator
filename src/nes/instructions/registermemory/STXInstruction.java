@@ -18,10 +18,10 @@ public class STXInstruction extends Instruction {
 	public void execute() throws InstructionNotSupportedException {
 		// M = X
 		// Set address to write
-		updateMemoryAddress();
+		updateMemoryAddress(cpuRegisters.X, cpuRegisters.Y);
 		
 		// Set in memory
-		storeMemory(cpu.cpuInfo.X);
+		storeMemory(cpuRegisters.X);
 	}
 
 	@Override

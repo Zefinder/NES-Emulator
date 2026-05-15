@@ -26,20 +26,20 @@ class TestInstructionIssues {
 	@BeforeAll
 	static void init() {
 		// Registers at 0
-		cpu.cpuInfo.A = 0;
-		cpu.cpuInfo.X = 0;
-		cpu.cpuInfo.Y = 0;
-		cpu.cpuInfo.SP = 0xFD;
-		cpu.cpuInfo.PC = 0;
+		cpuRegisters.A = 0;
+		cpuRegisters.X = 0;
+		cpuRegisters.Y = 0;
+		cpuRegisters.SP = 0xFD;
+		cpuRegisters.PC = 0;
 
 		// Flags at 0
-		cpu.cpuInfo.C = 0;
-		cpu.cpuInfo.Z = 0;
-		cpu.cpuInfo.I = 0;
-		cpu.cpuInfo.D = 0;
-		cpu.cpuInfo.B = 0;
-		cpu.cpuInfo.V = 0;
-		cpu.cpuInfo.N = 0;
+		cpuRegisters.C = 0;
+		cpuRegisters.Z = 0;
+		cpuRegisters.I = 0;
+		cpuRegisters.D = 0;
+		cpuRegisters.B = 0;
+		cpuRegisters.V = 0;
+		cpuRegisters.N = 0;
 	}
 
 	/**
@@ -74,7 +74,7 @@ class TestInstructionIssues {
 //				0x21, 0x20, 0xA2, 0x02, 0xA9, 0x01, 0x71, 0x00, 0xC8, 0xCA, 0xD0, 0xF6, 0x85, 0x02 };
 		MapperTest mapper = new MapperTest();
 		cpu.setMapper(mapper);
-		cpu.cpuInfo.PC = 0x8000;
+		cpuRegisters.PC = 0x8000;
 		
 		Instruction[] instructions = new Instruction[] {
 			new LDAInstruction(IMMEDIATE, 0x20), null,

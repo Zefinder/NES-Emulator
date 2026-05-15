@@ -16,8 +16,8 @@ public class TAXInstruction extends TransferInstruction {
 	@Override
 	public void execute() throws InstructionNotSupportedException {
 		// X = A
-		int value = cpu.cpuInfo.A;
-		cpu.cpuInfo.X = value;
+		int value = cpuRegisters.A;
+		cpuRegisters.X = value;
 		
 		// Update flags
 		updateFlags(value);

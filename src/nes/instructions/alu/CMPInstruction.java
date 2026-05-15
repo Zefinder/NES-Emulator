@@ -19,7 +19,7 @@ public class CMPInstruction extends AluInstruction {
 		int result = operand1 - operand2;
 		
 		// Flag update
-		cpu.cpuInfo.C = result >= 0 ? 1 : 0;
+		cpuRegisters.C = result >= 0 ? 1 : 0;
 		updateFlags(result, false);
 	}
 

@@ -18,10 +18,10 @@ public class STAInstruction extends Instruction {
 	public void execute() throws InstructionNotSupportedException {
 		// M = A
 		// Set address to write
-		updateMemoryAddress();
+		updateMemoryAddress(cpuRegisters.X, cpuRegisters.Y);
 		
 		// Set in memory
-		storeMemory(cpu.cpuInfo.A);
+		storeMemory(cpuRegisters.A);
 	}
 
 	@Override

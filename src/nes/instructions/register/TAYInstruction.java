@@ -16,8 +16,8 @@ public class TAYInstruction extends TransferInstruction {
 	@Override
 	public void execute() throws InstructionNotSupportedException {
 		// Y = A
-		int value = cpu.cpuInfo.A;
-		cpu.cpuInfo.Y = value;
+		int value = cpuRegisters.A;
+		cpuRegisters.Y = value;
 		
 		// Update flags
 		updateFlags(value);

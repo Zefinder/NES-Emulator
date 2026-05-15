@@ -16,7 +16,7 @@ public class PHAInstruction extends Instruction {
 
 	@Override
 	public void execute() throws InstructionNotSupportedException {
-		cpu.push(cpu.cpuInfo.A);
+		push(cpuRegisters.A);
 	}
 
 	@Override
@@ -27,7 +27,8 @@ public class PHAInstruction extends Instruction {
 
 		default:
 			throw new InstructionNotSupportedException("Cannot get cycles: addressing mode is wrong!");
-		}	}
+		}
+	}
 
 	@Override
 	public String getName() {

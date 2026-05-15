@@ -26,46 +26,46 @@ class TestCpuStack {
 		}
 
 		// SP at initial value
-		cpu.cpuInfo.SP = 0xFD;
+		cpuRegisters.SP = 0xFD;
 	}
 
 	@Test
 	void testPush() {
 		int expectedValue = 10;
-		cpu.push(expectedValue);
+		push(expectedValue);
 		int gotValue = cpu.fetchMemory(0x1FD);
 
 		assertEquals(expectedValue, gotValue, "Value must be in memory");
-		assertEquals(0xFC, cpu.cpuInfo.SP, "SP must have decreased");
+		assertEquals(0xFC, cpuRegisters.SP, "SP must have decreased");
 	}
 
 	@Test
 	void testPushPop() {
 		int expectedValue = 10;
-		cpu.push(expectedValue);
-		int gotValue = cpu.pop();
+		push(expectedValue);
+		int gotValue = pop();
 
 		assertEquals(expectedValue, gotValue, "Value pushed must be value poped");
-		assertEquals(0xFD, cpu.cpuInfo.SP, "SP must be at the initial state");
+		assertEquals(0xFD, cpuRegisters.SP, "SP must be at the initial state");
 	}
 
 	@Test
 	void testStackOOBUp() {
 		// SP is at FD, 3 pops must set it to 0x00
-		cpu.pop();
-		cpu.pop();
-		cpu.pop();
+		pop();
+		pop();
+		pop();
 
-		assertEquals(0x00, cpu.cpuInfo.SP, "SP must be 0 since wrapped");
+		assertEquals(0x00, cpuRegisters.SP, "SP must be 0 since wrapped");
 	}
 
 	@Test
 	void testStackOOBDown() {
 		// Push until 0xFF
-		for (; cpu.cpuInfo.SP <= 0xFD;) {
-			cpu.push(1);
+		for (; cpuRegisters.SP <= 0xFD;) {
+			push(1);
 		}
 
-		assertEquals(0xFF, cpu.cpuInfo.SP, "SP must be 0xFF since wrapped");
+		assertEquals(0xFF, cpuRegisters.SP, "SP must be 0xFF since wrapped");
 	}
 }

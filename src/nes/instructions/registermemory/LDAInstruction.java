@@ -17,7 +17,7 @@ public class LDAInstruction extends AluInstruction {
 	@Override
 	protected void execute(int operand1, int operand2) {
 		// A = M
-		cpu.cpuInfo.A = operand2;
+		cpuRegisters.A = operand2;
 		
 		// Flags update
 		updateFlags(operand2, false);

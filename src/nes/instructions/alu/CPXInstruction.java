@@ -16,10 +16,10 @@ public class CPXInstruction extends AluInstruction {
 	@Override
 	protected void execute(int operand1, int operand2) {
 		// X - M
-		int result = cpu.cpuInfo.X - operand2;
+		int result = cpuRegisters.X - operand2;
 		
 		// Flag update
-		cpu.cpuInfo.C = result >= 0 ? 1 : 0;
+		cpuRegisters.C = result >= 0 ? 1 : 0;
 		updateFlags(result, false);
 	}
 

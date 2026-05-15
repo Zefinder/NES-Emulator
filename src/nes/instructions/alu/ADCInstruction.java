@@ -16,10 +16,10 @@ public class ADCInstruction extends AluInstruction {
 	@Override
 	protected void execute(int operand1, int operand2) {
 		// A = A + M + C
-		int result = operand1 + operand2 + cpu.cpuInfo.C;
+		int result = operand1 + operand2 + cpuRegisters.C;
 
 		// Register A update
-		cpu.cpuInfo.A = result & 0xFF;
+		cpuRegisters.A = result & 0xFF;
 
 		// Flags update
 		updateFlags(result, true);
