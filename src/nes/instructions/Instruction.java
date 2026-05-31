@@ -363,4 +363,16 @@ public abstract class Instruction {
 		return value;
 	}
 	
+	public static void setCpuRegisters(CpuRegisters cpuRegisters) {
+		if (Instruction.cpuRegisters == null) {
+			Instruction.cpuRegisters = cpuRegisters;
+		}
+	}
+	
+	public static void setCpuBus(CpuBus bus) {
+		if (Instruction.bus == null) {
+			Instruction.bus = bus;
+		}
+	}
+	
 }

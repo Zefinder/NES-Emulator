@@ -12,31 +12,38 @@ import components.register.PpuRegisters;
 import exceptions.ComponentCheckException;
 import exceptions.InstructionNotSupportedException;
 import exceptions.NotNesFileException;
+import instructions.Instruction;
 
 public class Nes {
 
-	public Nes() {
+	private PpuRegisters ppuRegisters;
+	private PpuBus ppuBus;
+	private MmioBus mmioBus;
+	private CpuRegisters cpuRegisters;
+	private CpuBus cpuBus;
+	private IoRegisters ioRegisters;
+	private NmiFlipFlop nmiFlipFlop;
+	private OamDma oamDma;
+	private Ppu ppu;
+	private Cpu cpu;
 
-	}
-
-	public static void main(String[] args)
-			throws NotNesFileException, IOException, InstructionNotSupportedException, ComponentCheckException {
+	public Nes() throws ComponentCheckException {
 		// Create all components
-		PpuRegisters ppuRegisters = new PpuRegisters();
-		PpuBus ppuBus = new PpuBus();
-		MmioBus mmioBus = new MmioBus();
+		ppuRegisters = new PpuRegisters();
+		ppuBus = new PpuBus();
+		mmioBus = new MmioBus();
 
-		CpuRegisters cpuRegisters = new CpuRegisters();
-		CpuBus cpuBus = new CpuBus();
+		cpuRegisters = new CpuRegisters();
+		cpuBus = new CpuBus();
 
-		IoRegisters ioRegisters = new IoRegisters();
+		ioRegisters = new IoRegisters();
 
-		NmiFlipFlop nmiFlipFlop = new NmiFlipFlop();
+		nmiFlipFlop = new NmiFlipFlop();
 
-		OamDma oamDma = new OamDma();
+		oamDma = new OamDma();
 
-		Ppu ppu = new Ppu();
-		Cpu cpu = new Cpu();
+		ppu = new Ppu();
+		cpu = new Cpu();
 
 		// Link components
 		cpu.setCpuRegisters(cpuRegisters);
@@ -48,7 +55,7 @@ public class Nes {
 		ppu.setPpuRegisters(ppuRegisters);
 		ppu.setBus(ppuBus);
 		ppu.setMmioBus(mmioBus);
-		
+
 		mmioBus.setPpuBus(ppuBus);
 		mmioBus.setPpuRegisters(ppuRegisters);
 		mmioBus.setNmiFlipFlop(nmiFlipFlop);
@@ -70,6 +77,27 @@ public class Nes {
 		cpu.check();
 		ppu.check();
 		
+		// Set CPU components in instruction for faster access
+		Instruction.setCpuBus(cpuBus);
+		Instruction.setCpuRegisters(cpuRegisters);
+	}
+
+	public void insertCartridge(Cartridge cartridge) {
+		cpu.insertCartridge(cartridge);
+		ppu.insertCartridge(cartridge);
+	}
+
+	public Cpu getCpu() {
+		return cpu;
+	}
+
+	public Ppu getPpu() {
+		return ppu;
+	}
+
+	public static void main(String[] args)
+			throws NotNesFileException, IOException, InstructionNotSupportedException, ComponentCheckException {
+
 		// Create frame
 
 //		Cartridge cartridge = new Cartridge("./Donkey Kong.nes");

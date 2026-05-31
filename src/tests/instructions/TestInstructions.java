@@ -98,8 +98,6 @@ interface TesserIntFunction<T, U, V, W> {
 
 class TestInstructions {
 
-	static final Cpu cpu = Cpu.getInstance();
-
 	@BeforeAll
 	static void init() {
 		// Set mapper

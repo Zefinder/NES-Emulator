@@ -40,6 +40,17 @@ public class Mapper0 extends Mapper {
 					this.prgrom2.write(address, prgRom[PRG_ROM_SIZE + address]);
 				}
 			}
+			
+//			int offset = prgRom.length == 2 * PRG_ROM_SIZE ? 0 : PRG_ROM_SIZE;
+//
+//			// Write prog rom
+//			for (int address = 0; address < PRG_ROM_SIZE; address++) {
+//				memory.write(address + PRG_ROM_OFFSET, prgRom[address]);
+//			}
+//
+//			for (int address = 0; address < PRG_ROM_SIZE; address++) {
+//				memory.write(address + PRG_ROM2_OFFSET, prgRom[address + offset]);
+//			}
 		}
 
 		@Override

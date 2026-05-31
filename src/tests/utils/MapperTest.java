@@ -1,5 +1,8 @@
 package utils;
 
+import components.MemoryImpl;
+import components.TranslatedAddress;
+import components.bus.Bus;
 import mapper.Mapper;
 
 public class MapperTest extends Mapper {
@@ -7,66 +10,61 @@ public class MapperTest extends Mapper {
 	// Address of special register
 	public static final int SPECIAL_REGISTER_ADDRESS = 0x1234;
 
-	// Read and write counter for special register
-	private int readCounter = 0;
-	private int writeCounter = 0;
+	private static class CpuMapperTest extends Bus {
 
-	public MapperTest() {
-	}
-	
-	public MapperTest(int[] cpuRom, int[] ppuRom) {
-		for (int address = 0; address < cpuRom.length; address++) {
-			cpuBus.busContent[address + 0x8000] = cpuRom[address];
-		}
+		private MemoryImpl memory;
 		
-		for (int address = 0; address < ppuRom.length; address++) {
-			ppuBus.busContent[address] = ppuRom[address];
+		private int readCounter = 0;
+		private int writeCounter = 0;
+
+		public CpuMapperTest() {
+			memory = new MemoryImpl(0xBFE0);
+		}
+
+		@Override
+		protected boolean checkImpl() {
+			// Not link to another component
+			return true;
+		}
+
+		@Override
+		protected TranslatedAddress translateAddress(int address) {
+			if (address == SPECIAL_REGISTER_ADDRESS) {
+				readCounter += 1;
+			}
+			
+			return new TranslatedAddress(memory, address);
 		}
 	}
 
-	@Override
-	public int readCpuBus(int address) {
-		if (address == SPECIAL_REGISTER_ADDRESS) {
-			readCounter++;
+	private static class PpuMapperTest extends MemoryImpl {
+
+		public PpuMapperTest() {
+			super(0x2000);
 		}
 
-		return cpuBus.getFromBus(address);
 	}
 
-	@Override
-	public void writeCpuBus(int address, int... values) {
-		if (address == SPECIAL_REGISTER_ADDRESS) {
-			writeCounter++;
-		}
-
-		cpuBus.writeToBus(address, values);
-	}
-
-	@Override
-	public int readPpuBus(int address) {
-		return ppuBus.busContent[address];
-	}
-
-	@Override
-	public void writePpuBus(int address, int... values) {
-		int offset = 0;
-		for (int value : values) {
-			int writeAddress = (address + offset) & 0xFFFF;
-			ppuBus.busContent[writeAddress] = value;
-		}
+	private CpuMapperTest cpuMapper;
+//	private PpuMapperTest ppuMapper;
+	
+	public MapperTest() {
+		super(new CpuMapperTest(), new PpuMapperTest());
+		cpuMapper = (CpuMapperTest) super.getCpuBusMemory();
+//		ppuMapper = (PpuMapperTest) super.getPpuBusMemory();
 	}
 
 	public int getReadCounter() {
-		return readCounter;
+		return cpuMapper.readCounter;
 	}
 
 	public int getWriteCounter() {
-		return writeCounter;
+		return cpuMapper.writeCounter;
 	}
 
 	public void resetCounters() {
-		readCounter = 0;
-		writeCounter = 0;
+		cpuMapper.readCounter = 0;
+		cpuMapper.writeCounter = 0;
 	}
 
 }

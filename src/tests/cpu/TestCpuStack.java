@@ -1,21 +1,20 @@
 package cpu;
 
+import static instructions.Instruction.pop;
+import static instructions.Instruction.push;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import components.Cpu;
-import utils.MapperTest;
+import utils.CartridgeTest;
 
-class TestCpuStack {
-
-	static final Cpu cpu = Cpu.getInstance();
+class TestCpuStack extends TestCpu {
 
 	@BeforeAll
-	static void init() {
-		cpu.setMapper(new MapperTest());
+	static void init() throws Exception {
+		cpu.insertCartridge(new CartridgeTest());
 	}
 
 	@BeforeEach

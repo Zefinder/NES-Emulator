@@ -28,7 +28,7 @@ public class Cpu extends Component {
 	private Instruction[] romInstructions;
 
 	/* Registers & Flags */
-	private CpuRegisters cpuRegisters = new CpuRegisters();
+	private CpuRegisters cpuRegisters;
 	private NmiFlipFlop nmiFlipFlop;
 
 	private CpuBus bus;
